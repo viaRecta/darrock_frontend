@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% set page_subtitle = "Performance Metrics Analysis" %}
+{% set active_page = "performance" %}
+
+{% block title %}Performance Analysis | Super Duper Waffle{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Performance Metrics Overview</h2>
+    
+    <!-- Key Return Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card text-center">
+                <h6 class="text-muted">Total Return</h6>
+                <div class="metric-value {% if performance_metrics.total_return > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ "%.1f"|format(performance_metrics.total_return) }}%
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card text-center">
+                <h6 class="text-muted">vs S&P 500</h6>
+                <div class="metric-value {% if performance_metrics.outperformance > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ "%.1f"|format(performance_metrics.outperformance) }}%
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card text-center">
+                <h6 class="text-muted">Annualized Return</h6>
+                <div class="metric-value text-primary">
+                    {{ "%.1f"|format(performance_metrics.annualized_return_strategy) }}%
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="metric-card text-center">
+                <h6 class="text-muted">Win Rate</h6>
+                <div class="metric-value text-info">
+                    {{ "%.1f"|format(performance_metrics.win_rate) }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="metric-card">
+                <h5 class="mb-3">Risk Measures</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Volatility:</span>
+                    <strong>{{ "%.1f"|format(performance_metrics.volatility) }}%</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Max Drawdown:</span>
+                    <strong class="text-danger">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>Annualized Std Dev:</span>
+                    <strong>{{ "%.2f"|format(performance_metrics.annualized_std) }}%</strong>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8 col-md-6">
+            <div class="metric-card">
+                <h5 class="mb-3">Risk-Adjusted Returns</h5>
+                <div class="row g-3">
+                    <div class="col-md-4 text-center">
+                        <div class="fs-1 mb-2 text-primary">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <h6>Sharpe Ratio</h6>
+                        <div class="metric-value h4">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</div>
+                        <small class="text-muted">Risk-Adjusted</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="fs-1 mb-2 text-success">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h6>Sortino Ratio</h6>
+                        <div class="metric-value h4">{{ "%.2f"|format(performance_metrics.sortino_ratio) }}</div>
+                        <small class="text-muted">Downside Risk</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="fs-1 mb-2 text-warning">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                        <h6>Calmar Ratio</h6>
+                        <div class="metric-value h4">{{ "%.2f"|format(performance_metrics.calmar_ratio) }}</div>
+                        <small class="text-muted">Return vs DD</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Annual Returns Table -->
+    <div class="metric-card">
+        <h4 class="mb-4">Annual Returns Breakdown</h4>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Year</th>
+                        <th class="text-end">Strategy Return</th>
+                        <th class="text-end">S&P 500 Return</th>
+                        <th class="text-end">Outperformance</th>
+                        <th class="text-center">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td class="fw-bold">{{ result.year }}</td>
+                        <td class="text-end {% if result.strategy_return > 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ "%.1f"|format(result.strategy_return) }}%
+                        </td>
+                        <td class="text-end">{{ "%.1f"|format(result.sp500_return) }}%</td>
+                        <td class="text-end {% if result.outperformance > 0 %}text-success{% else %}text-danger{% endif %}">
+                            {{ "%.1f"|format(result.outperformance) }}%
+                        </td>
+                        <td class="text-center">
+                            {% if result.outperformance > 0 %}
+                            <span class="badge bg-success">Win</span>
+                            {% else %}
+                            <span class="badge bg-danger">Loss</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

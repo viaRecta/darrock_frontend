@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Super Duper Waffle | Investment Strategy{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block header %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">🧇 Super Duper Waffle</h1>
+                <p class="lead mb-4">AI-Driven investment strategy leveraging 20+ years of S&P 500 analysis</p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge bg-light text-dark fs-6">
+                        <i class="fas fa-chart-line me-1"></i>20+ Years Backtested
+                    </span>
+                    <span class="badge bg-light text-dark fs-6">
+                        <i class="fas fa-database me-1"></i>Fundamental Analysis
+                    </span>
+                    <span class="badge bg-light text-dark fs-6">
+                        <i class="fas fa-rocket me-1"></i>Growth-Oriented
+                    </span>
+                </div>
+            </div>
+            <div class="col-lg-4 text-end mt-3 mt-lg-0">
+                <a href="/dashboard" class="btn btn-light btn-lg">
+                    <i class="fas fa-chart-bar me-2"></i>View Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Future Portfolio -->
+<div class="container mt-4">
+    <div class="future-portfolio">
+        <div class="row align-items-center mb-4">
+            <div class="col-md-8">
+                <h2 class="mb-2">📈 Recommended Portfolio for {{ current_year + 1 }}</h2>
+                <p class="mb-0 opacity-75">Generated using {{ current_year }} data available in December {{ current_year }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="badge bg-light text-dark fs-6">
+                    <i class="fas fa-calendar-alt me-2"></i>{{ current_year + 1 }}
+                </span>
+            </div>
+        </div>
+        
+        <div class="row g-3">
+            {% for ticker in next_year_portfolio %}
+            <div class="col-xl-3 col-lg-4 col-md-6">
+                <div class="stock-card" style="background: rgba(255,255,255,0.95); border-left-color: white;">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h5 class="fw-bold mb-1">
+                                <a href="/stock/{{ ticker }}" class="text-decoration-none text-primary">{{ ticker }}</a>
+                            </h5>
+                            <small class="text-muted">{{ companies.get(ticker, 'Leading Company') }}</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">#{{ loop.index }}</span>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted d-block mb-2">Selected for:</small>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <span class="badge bg-light text-dark">Revenue</span>
+                            <span class="badge bg-light text-dark">Cash Flow</span>
+                            <span class="badge bg-light text-dark">Momentum</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Performance Overview -->
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Performance Overview</h2>
+    
+    <!-- Key Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="metric-card text-center">
+                <div class="metric-value text-success">{{ "%.1f"|format(performance_metrics.total_return) }}%</div>
+                <div class="metric-label">Total Return</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="metric-card text-center">
+                <div class="metric-value {% if performance_metrics.outperformance > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ "%.1f"|format(performance_metrics.outperformance) }}%
+                </div>
+                <div class="metric-label">vs S&P 500</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="metric-card text-center">
+                <div class="metric-value text-info">{{ "%.0f"|format(performance_metrics.win_rate) }}%</div>
+                <div class="metric-label">Win Rate</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="metric-card text-center">
+                <div class="metric-value text-warning">{{ "%.1f"|format(performance_metrics.volatility) }}%</div>
+                <div class="metric-label">Volatility</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Risk Metrics -->
+    <div class="metric-card">
+        <h4 class="text-center mb-4 pb-3 border-bottom">Advanced Risk Metrics</h4>
+        
+        <div class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <div class="text-center">
+                    <div class="fs-1 mb-2 text-primary">
+                        <i class="fas fa-balance-scale"></i>
+                    </div>
+                    <h6>Sharpe Ratio</h6>
+                    <div class="metric-value h3">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</div>
+                    <small class="text-muted">Risk-Adjusted Return</small>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="text-center">
+                    <div class="fs-1 mb-2 text-success">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h6>Sortino Ratio</h6>
+                    <div class="metric-value h3">{{ "%.2f"|format(performance_metrics.sortino_ratio) }}</div>
+                    <small class="text-muted">Downside Risk Adjusted</small>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="text-center">
+                    <div class="fs-1 mb-2 text-warning">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h6>Calmar Ratio</h6>
+                    <div class="metric-value h3">{{ "%.2f"|format(performance_metrics.calmar_ratio) }}</div>
+                    <small class="text-muted">Return vs Max Drawdown</small>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="text-center">
+                    <div class="fs-1 mb-2 text-danger">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <h6>Max Drawdown</h6>
+                    <div class="metric-value h3">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+                    <small class="text-muted">Worst Decline</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="row g-3 mt-4">
+        <div class="col-lg-6">
+            <div class="metric-card">
+                <h5 class="mb-4">Portfolio Growth</h5>
+                <canvas id="growthChart" height="250"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="metric-card">
+                <h5 class="mb-4">Annual Performance</h5>
+                <canvas id="annualChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Metrics -->
+    <div class="row g-3 mt-4">
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6 class="mb-3">Annualized Return</h6>
+                <div class="metric-value h4 text-success">{{ "%.2f"|format(performance_metrics.annualized_return_strategy) }}%</div>
+                <div class="metric-label">Strategy</div>
+                <div class="metric-value h4 text-primary mt-2">{{ "%.2f"|format(performance_metrics.annualized_return_sp500) }}%</div>
+                <div class="metric-label">S&P 500</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6 class="mb-3">Final Value</h6>
+                <div class="metric-value h4">${{ "%.2f"|format(performance_metrics.final_value) }}</div>
+                <div class="metric-label">From $1 Investment</div>
+                <div class="mt-3">
+                    <small class="text-muted">{{ performance_metrics.years_analyzed }} Years Analyzed</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="metric-card text-center">
+                <h6 class="mb-3">Risk Management</h6>
+                <div class="metric-value h4 text-warning">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+                <div class="metric-label">Max Drawdown</div>
+                <div class="mt-3">
+                    <small class="text-muted">Conservative Construction</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Methodology -->
+<div class="container my-5">
+    <div class="metric-card">
+        <h3 class="text-center mb-5">Investment Methodology</h3>
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                <h5>Fundamental Analysis</h5>
+                <p class="text-muted">5-year revenue and cash flow growth to identify strong companies</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-bolt fa-3x text-warning mb-3"></i>
+                <h5>Momentum Scoring</h5>
+                <p class="text-muted">2-year momentum evaluation to capture emerging trends</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-robot fa-3x text-success mb-3"></i>
+                <h5>AI-Driven Selection</h5>
+                <p class="text-muted">Machine learning with 20+ years of backtesting data</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Growth Chart
+    new Chart(document.getElementById('growthChart'), {
+        type: 'line',
+        data: {
+            labels: [{% for r in results %}'{{ r.year }}',{% endfor %}],
+            datasets: [{
+                label: 'Waffle Strategy',
+                data: [{% for r in results %}{{ r.investment }},{% endfor %}],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 3
+            }, {
+                label: 'S&P 500',
+                data: [{% for r in results %}{{ r.investmentsp }},{% endfor %}],
+                borderColor: '#764ba2',
+                backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'top' } }
+        }
+    });
+
+    // Annual Chart
+    new Chart(document.getElementById('annualChart'), {
+        type: 'bar',
+        data: {
+            labels: [{% for r in results if r.year > 2006 %}'{{ r.year }}',{% endfor %}],
+            datasets: [{
+                label: 'Outperformance',
+                data: [{% for r in results if r.year > 2006 %}{{ r.outperformance }},{% endfor %}],
+                backgroundColor: [{% for r in results if r.year > 2006 %}'{% if r.outperformance > 0 %}#10b981{% else %}#ef4444{% endif %}',{% endfor %}]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.env
+venv/
+
+# Data
+#*.csv
+*.parquet
+*.db-wal
+*.db-shm
+
+# IDE
+.vscode/
+
+*.log

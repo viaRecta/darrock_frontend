@@ -1,0 +1,868 @@
+{% extends "base.html" %}
+
+{% set page_subtitle = "Stock Selection Annual Analysis" %}
+{% set active_page = "dashboard" %}
+
+{% block title %}Portfolio Analysis Dashboard{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Next Year Portfolio Section -->
+    {% if next_year_portfolio %}
+    <div class="next-year-section">
+        <h2>Recommended Portfolio for 2026</h2>
+        <p>Generated using 2025 data available in December 2025</p>
+        <div class="next-year-tickers">
+            {% for ticker in next_year_portfolio %}
+            <div class="next-year-ticker">
+                <a href="/stock/{{ ticker }}" style="text-decoration: none;">{{ ticker }}</a>
+                - {{ companies.get(ticker, '') }}
+            </div>
+            {% endfor %}
+        </div>
+        <br/>
+        <a href="/performance" class="btn btn-warning">Performance Analysis</a>
+    </div>
+    {% endif %}
+    {% if next_year_portfolio %}
+    <button class="btn btn-primary expand-btn" name="Save Tab" onclick="toggleContent(this)">▼ Save Tab</button>
+    <div class="save-portfolio-section" style="display:none; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+        <h4>Save This Portfolio</h4>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="portfolioName" placeholder="Portfolio Name" required 
+                style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; flex-grow: 1;">
+            <button type="button" class="btn btn-primary" onclick="savePortfolio()">Save Portfolio</button>
+        </div>
+        <div id="saveStatus" style="margin-top: 10px; display: none;"></div>
+        {% if saved_portfolios %}
+        <div class="saved-portfolios mt-3">
+            <h5>Saved Portfolios</h5>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                {% for portfolio in saved_portfolios %}
+                {% if portfolio.name != '___LATEST___'%}
+                <div style="background: white; padding: 10px; border-radius: 5px; border: 1px solid #ddd; min-width: 200px;">
+                    <strong>{{ portfolio.name }}</strong> ({{ portfolio.year }})<br>
+                    <small>{{ portfolio.tickers|length }} stocks</small><br>
+                    <small>Saved: {{ portfolio.saved_date[:10] }}</small><br>
+                    <div style="margin-top: 5px;">
+                        <button type="button" onclick="loadPortfolioDirect({{ portfolio.id }})" 
+                                class="btn btn-sm btn-primary">Load Parameters</button>
+                        <button type="button" onclick="loadPortfolioAndSubmit({{ portfolio.id }})" 
+                                class="btn btn-sm btn-warning">Load & Run</button>
+                        <button type="button" onclick="deletePortfolio({{ portfolio.id }})" 
+                                class="btn btn-sm btn-danger">Delete</button>
+                    </div>
+                    <div class="portfolio-tickers" style="margin-top: 5px; font-size: 0.8em; max-height: 100px; overflow-y: auto;">
+                        {% for ticker in portfolio.tickers %}
+                        <span class="badge bg-light text-dark">{{ ticker }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+    {% endif %}
+
+    <form method="POST" class="param-form">
+    <button class="btn btn-primary expand-btn" name="Filters" type="button" onclick="toggleContent(this)">▲ Filters</button>
+        <div style="display: flex; flex-wrap: wrap; gap: 40px;">
+            <div>
+                <h2>Rule 1 Parameters - 5yr</h2>
+                
+                <div class="param-group">
+                    <label>Sales Min (Mil.):</label>
+                    <input type="number" name="sales_min_scale" min="1" max="10000"
+                        value="{{ rule1_params.sales_min_scale }}">
+                </div>
+
+                <div class="param-group">
+                    <label>Sales CAGR (%):</label>
+                    <input type="number" name="sales_cagr" step="0.01" min="0" max="1"
+                        value="{{ rule1_params.sales_cagr }}">
+                </div>
+
+                <div class="param-group">
+                    <label>FCF CAGR (%):</label>
+                    <input type="number" name="fcf_cagr" step="0.01" min="0" max="1"
+                        value="{{ rule1_params.fcf_cagr }}">
+                </div>
+                <div class="param-group">
+                    <label>Omit Negative FCF:</label>
+                    <input type="checkbox" name="omit_negative_fcf" {% if rule1_params.omit_negative_fcf %}checked{%endif%}/>
+                </div>
+
+                <div class="param-group">
+                    <label>Price CAGR (%):</label>
+                    <input type="number" name="price_cagr" step="0.01" min="0" max="1"
+                        value="{{ rule1_params.price_cagr }}">
+                </div>
+            </div>
+
+            <div>
+                <h2>Rule 2 Parameters 2yr</h2>
+
+                <div class="param-group">
+                    <label>2Y Sales CAGR (%):</label>
+                    <input type="number" name="sales_cagr_2y" step="0.01" min="0" max="1"
+                        value="{{ rule2_params.sales_cagr_2y }}">
+                </div>
+                <div class="param-group">
+                    <label>Omit 2Y Sales CAGR:</label>
+                    <input type="checkbox" name="sales_cagr_2y_omit" {% if rule2_params.sales_cagr_2y_omit %}checked{%endif%}/>
+                </div>
+
+                <div class="param-group">
+                    <label>2Y FCF CAGR (%):</label>
+                    <input type="number" name="fcf_cagr_2y" step="0.01" min="0" max="1"
+                        value="{{ rule2_params.fcf_cagr_2y }}">
+                </div>
+                <div class="param-group">
+                    <label>Omit 2Y FCF CAGR:</label>
+                    <input type="checkbox" name="fcf_cagr_2y_omit" {% if rule2_params.fcf_cagr_2y_omit %}checked{%endif%}/>
+                </div>
+
+                <div class="param-group">
+                    <label>2Y Price CAGR (%):</label>
+                    <input type="number" name="price_cagr_2y" step="0.01" min="0" max="1"
+                        value="{{ rule2_params.price_cagr_2y }}">
+                </div>
+                <div class="param-group">
+                    <label>Omit 2Y Price CAGR:</label>
+                    <input type="checkbox" name="price_cagr_2y_omit" {% if rule2_params.price_cagr_2y_omit %}checked{%endif%}/>
+                </div>
+            </div>
+
+            <div>
+                <h2>Portfolio Filters</h2>
+                <div class="param-group">
+                    <label>Portfolio Filter:</label>
+                    <select name="ranking_method">
+                        <option value="2" {% if filter_params.ranking_method == '2' %}selected{% endif %}>Normalize 2YR Comp.</option>
+                        <option value="5" {% if filter_params.ranking_method == '5' %}selected{% endif %}>Norm 5YR No Price</option>
+                        <option value="6" {% if filter_params.ranking_method == '6' %}selected{% endif %}>Norm 5YR With Price</option>
+                        <option value="7" {% if filter_params.ranking_method == '7' %}selected{% endif %}>Norm 5YR Only Sales</option>
+                        <!--option value="0" {% if filter_params.ranking_method == '0' %}selected{% endif %}>Sales + FCF growth</option>
+                        <option value="3" {% if filter_params.ranking_method == '3' %}selected{% endif %}>Momentum of sales + fcf </option>
+                        <option value="4" {% if filter_params.ranking_method == '4' %}selected{% endif %}>Momentum Weight Adjusted </option-->
+                    </select>
+                </div>
+                <div class="param-group">
+                    <label>Max Portfolio:</label>
+                    <input type="number" name="maxPortfolio" step="1" min="1" max="100"
+                        value="{{ filter_params.maxPortfolio }}">
+                </div>
+
+                <div class="param-group">
+                    <label>Retention Policy (%):</label>
+                    <input type="number" name="retention" step="0.5" min="0" max="100"
+                        value="{{ filter_params.retention }}">
+                </div>
+            </div>
+
+            <div>
+                <h2>Weight Adjustments</h2>
+                <div class="param-group">
+                    <label>Sales Momentum:</label>
+                    <input type="number" name="salesMomRate" step="0.01" min="0" max="1"
+                        value="{{ filter_params.salesMomRate }}">
+                </div>
+                <div class="param-group">
+                    <label>FCF Momentum:</label>
+                    <input type="number" name="fcfMomRate" step="0.01" min="0" max="1"
+                        value="{{ filter_params.fcfMomRate }}">
+                </div>
+                <div class="param-group">
+                    <label>Price Inverse:</label>
+                    <input type="number" name="priceInvRate" step="0.01" min="0" max="1"
+                        value="{{ filter_params.priceInvRate }}">
+                </div>
+            </div>
+            <div>
+                <h2>Recent Price Filter</h2>
+                <div class="param-group">
+                    <label>Price Lookback:</label>
+                    <select name="recent_price_filter">
+                        <option value="omit" {% if filter_params.get('recent_price_filter', 'omit') == 'omit' %}selected{% endif %}>Omit</option>
+                        <option value="3m" {% if filter_params.get('recent_price_filter', 'omit') == '3m' %}selected{% endif %}>3 Months</option>
+                        <option value="6m" {% if filter_params.get('recent_price_filter', 'omit') == '6m' %}selected{% endif %}>6 Months</option>
+                        <option value="12m" {% if filter_params.get('recent_price_filter', 'omit') == '12m' %}selected{% endif %}>12 Months</option>
+                    </select>
+                </div>
+                <div class="param-group">
+                    <label>Max Return Threshold (%):</label>
+                    <input type="number" name="recent_price_threshold" step="0.01" min="-1" max="0"
+                        value="{{ filter_params.get('recent_price_threshold', -0.1) }}"><br/>
+                    <small>Enter minus values betwen -1 and 0</small>
+                </div>
+                
+                <div class="param-group">
+                    <label for="growth">!!!! SELECT GROWTH !!!!</label>
+                    <input type="checkbox" name="growth" id="growth" {% if filter_params.growth %}checked{%endif%}/>
+                    <small>If checked it will override filters !!!</small>
+                </div>
+                <button type="submit" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    Update Analysis
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Performance Summary -->
+    {% set cumulative_data = namespace(
+        returnMy1USD=0, 
+        compoundR=0, 
+        returnMy1USDSP500=0, 
+        compoundRSP500=0, 
+        outperformance=0
+    ) %}
+    
+    {% for result in results %}
+        {% if loop.last %}
+            {% set cumulative_data.returnMy1USD = result.investment %}
+            {% set cumulative_data.compoundR = result.car %}
+            {% set cumulative_data.returnMy1USDSP500 = result.investmentsp %}
+            {% set cumulative_data.compoundRSP500 = result.carsp %}
+            {% set cumulative_data.outperformance = result.car - result.carsp %}
+        {% endif %}
+    {% endfor %}
+
+    <div style="display: flex; flex-wrap: wrap; margin: 20px 0;">
+        <div class="colorR return">
+            My 1 USD in here : <b id="returnMy1USD">{{'{:0.4f}'.format(cumulative_data.returnMy1USD) }}</b> USD<br />
+            Compound Return : <b id="returnCompound">{{'{:0.4f}'.format(cumulative_data.compoundR) }}</b> %<br />
+            Annualized Return : <b id="annualReturn">{{ '{:0.4f}'.format( ((cumulative_data.returnMy1USD ** (1 / 20)) - 1) *100) }}</b> %
+        </div>
+        <div class="colorR sp">
+            My 1 USD in SP500 : <b id="returnMy1USDSP500">{{'{:0.4f}'.format(cumulative_data.returnMy1USDSP500) }}</b> USD<br />
+            SP500 Comp Return : <b id="returnCompoundSP500">{{'{:0.4f}'.format(cumulative_data.compoundRSP500) }}</b> %<br />
+            Annualized Return : <b id="annualReturnSP500">{{ '{:0.4f}'.format( ((cumulative_data.returnMy1USDSP500 ** (1 / 20)) - 1) *100) }}</b> %
+        </div>
+        <div class="colorR {% if cumulative_data.outperformance > 0 %}good{%else%}bad{%endif%}" style="width: 300px;">
+            Outperformance: <b id="returnOutperf">{{'{:0.4f}'.format(cumulative_data.outperformance) }}</b>  %
+        </div>
+    </div>
+
+    <button class="btn btn-primary expand-btn" name="Performance Summary" onclick="toggleContent(this)">▼ Performance Summary</button>
+    <div class="performance-overview">
+        <h2>Performance Summary</h2>
+        <div class="summary-cards">
+            <div class="metric-card {% if cumulative_data.outperformance > 0 %}positive{% else %}negative{% endif %}">
+                <h3>Strategy vs SP500</h3>
+                <div class="metric-value">{{ '{:0.2f}'.format(cumulative_data.outperformance) }}%</div>
+                <div class="metric-label">Cumulative Outperformance</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Strategy CAGR</h3>
+                <div class="metric-value">{{ '{:0.2f}'.format(cumulative_data.compoundR) }}%</div>
+                <div class="metric-label">Compound Annual Growth</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>SP500 CAGR</h3>
+                <div class="metric-value">{{ '{:0.2f}'.format(cumulative_data.compoundRSP500) }}%</div>
+                <div class="metric-label">Benchmark Growth</div>
+            </div>
+            
+            <div class="metric-card">
+                <h3>Final Value</h3>
+                <div class="metric-value">${{ '{:0.2f}'.format(cumulative_data.returnMy1USD) }}</div>
+                <div class="metric-label">From $1 Investment</div>
+            </div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="metric-card">
+                <h3>Annualized Return</h3>
+                <div class="metric-value">{{ '{:0.2f}'.format( ((cumulative_data.returnMy1USD ** (1 / 20)) - 1) *100) }} %</div>
+                <div class="metric-label">vs SP500</div>
+                <div class="metric-value">{{ '{:0.2f}'.format( ((cumulative_data.returnMy1USDSP500 ** (1 / 20)) - 1) *100) }} %</div>
+            </div>
+            <div class="metric-card">
+                <h3>Win RateVolatility</h3>
+                <div class="metric-value">{{ "%.1f"|format(performance_metrics.win_rate) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Volatility</h3>
+                <div class="metric-value">{{ "%.1f"|format(performance_metrics.volatility) }}%</div>
+            </div>
+            <div class="metric-card">
+                <h3>Max Drawdown</h3>
+                <div class="metric-value">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+            </div>
+        </div>
+        <div class="summary-cards">
+            <div class="metric-card">
+                <h3>Sharpe Ratio</h3>
+                <div class="metric-value">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</div>
+                <div class="metric-label">Risk-Adjusted Return</div>
+            </div>
+            <div class="metric-card">
+                <h3>Sortino Ratio</h3>
+                <div class="metric-value">{{ "%.2f"|format(performance_metrics.sortino_ratio) }}</div>
+                <div class="metric-label">Downside Risk Adjusted</div>
+            </div>
+            <div class="metric-card">
+                <h3>Calmar Ratio</h3>
+                <div class="metric-value">{{ "%.2f"|format(performance_metrics.calmar_ratio) }}</div>
+                <div class="metric-label">Return vs Max DD</div>
+            </div>
+            <div class="metric-card">
+                <h3>Max Drawdown</h3>
+                <div class="metric-value">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+                <div class="metric-label">Worst Decline</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section Header -->
+    <div style="margin: 20px;">
+        <h2>Yearly Analysis  <br/>
+            <small style="font-weight: 100; font-size: small;"> 
+                <input type="checkbox" id="returnDebug"> Show Return Prices (For Debug)<br/>
+                <input type="checkbox" id="showFilteredCandidates"> Show Filtered Candidates Details(For Debug)
+            </small>
+            
+        </h2>
+    </div>
+
+    <!-- Yearly Analysis Cards -->
+    <div class="yearly-analysis">
+        {% for result in results %}
+        <div class="analysis-card" data-year="{{ result.year }}">
+            <div class="card-header" onclick="toggleCard(this)">
+                <h3>{{ result.year }}</h3>
+                <div class="year-performance">
+                    <span class="return-badge strategy {% if result.outperformance > 0 %}positive{% else %}negative{% endif %}">
+                        Strategy: {{ '{:0.2f}'.format(result.strategy_return) }}%
+                    </span>
+                    <span class="return-badge sp500">
+                        SP500: {{ '{:0.2f}'.format(result.sp500_return) }}%
+                    </span>
+                    <span class="return-badge outperformance {% if result.outperformance > 0 %}positive{% else %}negative{% endif %}">
+                        Out: {{ '{:0.2f}'.format(result.outperformance) }}%
+                    </span>
+                </div>
+                <button class="expand-btn">▼ Details</button>
+            </div>
+
+            <div class="card-content" style="display: none; padding: 20px;">
+                <!-- Portfolio Construction Flow -->
+                <div class="construction-flow">
+                    <h4>Portfolio Construction</h4>
+                    <div style="display: flex;align-items: center;flex-wrap: wrap;gap: 10px;flex-direction: row;">
+                        <div style="width: 370px;"></div>
+                        <div style="text-align: center;">
+                            <div style="background: #e8f5e8; padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 24px; font-weight: bold;">{{ result.retained|length }}</div>
+                                <div>Retained</div>
+                            </div>
+                            <div style="font-size: 12px; margin-top: 5px;">{{ result.retained|join(', ') }}</div>
+                        </div>
+                        <div>↓</div>
+                    </div>
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div style="text-align: center;">
+                            <div style="background: #e3f2fd; padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 24px; font-weight: bold;">{{ result.rule1|length }}</div>
+                                <div>5yr Rule</div>
+                            </div>
+                        </div>
+                        <div>→</div>
+                        <div style="text-align: center;">
+                            <div style="background: #fff3e0; padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 24px; font-weight: bold;">{{ result.rule2|length }}</div>
+                                <div>2yr Rule</div>
+                            </div>
+                        </div>
+                        <div>→</div>
+                        <div style="text-align: center;">
+                            <div style="background: #f3e5f5; padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 24px; font-weight: bold;">{{ result.filtered|length }}</div>
+                                <div>Filtered</div>
+                            </div>
+                        </div>
+                        <div>→</div>
+                        <div style="text-align: center;">
+                            <div style="background: #e8f5e8; padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 24px; font-weight: bold;">{{ result.new_candidates|length }}</div>
+                                <div>New Candidates</div>
+                            </div>
+                        </div>
+                        <div>→</div>
+                        <div style="text-align: center;">
+                            <div style="background: #4CAF50; color: white; padding: 10px; border-radius: 5px;">
+                                <div style="font-size: 24px; font-weight: bold;">{{ result.portfolio|length }}</div>
+                                <div>Final Portfolio</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- filtered candidates section -->
+                <div class="filtered-candidates-section" style="display: none;">
+                    <h4>Filtered Candidates Details (Ranked by Score)</h4>
+                    <table class="table table-sm" style="font-size: 12px;">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Ticker</th>
+                                <th>Score</th>
+                                <th>Sales CAGR 5Y</th>
+                                <th>FCF CAGR 5Y</th>
+                                <th>Price CAGR 5Y</th>
+                                <th>Sales CAGR 2Y</th>
+                                <th>FCF CAGR 2Y</th>
+                                <th>Price CAGR 2Y</th>
+                                {% if result.filtered_candidates_details and result.filtered_candidates_details[0].sales_norm is defined %}
+                                <th>Sales Norm</th>
+                                <th>FCF Norm</th>
+                                <th>Price Norm</th>
+                                {% endif %}
+                                {% if result.filtered_candidates_details and result.filtered_candidates_details[0].sales_momentum is defined %}
+                                <th>Sales Momentum</th>
+                                <th>FCF Momentum</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in result.filtered_candidates_details %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ stock.ticker }}</td>
+                                <td>{{ "%.4f"|format(stock.score) }}</td>
+                                <td>{{ "%.4f"|format(stock.sales_CAGR_5Y) }}</td>
+                                <td>{{ "%.4f"|format(stock.FCF_CAGR_5Y) }}</td>
+                                <td>{{ "%.4f"|format(stock.price_CAGR_5Y) }}</td>
+                                <td>{{ "%.4f"|format(stock.sales_CAGR_2Y) }}</td>
+                                <td>{{ "%.4f"|format(stock.FCF_CAGR_2Y) }}</td>
+                                <td>{{ "%.4f"|format(stock.price_CAGR_2Y) }}</td>
+                                {% if stock.sales_norm is defined %}
+                                <td>{{ "%.4f"|format(stock.sales_norm) }}</td>
+                                <td>{{ "%.4f"|format(stock.fcf_norm) }}</td>
+                                <td>{{ "%.4f"|format(stock.price_norm) }}</td>
+                                {% endif %}
+                                {% if stock.sales_momentum is defined %}
+                                <td>{{ "%.4f"|format(stock.sales_momentum) }}</td>
+                                <td>{{ "%.4f"|format(stock.fcf_momentum) }}</td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Portfolio Details -->
+                <div style="display: flex; gap: 20px; margin: 20px 0;">
+                    <div style="flex: 1;">
+                        <h4>Previous Portfolio (Held during {{ result.year }})</h4>
+                        <div>
+                            {% for ticker in result.lastPort %}
+                                <span class="tooltip ticker-item">
+                                    <a href="/stock/{{ ticker }}" >{{ ticker }}</a>
+                                    <span class="tooltiptext" style="left:140px">
+                                        <strong>{{ result.last_port_info[ticker].name if ticker in result.last_port_info else ticker }}</strong><br>
+                                        {{ companies.get(ticker, 'Company name not found') }}<br/>
+                                        Ticker: {{ ticker }}<br/>
+                                        Year: {{ result.year - 1 }} Data<br>
+                                        {% if result.last_port_returns and ticker in result.last_port_returns %}
+                                            Buy Price: <b style="color:lightsalmon;">${{ '{:0.2f}'.format(result.last_port_returns[ticker].buy_price) }}</b><br>
+                                            Sell Price: <b style="color:lightsalmon;">${{ '{:0.2f}'.format(result.last_port_returns[ticker].sell_price) }}</b><br>
+                                            Return: <span class="{% if result.last_port_returns[ticker].return > 0 %}good{% else %}bad{% endif %}">
+                                                {{ '{:0.2f}'.format(result.last_port_returns[ticker].return) }}%
+                                            </span><br>
+                                            SP500: 
+                                            <span>
+                                                {{ '{:0.2f}'.format(result.sp500_return_prev) }}%
+                                            </span><br>
+                                            Return - SP500
+                                            <span class="{% if result.last_port_returns[ticker].return > result.sp500_return_prev %}good{% else %}bad{% endif %}">
+                                                {{ '{:0.2f}'.format(result.last_port_returns[ticker].return - result.sp500_return_prev) }}%
+                                            </span><br>
+                                        {% else %}
+                                            Return: N/A (new stock or no data)<br>
+                                        {% endif %}
+                                        {% if result.last_port_info and ticker in result.last_port_info %}
+                                            Sales: {{ '{:0.2f}'.format(result.last_port_info[ticker].sales) if result.last_port_info[ticker].sales != 'N/A' else 'N/A' }}<br>
+                                            FCF: {{ '{:0.2f}'.format(result.last_port_info[ticker].fcf) if result.last_port_info[ticker].fcf != 'N/A' else 'N/A' }}<br>
+                                            Price: ${{ '{:0.2f}'.format(result.last_port_info[ticker].price) if result.last_port_info[ticker].price != 'N/A' else 'N/A' }}<br>
+                                        {% else %}
+                                            Financial Data: N/A<br>
+                                        {% endif %}
+                                    </span>
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div style="flex: 1;">
+                        <h4>New Portfolio (For {{ result.year + 1 }})</h4>
+                        <div>
+                            {% for ticker in result.portfolio %}
+                                <span class="tooltip ticker-item">
+                                    <a href="/stock/{{ ticker }}" style="text-decoration: none;">{{ ticker }}</a>
+                                    <span class="tooltiptext">
+                                        <strong>{{ result.current_port_info[ticker].name if ticker in result.current_port_info else ticker }}</strong><br/>
+                                        {{ companies.get(ticker, 'Company name not found') }}<br/>
+                                        Ticker: {{ ticker }}<br>
+                                        Year: {{ result.year }} Data<br>
+                                        {% if result.current_port_info and ticker in result.current_port_info %}
+                                            Sales: {{ '{:0.2f}'.format(result.current_port_info[ticker].sales) if result.current_port_info[ticker].sales != 'N/A' else 'N/A' }}<br>
+                                            FCF: {{ '{:0.2f}'.format(result.current_port_info[ticker].fcf) if result.current_port_info[ticker].fcf != 'N/A' else 'N/A' }}<br>
+                                            Price: ${{ '{:0.2f}'.format(result.current_port_info[ticker].price) if result.current_port_info[ticker].price != 'N/A' else 'N/A' }}<br>
+                                        {% else %}
+                                            Financial Data: N/A<br>
+                                        {% endif %}
+                                    </span>
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
+                    <div class="colorR st">Strategy Return: {{'{:0.4f}'.format(result.strategy_return) }} %</div>
+                    <div class="colorR sp">S&P 500 Return: {{'{:0.4f}'.format(result.sp500_return) }} %</div>
+                    <div class="colorR {% if result.outperformance > 0 %}good{%else%}bad{%endif%}">Outperformance: {{'{:0.4f}'.format(result.outperformance) }} %</div>
+                    <div class="colorR return">My 1 USD IS : {{'{:0.4f}'.format(result.investment) }} USD</div>
+                    <div class="colorR return">Compound Return : {{'{:0.4f}'.format(result.car) }} %</div>
+                    <div class="colorR sp">SP500 : {{'{:0.4f}'.format(result.investmentsp) }} USD</div>
+                    <div class="colorR sp">SP500 CAR : {{'{:0.4f}'.format(result.carsp) }} %</div>
+                </div>
+
+                <!-- Debug Section -->
+                <div class="debug-section return-debug" style="display: none;">
+                    <h4>Return Calculation Details</h4>
+                    {{result.return_html|safe}}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+        
+        function toggleContent(cont){
+            const content = cont.nextElementSibling;
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : (cont.name=='Filters'?'flex':'block');
+            cont.textContent = ( isVisible ? '▼ ' : '▲ ' ) + cont.name;
+        }
+
+        function toggleCard(header) {
+            const card = header.closest('.analysis-card');
+            const content = card.querySelector('.card-content');
+            const btn = card.querySelector('.expand-btn');
+            const isVisible = content.style.display !== 'none';
+            
+            content.style.display = isVisible ? 'none' : 'block';
+            btn.textContent = isVisible ? '▼ Details' : '▲ Details';
+        }
+
+        function setupEventListeners() {
+            // Debug checkbox
+            const debugCheckbox = document.getElementById('returnDebug');
+            if (debugCheckbox) {
+                debugCheckbox.addEventListener('change', function() {
+                    const debugSections = document.querySelectorAll('.return-debug');
+                    debugSections.forEach(section => {
+                        section.style.display = this.checked ? 'block' : 'none';
+                    });
+                });
+            }
+            
+            const filteredCheckbox = document.getElementById('showFilteredCandidates');
+            if (filteredCheckbox) {
+                filteredCheckbox.addEventListener('change', function() {
+                    const sections = document.querySelectorAll('.filtered-candidates-section');
+                    sections.forEach(section => {
+                        section.style.display = this.checked ? 'block' : 'none';
+                    });
+                });
+            }
+
+            // Touch support for tooltips
+            const tooltips = document.querySelectorAll('.tooltip');
+            tooltips.forEach(tooltip => {
+                tooltip.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    const tooltipText = this.querySelector('.tooltiptext');
+                    const isVisible = tooltipText.style.visibility === 'visible';
+                    
+                    // Hide all other tooltips
+                    document.querySelectorAll('.tooltiptext').forEach(tt => {
+                        tt.style.visibility = 'hidden';
+                        tt.style.opacity = '0';
+                    });
+                    
+                    // Show/hide this tooltip
+                    if (!isVisible) {
+                        tooltipText.style.visibility = 'visible';
+                        tooltipText.style.opacity = '1';
+                        tooltipText.style.left='400px';
+                    }
+                });
+            });
+            
+            // Hide tooltips when clicking elsewhere
+            document.addEventListener('touchstart', function(e) {
+                if (!e.target.closest('.tooltip')) {
+                    document.querySelectorAll('.tooltiptext').forEach(tt => {
+                        tt.style.visibility = 'hidden';
+                        tt.style.opacity = '0';
+                    });
+                }
+            });
+        }
+
+        function loadPortfolioDirect(portfolioId) {
+            if (!confirm('This will replace your current form values with the saved portfolio parameters. Continue?')) {
+                return;
+            }
+            
+            fetch('/get_portfolio/' + portfolioId)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.success) {
+                        alert(data.message || 'Error loading portfolio');
+                        return;
+                    }
+                    
+                    const portfolio = data.portfolio;
+                    const form = document.querySelector('.param-form');
+                    
+                    // Fill form with portfolio parameters
+                    const params = portfolio.parameters;
+                    
+                    // Handle all form fields
+                    Object.keys(params).forEach(key => {
+                        const element = form.querySelector(`[name="${key}"]`);
+                        if (element) {
+                            if (element.type === 'checkbox') {
+                                element.checked = params[key];
+                            } else if (element.type === 'radio') {
+                                // Handle radio buttons
+                                const radio = form.querySelector(`[name="${key}"][value="${params[key]}"]`);
+                                if (radio) radio.checked = true;
+                            } else if (element.tagName === 'SELECT') {
+                                // Handle select dropdowns
+                                element.value = params[key];
+                            } else {
+                                // Handle text, number inputs
+                                element.value = params[key];
+                            }
+                        }
+                    });
+                    
+                    // Special handling for the growth checkbox since it might override other values
+                    if (params.growth) {
+                        const growthCheckbox = form.querySelector('[name="growth"]');
+                        if (growthCheckbox) {
+                            growthCheckbox.checked = params.growth;
+                        }
+                    }
+                    
+                    // Show success message
+                    showNotification(`Loaded portfolio "${portfolio.name}" parameters. Click "Update Analysis" to apply.`, 'success');
+                    
+                    // Scroll to top of form so user sees the changes
+                    form.scrollIntoView({ behavior: 'smooth' });
+                    
+                })
+                .catch(error => {
+                    console.error('Error loading portfolio:', error);
+                    showNotification('Error loading portfolio: ' + error, 'error');
+                });
+        }
+        function loadPortfolioAndSubmit(portfolioId) {
+            fetch('/get_portfolio/' + portfolioId)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        alert(data.message || 'Error loading portfolio');
+                        return;
+                    }
+                    
+                    const portfolio = data.portfolio;
+                    const form = document.querySelector('.param-form');
+                    
+                    // Fill form with portfolio parameters
+                    const params = portfolio.parameters;
+                    Object.keys(params).forEach(key => {
+                        const element = form.querySelector(`[name="${key}"]`);
+                        if (element) {
+                            if (element.type === 'checkbox') {
+                                element.checked = params[key];
+                            } else if (element.tagName === 'SELECT') {
+                                element.value = params[key];
+                            } else {
+                                element.value = params[key];
+                            }
+                        }
+                    });
+                    
+                    // Show loading indicator
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.textContent;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+                    submitBtn.disabled = true;
+                    
+                    // Submit the form
+                    setTimeout(() => {
+                        form.submit();
+                    }, 1000); // Small delay to show loading state
+                    
+                })
+                .catch(error => {
+                    console.error('Error loading portfolio:', error);
+                    alert('Error loading portfolio: ' + error);
+                });
+        }
+        // Show notification message
+        function showNotification(message, type = 'info') {
+            // Remove existing notification
+            const existing = document.getElementById('portfolio-notification');
+            if (existing) existing.remove();
+            
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.id = 'portfolio-notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px;
+                border-radius: 5px;
+                color: white;
+                z-index: 1000;
+                min-width: 300px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            if (type === 'success') {
+                notification.style.backgroundColor = '#28a745';
+            } else if (type === 'error') {
+                notification.style.backgroundColor = '#dc3545';
+            } else {
+                notification.style.backgroundColor = '#17a2b8';
+            }
+            
+            notification.innerHTML = `
+                ${message}
+                <button onclick="this.parentElement.remove()" 
+                        style="background: none; border: none; color: white; float: right; cursor: pointer; font-size: 20px;">
+                    &times;
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+
+        
+        function savePortfolio() {
+            const portfolioName = document.getElementById('portfolioName').value;
+            if (!portfolioName) {
+                alert('Please enter a portfolio name');
+                return;
+            }
+            
+            const statusDiv = document.getElementById('saveStatus');
+            statusDiv.innerHTML = 'Saving...';
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'text-info';
+            
+            // Collect all form data from the main form
+            const form = document.querySelector('.param-form');
+            const formData = new FormData(form);
+            
+            // Add portfolio-specific data
+            formData.append('portfolio_name', portfolioName);
+            formData.append('portfolio_year', {{ endDate + 1 }});
+            
+            // Add tickers
+            {% for ticker in next_year_portfolio %}
+            formData.append('portfolio_tickers[]', '{{ ticker }}');
+            {% endfor %}
+            
+            // Send AJAX request
+            fetch('/save_portfolio', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = 'Portfolio saved successfully!';
+                    statusDiv.className = 'text-success';
+                    // Reload page after 2 seconds to show updated list
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    statusDiv.innerHTML = 'Error: ' + (data.message || 'Unknown error');
+                    statusDiv.className = 'text-danger';
+                }
+            })
+            .catch(error => {
+                statusDiv.innerHTML = 'Error saving portfolio: ' + error;
+                statusDiv.className = 'text-danger';
+            });
+        }
+
+        // Delete portfolio using AJAX
+        function deletePortfolio(portfolioId) {
+            if (!confirm('Are you sure you want to delete this portfolio?')) {
+                return;
+            }
+            
+            fetch('/delete_portfolio/' + portfolioId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Portfolio deleted successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error deleting portfolio: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error deleting portfolio: ' + error);
+            });
+        }
+    </script>
+{% endblock %}
