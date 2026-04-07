@@ -1,0 +1,68 @@
+{
+  "ticker": "NVDA",
+  "company_name": "NVIDIA Corporation",
+  "sector": "Technology",
+  "industry": "Semiconductors",
+  "sp500_years": [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+  "stock_metrics": [
+    {
+      "ticker": "NVDA", "year": 2025,
+      "sales": 183718, "free_cash_flow": 81200, "price": 1348.0, "return_price": 1348.0,
+      "gross_profit": 138920, "operating_cash_flow": 86140,
+      "cogs": 44798, "operating_income": 102912, "capex": -4940,
+      "cash": 45844, "short_term_investments": 33401,
+      "accounts_receivable": 26428, "total_debt": 8458,
+      "accounts_payable": 3142, "current_liabilities": 15730,
+      "shareholders_equity": 98521, "sector": "Technology", "industry": "Semiconductors",
+      "sales_CAGR_5Y": 0.921, "FCF_CAGR_5Y": 0.813, "price_CAGR_5Y": 0.741,
+      "sales_CAGR_2Y": 0.732, "FCF_CAGR_2Y": 0.698, "price_CAGR_2Y": 0.812,
+      "sales_5Y_ago": 16675, "free_cash_flow_5Y_ago": 5498, "price_5Y_ago": 196.2,
+      "sales_2Y_ago": 26974, "free_cash_flow_2Y_ago": 8138, "price_2Y_ago": 389.1
+    },
+    {
+      "ticker": "NVDA", "year": 2024,
+      "sales": 130497, "free_cash_flow": 60850, "price": 495.22, "return_price": 495.22,
+      "gross_profit": 97994, "operating_cash_flow": 64089,
+      "cogs": 32503, "operating_income": 69843, "capex": -3239,
+      "cash": 31440, "short_term_investments": 22283,
+      "accounts_receivable": 17227, "total_debt": 8462,
+      "accounts_payable": 2015, "current_liabilities": 10631,
+      "shareholders_equity": 65728, "sector": "Technology", "industry": "Semiconductors",
+      "sales_CAGR_5Y": 0.831, "FCF_CAGR_5Y": 0.712, "price_CAGR_5Y": 0.624,
+      "sales_CAGR_2Y": 0.941, "FCF_CAGR_2Y": 0.884, "price_CAGR_2Y": 1.038,
+      "sales_5Y_ago": 10918, "free_cash_flow_5Y_ago": 4231, "price_5Y_ago": 146.2,
+      "sales_2Y_ago": 26974, "free_cash_flow_2Y_ago": 8138, "price_2Y_ago": 146.12
+    },
+    {
+      "ticker": "NVDA", "year": 2023,
+      "sales": 26974, "free_cash_flow": 8138, "price": 389.1, "return_price": 389.1,
+      "gross_profit": 15981, "operating_cash_flow": 9028,
+      "cogs": 10993, "operating_income": 4224, "capex": -890,
+      "cash": 3389, "short_term_investments": 9907,
+      "accounts_receivable": 3827, "total_debt": 9908,
+      "accounts_payable": 440, "current_liabilities": 5714,
+      "shareholders_equity": 22101, "sector": "Technology", "industry": "Semiconductors",
+      "sales_CAGR_5Y": 0.214, "FCF_CAGR_5Y": 0.198, "price_CAGR_5Y": 0.312,
+      "sales_CAGR_2Y": 0.118, "FCF_CAGR_2Y": 0.087, "price_CAGR_2Y": 0.241,
+      "sales_5Y_ago": 11716, "free_cash_flow_5Y_ago": 3810, "price_5Y_ago": 182.4,
+      "sales_2Y_ago": 21974, "free_cash_flow_2Y_ago": 6284, "price_2Y_ago": 253.1
+    }
+  ],
+  "financial_data": [
+    { "ticker": "NVDA", "year": 2025, "quarter": "3", "sales": 50284, "free_cash_flow": 21841, "unit_scale": "millions", "filing_date": "2025-11-20" },
+    { "ticker": "NVDA", "year": 2025, "quarter": "2", "sales": 44062, "free_cash_flow": 19214, "unit_scale": "millions", "filing_date": "2025-08-27" },
+    { "ticker": "NVDA", "year": 2025, "quarter": "1", "sales": 44065, "free_cash_flow": 19814, "unit_scale": "millions", "filing_date": "2025-05-28" },
+    { "ticker": "NVDA", "year": 2024, "quarter": "4", "sales": 45307, "free_cash_flow": 21131, "unit_scale": "millions", "filing_date": "2025-02-26" },
+    { "ticker": "NVDA", "year": 2024, "quarter": "3", "sales": 35082, "free_cash_flow": 16978, "unit_scale": "millions", "filing_date": "2024-11-20" },
+    { "ticker": "NVDA", "year": 2024, "quarter": "2", "sales": 30040, "free_cash_flow": 14982, "unit_scale": "millions", "filing_date": "2024-08-28" },
+    { "ticker": "NVDA", "year": 2024, "quarter": "1", "sales": 22103, "free_cash_flow": 11412, "unit_scale": "millions", "filing_date": "2024-05-22" },
+    { "ticker": "NVDA", "year": 2023, "quarter": "4", "sales": 18120, "free_cash_flow": 7411, "unit_scale": "millions", "filing_date": "2024-02-21" }
+  ],
+  "daily_price_data": [
+    { "ticker": "NVDA", "year": 2026, "month": 4, "day": 4, "date": "2026-04-04", "price": 1121.0, "adj_close": 1121.0 },
+    { "ticker": "NVDA", "year": 2026, "month": 4, "day": 3, "date": "2026-04-03", "price": 1198.4, "adj_close": 1198.4 },
+    { "ticker": "NVDA", "year": 2026, "month": 4, "day": 2, "date": "2026-04-02", "price": 1241.0, "adj_close": 1241.0 },
+    { "ticker": "NVDA", "year": 2026, "month": 4, "day": 1, "date": "2026-04-01", "price": 1284.2, "adj_close": 1284.2 },
+    { "ticker": "NVDA", "year": 2026, "month": 3, "day": 31,"date": "2026-03-31", "price": 1312.8, "adj_close": 1312.8 }
+  ]
+}

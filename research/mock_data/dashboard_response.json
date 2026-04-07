@@ -1,0 +1,479 @@
+{
+  "startDate": 2024,
+  "endDate": 2026,
+  "next_year_portfolio": ["AAPL", "MSFT", "NVDA", "META", "GOOGL"],
+  "buy_prices": {
+    "AAPL": 192.53,
+    "MSFT": 374.39,
+    "NVDA": 495.22,
+    "META": 353.96,
+    "GOOGL": 140.08
+  },
+  "companies": {
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corporation",
+    "NVDA": "NVIDIA Corporation",
+    "META": "Meta Platforms Inc.",
+    "GOOGL": "Alphabet Inc.",
+    "AMZN": "Amazon.com Inc.",
+    "TSLA": "Tesla Inc.",
+    "COST": "Costco Wholesale Corp.",
+    "LLY": "Eli Lilly and Company"
+  },
+  "company_details": {
+    "AAPL":  { "name": "Apple Inc.",             "sector": "Technology",            "industry": "Consumer Electronics" },
+    "MSFT":  { "name": "Microsoft Corporation",  "sector": "Technology",            "industry": "Software - Infrastructure" },
+    "NVDA":  { "name": "NVIDIA Corporation",     "sector": "Technology",            "industry": "Semiconductors" },
+    "META":  { "name": "Meta Platforms Inc.",    "sector": "Communication Services","industry": "Internet Content & Information" },
+    "GOOGL": { "name": "Alphabet Inc.",          "sector": "Communication Services","industry": "Internet Content & Information" },
+    "AMZN":  { "name": "Amazon.com Inc.",        "sector": "Consumer Cyclical",     "industry": "Internet Retail" },
+    "TSLA":  { "name": "Tesla Inc.",             "sector": "Consumer Cyclical",     "industry": "Auto Manufacturers" },
+    "COST":  { "name": "Costco Wholesale Corp.", "sector": "Consumer Defensive",    "industry": "Discount Stores" },
+    "LLY":   { "name": "Eli Lilly and Company",  "sector": "Healthcare",            "industry": "Drug Manufacturers" }
+  },
+  "rule1_params": {
+    "sales_min_scale": 5000,
+    "sales_cagr": 0.1,
+    "fcf_cagr": 0.1,
+    "price_cagr": 0.1,
+    "omit_negative_fcf": true
+  },
+  "rule2_params": {
+    "sales_cagr_2y": 0.1,
+    "fcf_cagr_2y": 0.1,
+    "price_cagr_2y": 0.1,
+    "sales_cagr_2y_omit": false,
+    "fcf_cagr_2y_omit": true,
+    "price_cagr_2y_omit": true
+  },
+  "filter_params": {
+    "ranking_method": "5",
+    "maxPortfolio": 10,
+    "retention": 0,
+    "salesMomRate": 0.33,
+    "fcfMomRate": 0.33,
+    "priceInvRate": 0.34,
+    "recent_price_filter": "omit",
+    "recent_price_threshold": -0.1,
+    "growth": false
+  },
+  "performance_metrics": {
+    "total_return": 187.4,
+    "sp500_return": 98.2,
+    "outperformance": 89.2,
+    "win_rate": 72.0,
+    "volatility": 18.6,
+    "max_drawdown": -24.3,
+    "final_value": 2.874,
+    "years_analyzed": 3,
+    "annualized_return_strategy": 42.1,
+    "annualized_return_sp500": 25.9,
+    "annualized_std": 10.7,
+    "sharpe_ratio": 1.84,
+    "sortino_ratio": 2.41,
+    "calmar_ratio": 1.73
+  },
+  "saved_portfolios": [
+    {
+      "id": 20,
+      "name": "Tracking_2026_Portfolio",
+      "year": 2026,
+      "tickers": ["AAPL", "MSFT", "NVDA", "META", "GOOGL"],
+      "buy_prices": { "AAPL": 192.53, "MSFT": 374.39, "NVDA": 495.22, "META": 353.96, "GOOGL": 140.08 },
+      "parameters": {},
+      "saved_date": "2025-12-31T00:00:00"
+    }
+  ],
+  "results": [
+    {
+      "year": 2024,
+      "rule1": ["AAPL", "MSFT", "NVDA", "META", "GOOGL", "AMZN", "TSLA", "COST"],
+      "rule2": ["AAPL", "MSFT", "NVDA", "META", "GOOGL", "AMZN"],
+      "filtered": ["NVDA", "META", "MSFT", "GOOGL", "AAPL", "AMZN"],
+      "retain_count": 0,
+      "lastPort": ["AAPL", "MSFT", "NVDA"],
+      "retained": [],
+      "new_candidates": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "portfolio": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "return_html": "",
+      "investment": 1.38,
+      "investmentsp": 1.26,
+      "car": 38.0,
+      "carsp": 26.0,
+      "strategy_return": 38.0,
+      "sp500_return": 26.0,
+      "outperformance": 12.0,
+      "sp500_return_prev": 24.1,
+      "last_port_returns": {
+        "AAPL":  { "return": 48.2, "buy_price": 130.21, "sell_price": 192.53 },
+        "MSFT":  { "return": 55.1, "buy_price": 241.35, "sell_price": 374.39 },
+        "NVDA":  { "return": 238.9,"buy_price": 146.12, "sell_price": 495.22 }
+      },
+      "last_port_info": {
+        "AAPL": {
+          "sales": 385706, "fcf": 107038, "price": 130.21,
+          "gross_profit": 173200, "operating_cash_flow": 110543,
+          "cogs": 212533, "operating_income": 114301, "capex": -10959,
+          "cash": 29965, "short_term_investments": 31590,
+          "accounts_receivable": 29508, "total_debt": 101304,
+          "accounts_payable": 62611, "current_liabilities": 145308,
+          "shareholders_equity": -4158,
+          "sector": "Technology", "industry": "Consumer Electronics"
+        },
+        "MSFT": {
+          "sales": 211915, "fcf": 63270, "price": 241.35,
+          "gross_profit": 146052, "operating_cash_flow": 87582,
+          "cogs": 65863, "operating_income": 88523, "capex": -24312,
+          "cash": 34704, "short_term_investments": 76558,
+          "accounts_receivable": 44261, "total_debt": 47899,
+          "accounts_payable": 18095, "current_liabilities": 95082,
+          "shareholders_equity": 238268,
+          "sector": "Technology", "industry": "Software - Infrastructure"
+        },
+        "NVDA": {
+          "sales": 60922, "fcf": 27276, "price": 146.12,
+          "gross_profit": 44301, "operating_cash_flow": 28975,
+          "cogs": 16621, "operating_income": 32972, "capex": -1699,
+          "cash": 7280, "short_term_investments": 10031,
+          "accounts_receivable": 8309, "total_debt": 9709,
+          "accounts_payable": 1141, "current_liabilities": 6963,
+          "shareholders_equity": 42978,
+          "sector": "Technology", "industry": "Semiconductors"
+        }
+      },
+      "current_port_info": {
+        "NVDA": {
+          "sales": 130497, "fcf": 60850, "price": 495.22,
+          "gross_profit": 97994, "operating_cash_flow": 64089,
+          "cogs": 32503, "operating_income": 69843, "capex": -3239,
+          "cash": 31440, "short_term_investments": 22283,
+          "accounts_receivable": 17227, "total_debt": 8462,
+          "accounts_payable": 2015, "current_liabilities": 10631,
+          "shareholders_equity": 65728,
+          "sector": "Technology", "industry": "Semiconductors"
+        },
+        "META": {
+          "sales": 134902, "fcf": 53025, "price": 353.96,
+          "gross_profit": 109663, "operating_cash_flow": 71114,
+          "cogs": 25239, "operating_income": 46751, "capex": -28101,
+          "cash": 65404, "short_term_investments": 0,
+          "accounts_receivable": 14380, "total_debt": 18387,
+          "accounts_payable": 889, "current_liabilities": 23727,
+          "shareholders_equity": 153166,
+          "sector": "Communication Services", "industry": "Internet Content & Information"
+        },
+        "MSFT": {
+          "sales": 245122, "fcf": 70672, "price": 374.39,
+          "gross_profit": 171008, "operating_cash_flow": 104347,
+          "cogs": 74114, "operating_income": 109433, "capex": -33675,
+          "cash": 18328, "short_term_investments": 64040,
+          "accounts_receivable": 52340, "total_debt": 49240,
+          "accounts_payable": 19010, "current_liabilities": 99248,
+          "shareholders_equity": 268477,
+          "sector": "Technology", "industry": "Software - Infrastructure"
+        },
+        "GOOGL": {
+          "sales": 307394, "fcf": 69496, "price": 140.08,
+          "gross_profit": 174062, "operating_cash_flow": 101746,
+          "cogs": 133332, "operating_income": 84293, "capex": -52250,
+          "cash": 24048, "short_term_investments": 86868,
+          "accounts_receivable": 47234, "total_debt": 28843,
+          "accounts_payable": 5765, "current_liabilities": 77433,
+          "shareholders_equity": 300558,
+          "sector": "Communication Services", "industry": "Internet Content & Information"
+        },
+        "AAPL": {
+          "sales": 385706, "fcf": 107038, "price": 192.53,
+          "gross_profit": 173200, "operating_cash_flow": 110543,
+          "cogs": 212533, "operating_income": 114301, "capex": -10959,
+          "cash": 29965, "short_term_investments": 31590,
+          "accounts_receivable": 29508, "total_debt": 101304,
+          "accounts_payable": 62611, "current_liabilities": 145308,
+          "shareholders_equity": -4158,
+          "sector": "Technology", "industry": "Consumer Electronics"
+        }
+      },
+      "filtered_candidates_details": [
+        {
+          "ticker": "NVDA", "score": 1.94,
+          "sector": "Technology", "industry": "Semiconductors",
+          "sales_CAGR_5Y": 0.831, "FCF_CAGR_5Y": 0.712, "price_CAGR_5Y": 0.624,
+          "sales_CAGR_2Y": 0.941, "FCF_CAGR_2Y": 0.884, "price_CAGR_2Y": 1.038,
+          "sales_norm": 1.0, "fcf_norm": 0.94, "price_norm": 0.88,
+          "sales": 130497, "free_cash_flow": 60850,
+          "gross_profit": 97994, "operating_cash_flow": 64089,
+          "cogs": 32503, "operating_income": 69843, "capex": -3239,
+          "cash": 31440, "short_term_investments": 22283,
+          "accounts_receivable": 17227, "total_debt": 8462,
+          "accounts_payable": 2015, "current_liabilities": 10631,
+          "shareholders_equity": 65728
+        },
+        {
+          "ticker": "META", "score": 1.71,
+          "sector": "Communication Services", "industry": "Internet Content & Information",
+          "sales_CAGR_5Y": 0.512, "FCF_CAGR_5Y": 0.498, "price_CAGR_5Y": 0.384,
+          "sales_CAGR_2Y": 0.628, "FCF_CAGR_2Y": 0.714, "price_CAGR_2Y": 0.521,
+          "sales_norm": 0.82, "fcf_norm": 0.89, "price_norm": 0.72,
+          "sales": 134902, "free_cash_flow": 53025,
+          "gross_profit": 109663, "operating_cash_flow": 71114,
+          "cogs": 25239, "operating_income": 46751, "capex": -28101,
+          "cash": 65404, "short_term_investments": 0,
+          "accounts_receivable": 14380, "total_debt": 18387,
+          "accounts_payable": 889, "current_liabilities": 23727,
+          "shareholders_equity": 153166
+        },
+        {
+          "ticker": "MSFT", "score": 1.58,
+          "sector": "Technology", "industry": "Software - Infrastructure",
+          "sales_CAGR_5Y": 0.427, "FCF_CAGR_5Y": 0.389, "price_CAGR_5Y": 0.312,
+          "sales_CAGR_2Y": 0.198, "FCF_CAGR_2Y": 0.223, "price_CAGR_2Y": 0.271,
+          "sales_norm": 0.77, "fcf_norm": 0.81, "price_norm": 0.68,
+          "sales": 245122, "free_cash_flow": 70672,
+          "gross_profit": 171008, "operating_cash_flow": 104347,
+          "cogs": 74114, "operating_income": 109433, "capex": -33675,
+          "cash": 18328, "short_term_investments": 64040,
+          "accounts_receivable": 52340, "total_debt": 49240,
+          "accounts_payable": 19010, "current_liabilities": 99248,
+          "shareholders_equity": 268477
+        },
+        {
+          "ticker": "GOOGL", "score": 1.41,
+          "sector": "Communication Services", "industry": "Internet Content & Information",
+          "sales_CAGR_5Y": 0.312, "FCF_CAGR_5Y": 0.298, "price_CAGR_5Y": 0.271,
+          "sales_CAGR_2Y": 0.214, "FCF_CAGR_2Y": 0.187, "price_CAGR_2Y": 0.198,
+          "sales_norm": 0.69, "fcf_norm": 0.72, "price_norm": 0.61,
+          "sales": 307394, "free_cash_flow": 69496,
+          "gross_profit": 174062, "operating_cash_flow": 101746,
+          "cogs": 133332, "operating_income": 84293, "capex": -52250,
+          "cash": 24048, "short_term_investments": 86868,
+          "accounts_receivable": 47234, "total_debt": 28843,
+          "accounts_payable": 5765, "current_liabilities": 77433,
+          "shareholders_equity": 300558
+        },
+        {
+          "ticker": "AAPL", "score": 1.29,
+          "sector": "Technology", "industry": "Consumer Electronics",
+          "sales_CAGR_5Y": 0.289, "FCF_CAGR_5Y": 0.271, "price_CAGR_5Y": 0.248,
+          "sales_CAGR_2Y": 0.082, "FCF_CAGR_2Y": 0.094, "price_CAGR_2Y": 0.112,
+          "sales_norm": 0.63, "fcf_norm": 0.66, "price_norm": 0.58,
+          "sales": 385706, "free_cash_flow": 107038,
+          "gross_profit": 173200, "operating_cash_flow": 110543,
+          "cogs": 212533, "operating_income": 114301, "capex": -10959,
+          "cash": 29965, "short_term_investments": 31590,
+          "accounts_receivable": 29508, "total_debt": 101304,
+          "accounts_payable": 62611, "current_liabilities": 145308,
+          "shareholders_equity": -4158
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "rule1": ["AAPL", "MSFT", "NVDA", "META", "GOOGL", "AMZN"],
+      "rule2": ["AAPL", "MSFT", "NVDA", "META", "GOOGL"],
+      "filtered": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "retain_count": 3,
+      "lastPort": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "retained": ["NVDA", "META", "MSFT"],
+      "new_candidates": ["GOOGL", "AAPL"],
+      "portfolio": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "return_html": "",
+      "investment": 1.89,
+      "investmentsp": 1.53,
+      "car": 89.0,
+      "carsp": 53.0,
+      "strategy_return": 37.0,
+      "sp500_return": 21.4,
+      "outperformance": 15.6,
+      "sp500_return_prev": 26.0,
+      "last_port_returns": {
+        "NVDA":  { "return": 172.4, "buy_price": 495.22,  "sell_price": 1348.0 },
+        "META":  { "return": 62.1,  "buy_price": 353.96,  "sell_price": 573.6 },
+        "MSFT":  { "return": 18.3,  "buy_price": 374.39,  "sell_price": 442.8 },
+        "GOOGL": { "return": 35.2,  "buy_price": 140.08,  "sell_price": 189.4 },
+        "AAPL":  { "return": -7.4,  "buy_price": 192.53,  "sell_price": 178.2 }
+      },
+      "last_port_info": {
+        "NVDA": {
+          "sales": 130497, "fcf": 60850, "price": 495.22,
+          "gross_profit": 97994, "operating_cash_flow": 64089,
+          "cogs": 32503, "operating_income": 69843, "capex": -3239,
+          "cash": 31440, "short_term_investments": 22283,
+          "accounts_receivable": 17227, "total_debt": 8462,
+          "accounts_payable": 2015, "current_liabilities": 10631,
+          "shareholders_equity": 65728,
+          "sector": "Technology", "industry": "Semiconductors"
+        },
+        "META": {
+          "sales": 134902, "fcf": 53025, "price": 353.96,
+          "gross_profit": 109663, "operating_cash_flow": 71114,
+          "cogs": 25239, "operating_income": 46751, "capex": -28101,
+          "cash": 65404, "short_term_investments": 0,
+          "accounts_receivable": 14380, "total_debt": 18387,
+          "accounts_payable": 889, "current_liabilities": 23727,
+          "shareholders_equity": 153166,
+          "sector": "Communication Services", "industry": "Internet Content & Information"
+        }
+      },
+      "current_port_info": {
+        "NVDA": {
+          "sales": 183718, "fcf": 81200, "price": 1348.0,
+          "gross_profit": 138920, "operating_cash_flow": 86140,
+          "cogs": 44798, "operating_income": 102912, "capex": -4940,
+          "cash": 45844, "short_term_investments": 33401,
+          "accounts_receivable": 26428, "total_debt": 8458,
+          "accounts_payable": 3142, "current_liabilities": 15730,
+          "shareholders_equity": 98521,
+          "sector": "Technology", "industry": "Semiconductors"
+        },
+        "META": {
+          "sales": 164501, "fcf": 67812, "price": 573.6,
+          "gross_profit": 135714, "operating_cash_flow": 91327,
+          "cogs": 28787, "operating_income": 60412, "capex": -37015,
+          "cash": 71218, "short_term_investments": 0,
+          "accounts_receivable": 17218, "total_debt": 18230,
+          "accounts_payable": 1102, "current_liabilities": 27410,
+          "shareholders_equity": 182214,
+          "sector": "Communication Services", "industry": "Internet Content & Information"
+        },
+        "MSFT": {
+          "sales": 278002, "fcf": 74198, "price": 442.8,
+          "gross_profit": 196442, "operating_cash_flow": 119342,
+          "cogs": 81560, "operating_income": 124561, "capex": -45144,
+          "cash": 22312, "short_term_investments": 72810,
+          "accounts_receivable": 59218, "total_debt": 45210,
+          "accounts_payable": 21440, "current_liabilities": 108114,
+          "shareholders_equity": 301024,
+          "sector": "Technology", "industry": "Software - Infrastructure"
+        },
+        "GOOGL": {
+          "sales": 349844, "fcf": 74210, "price": 189.4,
+          "gross_profit": 198802, "operating_cash_flow": 118912,
+          "cogs": 151042, "operating_income": 98701, "capex": -52802,
+          "cash": 26312, "short_term_investments": 95214,
+          "accounts_receivable": 52318, "total_debt": 29101,
+          "accounts_payable": 6240, "current_liabilities": 84218,
+          "shareholders_equity": 337412,
+          "sector": "Communication Services", "industry": "Internet Content & Information"
+        },
+        "AAPL": {
+          "sales": 407301, "fcf": 111840, "price": 178.2,
+          "gross_profit": 184220, "operating_cash_flow": 116102,
+          "cogs": 223081, "operating_income": 120432, "capex": -11018,
+          "cash": 32104, "short_term_investments": 35618,
+          "accounts_receivable": 31814, "total_debt": 98210,
+          "accounts_payable": 64218, "current_liabilities": 152318,
+          "shareholders_equity": -5814,
+          "sector": "Technology", "industry": "Consumer Electronics"
+        }
+      },
+      "filtered_candidates_details": [
+        {
+          "ticker": "NVDA", "score": 1.96,
+          "sector": "Technology", "industry": "Semiconductors",
+          "sales_CAGR_5Y": 0.921, "FCF_CAGR_5Y": 0.813, "price_CAGR_5Y": 0.741,
+          "sales_CAGR_2Y": 0.732, "FCF_CAGR_2Y": 0.698, "price_CAGR_2Y": 0.812,
+          "sales_norm": 1.0, "fcf_norm": 0.96, "price_norm": 0.91,
+          "sales": 183718, "free_cash_flow": 81200,
+          "gross_profit": 138920, "operating_cash_flow": 86140,
+          "cogs": 44798, "operating_income": 102912, "capex": -4940,
+          "cash": 45844, "short_term_investments": 33401,
+          "accounts_receivable": 26428, "total_debt": 8458,
+          "accounts_payable": 3142, "current_liabilities": 15730,
+          "shareholders_equity": 98521
+        }
+      ]
+    },
+    {
+      "year": 2026,
+      "rule1": ["AAPL", "MSFT", "NVDA", "META", "GOOGL"],
+      "rule2": ["AAPL", "MSFT", "NVDA", "META", "GOOGL"],
+      "filtered": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "retain_count": 4,
+      "lastPort": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "retained": ["NVDA", "META", "MSFT", "GOOGL"],
+      "new_candidates": ["AAPL"],
+      "portfolio": ["NVDA", "META", "MSFT", "GOOGL", "AAPL"],
+      "return_html": "",
+      "investment": 2.874,
+      "investmentsp": 1.982,
+      "car": 187.4,
+      "carsp": 98.2,
+      "strategy_return": 52.1,
+      "sp500_return": 29.6,
+      "outperformance": 22.5,
+      "sp500_return_prev": 21.4,
+      "last_port_returns": {
+        "NVDA":  { "return": 68.4,  "buy_price": 1348.0, "sell_price": 2270.0 },
+        "META":  { "return": 44.8,  "buy_price": 573.6,  "sell_price": 830.8 },
+        "MSFT":  { "return": 22.1,  "buy_price": 442.8,  "sell_price": 540.7 },
+        "GOOGL": { "return": 31.4,  "buy_price": 189.4,  "sell_price": 248.9 },
+        "AAPL":  { "return": -12.8, "buy_price": 178.2,  "sell_price": 155.4 }
+      },
+      "last_port_info": {
+        "NVDA": {
+          "sales": 183718, "fcf": 81200, "price": 1348.0,
+          "gross_profit": 138920, "operating_cash_flow": 86140,
+          "cogs": 44798, "operating_income": 102912, "capex": -4940,
+          "cash": 45844, "short_term_investments": 33401,
+          "accounts_receivable": 26428, "total_debt": 8458,
+          "accounts_payable": 3142, "current_liabilities": 15730,
+          "shareholders_equity": 98521,
+          "sector": "Technology", "industry": "Semiconductors"
+        }
+      },
+      "current_port_info": {
+        "NVDA": {
+          "sales": 183718, "fcf": 81200, "price": 1348.0,
+          "gross_profit": 138920, "operating_cash_flow": 86140,
+          "cogs": 44798, "operating_income": 102912, "capex": -4940,
+          "cash": 45844, "short_term_investments": 33401,
+          "accounts_receivable": 26428, "total_debt": 8458,
+          "accounts_payable": 3142, "current_liabilities": 15730,
+          "shareholders_equity": 98521,
+          "sector": "Technology", "industry": "Semiconductors"
+        },
+        "META": {
+          "sales": 164501, "fcf": 67812, "price": 573.6,
+          "gross_profit": 135714, "operating_cash_flow": 91327,
+          "cogs": 28787, "operating_income": 60412, "capex": -37015,
+          "cash": 71218, "short_term_investments": 0,
+          "accounts_receivable": 17218, "total_debt": 18230,
+          "accounts_payable": 1102, "current_liabilities": 27410,
+          "shareholders_equity": 182214,
+          "sector": "Communication Services", "industry": "Internet Content & Information"
+        },
+        "MSFT": {
+          "sales": 278002, "fcf": 74198, "price": 442.8,
+          "gross_profit": 196442, "operating_cash_flow": 119342,
+          "cogs": 81560, "operating_income": 124561, "capex": -45144,
+          "cash": 22312, "short_term_investments": 72810,
+          "accounts_receivable": 59218, "total_debt": 45210,
+          "accounts_payable": 21440, "current_liabilities": 108114,
+          "shareholders_equity": 301024,
+          "sector": "Technology", "industry": "Software - Infrastructure"
+        },
+        "GOOGL": {
+          "sales": 349844, "fcf": 74210, "price": 189.4,
+          "gross_profit": 198802, "operating_cash_flow": 118912,
+          "cogs": 151042, "operating_income": 98701, "capex": -52802,
+          "cash": 26312, "short_term_investments": 95214,
+          "accounts_receivable": 52318, "total_debt": 29101,
+          "accounts_payable": 6240, "current_liabilities": 84218,
+          "shareholders_equity": 337412,
+          "sector": "Communication Services", "industry": "Internet Content & Information"
+        },
+        "AAPL": {
+          "sales": 407301, "fcf": 111840, "price": 178.2,
+          "gross_profit": 184220, "operating_cash_flow": 116102,
+          "cogs": 223081, "operating_income": 120432, "capex": -11018,
+          "cash": 32104, "short_term_investments": 35618,
+          "accounts_receivable": 31814, "total_debt": 98210,
+          "accounts_payable": 64218, "current_liabilities": 152318,
+          "shareholders_equity": -5814,
+          "sector": "Technology", "industry": "Consumer Electronics"
+        }
+      },
+      "filtered_candidates_details": []
+    }
+  ]
+}
