@@ -9,7 +9,7 @@ from api_client import get_json
 app = Flask(__name__)
 
 
-@app.route('/track_portfolio', methods=['GET'])
+@app.route('/', methods=['GET'])
 def track_portfolio():
     params = {
         'portfolio_id': request.args.get('portfolio_id', 20, type=int),
