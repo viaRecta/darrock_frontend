@@ -4,6 +4,7 @@
     padding: 0;
 }
 
+/* Tokens */
 :root {
     --bg: #e9efea;
     --surface: #ffffff;
@@ -48,6 +49,7 @@ body {
     padding: 24px 16px 40px;
 }
 
+/* Global helpers */
 th {
     position: relative;
     cursor: pointer;
@@ -77,6 +79,7 @@ th {
     padding: 20px;
 }
 
+/* Header */
 .header {
     text-align: center;
     margin-bottom: 18px;
@@ -233,6 +236,7 @@ th {
     color: var(--heading);
 }
 
+/* Controls */
 .control-panel {
     position: relative;
     display: grid;
@@ -336,6 +340,7 @@ input[type="number"]:focus {
     flex-wrap: wrap;
 }
 
+/* Tabs */
 .tabs {
     display: flex;
     gap: 20px;
@@ -452,6 +457,7 @@ input[type="number"]:focus {
     }
 }
 
+/* Panel surfaces */
 .chart-container {
     position: relative;
     overflow: hidden;
@@ -548,12 +554,108 @@ input[type="number"]:focus {
     line-height: 1.35;
 }
 
+/* Tables */
 .table-responsive {
     overflow-x: auto;
     margin-top: 14px;
     border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--surface);
+}
+
+.stock-table-summary,
+.daily-table-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.stock-table-summary-item,
+.daily-table-summary-item {
+    padding: 12px 13px;
+    border-radius: 14px;
+    border: 1px solid rgba(188, 198, 188, 0.72);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 246, 241, 0.96) 100%);
+}
+
+.stock-table-summary-item--count {
+    background: linear-gradient(180deg, rgba(245, 247, 246, 0.98) 0%, rgba(236, 240, 238, 0.98) 100%);
+}
+
+.stock-table-summary-item--best {
+    background: linear-gradient(180deg, rgba(240, 249, 243, 0.98) 0%, rgba(229, 241, 233, 0.98) 100%);
+}
+
+.stock-table-summary-item--worst {
+    background: linear-gradient(180deg, rgba(251, 241, 239, 0.98) 0%, rgba(244, 230, 226, 0.98) 100%);
+}
+
+.daily-table-summary-item--days {
+    background: linear-gradient(180deg, rgba(245, 247, 246, 0.98) 0%, rgba(236, 240, 238, 0.98) 100%);
+}
+
+.daily-table-summary-item--value {
+    background: linear-gradient(180deg, rgba(240, 249, 243, 0.98) 0%, rgba(229, 241, 233, 0.98) 100%);
+}
+
+.daily-table-summary-item--return {
+    background: linear-gradient(180deg, rgba(250, 246, 238, 0.98) 0%, rgba(242, 234, 219, 0.98) 100%);
+}
+
+.stock-table-summary-label,
+.daily-table-summary-label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.stock-table-summary-value,
+.daily-table-summary-value {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--heading);
+}
+
+.table-date-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 88px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(188, 198, 188, 0.78);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 241, 236, 0.96) 100%);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--heading);
+}
+
+.table-ticker-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.table-ticker-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 1px solid rgba(188, 198, 188, 0.78);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(236, 241, 236, 0.96) 100%);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--heading);
 }
 
 table {
@@ -596,6 +698,7 @@ tbody tr:last-child td {
     border-bottom: none;
 }
 
+/* Shared chart shells */
 .chart-wrapper {
     position: relative;
     height: 240px;
@@ -633,6 +736,22 @@ tbody tr:last-child td {
     background: linear-gradient(180deg, rgba(250, 246, 238, 0.98) 0%, rgba(242, 234, 219, 0.98) 100%);
 }
 
+.performance-summary-card--start {
+    background: linear-gradient(180deg, rgba(245, 247, 246, 0.98) 0%, rgba(236, 240, 238, 0.98) 100%);
+}
+
+.performance-summary-card--current {
+    background: linear-gradient(180deg, rgba(240, 249, 243, 0.98) 0%, rgba(229, 241, 233, 0.98) 100%);
+}
+
+.performance-summary-card--change-positive {
+    background: linear-gradient(180deg, rgba(240, 249, 243, 0.98) 0%, rgba(229, 241, 233, 0.98) 100%);
+}
+
+.performance-summary-card--change-negative {
+    background: linear-gradient(180deg, rgba(251, 241, 239, 0.98) 0%, rgba(244, 230, 226, 0.98) 100%);
+}
+
 .performance-summary-label {
     display: block;
     margin-bottom: 6px;
@@ -658,14 +777,24 @@ tbody tr:last-child td {
     color: var(--muted);
 }
 
-.performance-visual {
+.performance-visual,
+.returns-visual,
+.drawdown-visual,
+.distribution-visual,
+.risk-visual,
+.stocks-visual,
+.metrics-shell {
+    margin-top: 14px;
     padding: 18px 18px 16px;
     border-radius: 18px;
     border: 1px solid rgba(188, 198, 188, 0.78);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.performance-visual {
     background:
         radial-gradient(circle at top, rgba(21, 138, 88, 0.08), transparent 42%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 244, 239, 0.98) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 .performance-legend {
@@ -674,7 +803,10 @@ tbody tr:last-child td {
     gap: 10px;
 }
 
-.performance-legend-item {
+.performance-legend-item,
+.returns-meta-item,
+.drawdown-meta-item,
+.risk-meta-item {
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -684,7 +816,9 @@ tbody tr:last-child td {
     background: rgba(255, 255, 255, 0.84);
 }
 
-.performance-legend-swatch {
+.performance-legend-swatch,
+.returns-meta-swatch,
+.drawdown-meta-swatch {
     width: 12px;
     height: 12px;
     border-radius: 999px;
@@ -701,18 +835,32 @@ tbody tr:last-child td {
     box-shadow: 0 0 0 4px rgba(91, 102, 112, 0.12);
 }
 
-.performance-legend-copy {
+.performance-legend-swatch--window {
+    background: #7a857d;
+    box-shadow: 0 0 0 4px rgba(122, 133, 125, 0.12);
+}
+
+.performance-legend-copy,
+.returns-meta-copy,
+.drawdown-meta-copy,
+.risk-meta-copy {
     min-width: 0;
 }
 
-.performance-legend-title {
+.performance-legend-title,
+.returns-meta-title,
+.drawdown-meta-title,
+.risk-meta-title {
     display: block;
     font-size: 12px;
     font-weight: 600;
     color: var(--heading);
 }
 
-.performance-legend-caption {
+.performance-legend-caption,
+.returns-meta-caption,
+.drawdown-meta-caption,
+.risk-meta-caption {
     display: block;
     margin-top: 1px;
     font-size: 11px;
@@ -724,19 +872,19 @@ tbody tr:last-child td {
     margin-top: 14px;
 }
 
-.returns-panel {
+.returns-panel,
+.drawdown-panel,
+.distribution-panel,
+.risk-panel,
+.stocks-panel,
+.metrics-panel {
     height: 100%;
 }
 
 .returns-visual {
-    margin-top: 14px;
-    padding: 18px 18px 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(188, 198, 188, 0.78);
     background:
         radial-gradient(circle at top, rgba(28, 107, 79, 0.08), transparent 42%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 244, 239, 0.98) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 .returns-meta {
@@ -745,26 +893,14 @@ tbody tr:last-child td {
     gap: 10px;
 }
 
-.returns-meta-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(188, 198, 188, 0.72);
-    background: rgba(255, 255, 255, 0.84);
-}
-
-.returns-meta-swatch {
-    width: 12px;
-    height: 12px;
-    border-radius: 999px;
-    flex: 0 0 auto;
-}
-
 .returns-meta-swatch--portfolio {
     background: #2d6f52;
     box-shadow: 0 0 0 4px rgba(45, 111, 82, 0.12);
+}
+
+.returns-meta-swatch--rolling {
+    background: #94702b;
+    box-shadow: 0 0 0 4px rgba(148, 112, 43, 0.12);
 }
 
 .returns-meta-swatch--benchmark {
@@ -772,65 +908,22 @@ tbody tr:last-child td {
     box-shadow: 0 0 0 4px rgba(91, 102, 112, 0.12);
 }
 
-.returns-meta-copy {
-    min-width: 0;
-}
-
-.returns-meta-title {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--heading);
-}
-
-.returns-meta-caption {
-    display: block;
-    margin-top: 1px;
-    font-size: 11px;
-    color: var(--muted);
-}
-
 .returns-chart-wrapper {
     height: 240px;
     margin-top: 12px;
 }
 
-.drawdown-panel {
-    height: 100%;
-}
-
 .drawdown-visual {
-    margin-top: 14px;
-    padding: 18px 18px 16px;
-    border-radius: 18px;
-    border: 1px solid rgba(198, 186, 186, 0.78);
+    border-color: rgba(198, 186, 186, 0.78);
     background:
         radial-gradient(circle at top, rgba(196, 69, 54, 0.08), transparent 42%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(245, 238, 236, 0.98) 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
 }
 
 .drawdown-meta {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-}
-
-.drawdown-meta-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(198, 186, 186, 0.72);
-    background: rgba(255, 255, 255, 0.84);
-}
-
-.drawdown-meta-swatch {
-    width: 12px;
-    height: 12px;
-    border-radius: 999px;
-    flex: 0 0 auto;
 }
 
 .drawdown-meta-swatch--portfolio {
@@ -843,26 +936,162 @@ tbody tr:last-child td {
     box-shadow: 0 0 0 4px rgba(91, 102, 112, 0.12);
 }
 
-.drawdown-meta-copy {
-    min-width: 0;
+.drawdown-chart-wrapper {
+    height: 240px;
+    margin-top: 12px;
 }
 
-.drawdown-meta-title {
+.distribution-visual {
+    background:
+        radial-gradient(circle at left top, rgba(196, 69, 54, 0.06), transparent 34%),
+        radial-gradient(circle at right top, rgba(21, 138, 88, 0.08), transparent 36%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 244, 239, 0.98) 100%);
+}
+
+.distribution-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.distribution-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(188, 198, 188, 0.72);
+    background: rgba(255, 255, 255, 0.84);
+}
+
+.distribution-meta-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+}
+
+.distribution-meta-swatch--negative {
+    background: #c44536;
+    box-shadow: 0 0 0 4px rgba(196, 69, 54, 0.12);
+}
+
+.distribution-meta-swatch--positive {
+    background: #158a58;
+    box-shadow: 0 0 0 4px rgba(21, 138, 88, 0.12);
+}
+
+.distribution-meta-title {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--heading);
+    letter-spacing: 0.02em;
+    line-height: 1;
+}
+
+.distribution-chart-wrapper {
+    height: 260px;
+    margin-top: 10px;
+}
+
+.risk-visual {
+    background:
+        radial-gradient(circle at left top, rgba(22, 58, 95, 0.08), transparent 34%),
+        radial-gradient(circle at right top, rgba(21, 138, 88, 0.06), transparent 36%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 244, 239, 0.98) 100%);
+}
+
+.risk-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.risk-meta-item {
+    gap: 8px;
+}
+
+.risk-meta-item--tone {
+    gap: 7px;
+}
+
+.risk-tone-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+}
+
+.risk-tone-dot--positive {
+    background: #158a58;
+    box-shadow: 0 0 0 4px rgba(21, 138, 88, 0.12);
+}
+
+.risk-tone-dot--negative {
+    background: #c44536;
+    box-shadow: 0 0 0 4px rgba(196, 69, 54, 0.12);
+}
+
+.risk-chart-wrapper {
+    height: 260px;
+    margin-top: 12px;
+}
+
+.stocks-visual {
+    background:
+        radial-gradient(circle at top, rgba(21, 138, 88, 0.08), transparent 42%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(238, 244, 239, 0.98) 100%);
+}
+
+.stocks-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.stocks-summary-item {
+    padding: 11px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(188, 198, 188, 0.72);
+    background: rgba(255, 255, 255, 0.84);
+}
+
+.stocks-summary-item--best {
+    background: linear-gradient(180deg, rgba(240, 249, 243, 0.98) 0%, rgba(229, 241, 233, 0.98) 100%);
+}
+
+.stocks-summary-item--worst {
+    background: linear-gradient(180deg, rgba(251, 241, 239, 0.98) 0%, rgba(244, 230, 226, 0.98) 100%);
+}
+
+.stocks-summary-label {
     display: block;
-    font-size: 12px;
+    margin-bottom: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.stocks-summary-value {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--heading);
 }
 
-.drawdown-meta-caption {
+.stocks-summary-note {
     display: block;
-    margin-top: 1px;
+    margin-top: 4px;
     font-size: 11px;
     color: var(--muted);
 }
 
-.drawdown-chart-wrapper {
-    height: 240px;
+.stocks-chart-wrapper {
+    height: 260px;
     margin-top: 12px;
 }
 
@@ -896,12 +1125,6 @@ tbody tr:last-child td {
     flex-direction: column;
 }
 
-.composition-legend-item {
-    border-radius: 14px;
-    border: 1px solid rgba(188, 198, 188, 0.72);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(242, 246, 242, 0.96) 100%);
-}
-
 .composition-legend {
     display: grid;
     gap: 10px;
@@ -915,6 +1138,9 @@ tbody tr:last-child td {
     align-items: flex-start;
     gap: 12px;
     padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(188, 198, 188, 0.72);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(242, 246, 242, 0.96) 100%);
     transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -1091,12 +1317,17 @@ tbody tr:last-child td {
     color: #f4f7f4;
 }
 
+/* Panel sizing */
 #overview .chart-container:first-child .chart-wrapper,
 #daily .chart-container:first-child .chart-wrapper {
     height: 300px;
 }
 
 #overview .performance-panel .performance-chart-wrapper {
+    height: 320px;
+}
+
+#daily .daily-performance-panel .performance-chart-wrapper {
     height: 320px;
 }
 
@@ -1108,14 +1339,78 @@ tbody tr:last-child td {
     height: 240px;
 }
 
+#performance .analysis-drawdown-panel .analysis-drawdown-chart-wrapper {
+    height: 240px;
+}
+
+#daily .distribution-panel .distribution-chart-wrapper {
+    height: 260px;
+}
+
+#performance .rolling-panel .rolling-chart-wrapper {
+    height: 240px;
+}
+
+#performance .risk-panel .risk-chart-wrapper {
+    height: 260px;
+}
+
+#stocks .stocks-panel .stocks-chart-wrapper {
+    height: 260px;
+}
+
 #stocks .chart-container:first-child .chart-wrapper,
 #performance .chart-container .chart-wrapper {
     height: 220px;
 }
 
+.metrics-shell {
+    background:
+        radial-gradient(circle at top, rgba(22, 58, 95, 0.05), transparent 36%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 244, 239, 0.98) 100%);
+}
+
+.metrics-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.metrics-meta-item {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(188, 198, 188, 0.72);
+    background: rgba(255, 255, 255, 0.84);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--heading);
+}
+
+.metrics-meta-item--return {
+    border-color: rgba(21, 138, 88, 0.18);
+    background: rgba(240, 249, 243, 0.92);
+}
+
+.metrics-meta-item--risk {
+    border-color: rgba(196, 69, 54, 0.16);
+    background: rgba(251, 241, 239, 0.92);
+}
+
+.metrics-meta-item--ratio {
+    border-color: rgba(148, 112, 43, 0.16);
+    background: rgba(250, 246, 238, 0.92);
+}
+
+.metrics-meta-item--distribution {
+    border-color: rgba(22, 58, 95, 0.12);
+    background: rgba(241, 246, 250, 0.92);
+}
+
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     gap: 12px;
     margin-top: 14px;
 }
@@ -1123,28 +1418,33 @@ tbody tr:last-child td {
 .metric-box {
     position: relative;
     overflow: hidden;
-    background: linear-gradient(180deg, #f8faf7 0%, #edf2ee 100%);
-    padding: 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 18px rgba(15, 20, 16, 0.04);
+    background: linear-gradient(180deg, #fbfcfa 0%, #eff4f0 100%);
+    padding: 14px 14px 15px;
+    border-radius: 14px;
+    border: 1px solid rgba(188, 198, 188, 0.78);
+    box-shadow: 0 10px 22px rgba(15, 20, 16, 0.04);
     transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
-.metrics-grid .metric-box:nth-child(4n + 1)::before {
-    background: linear-gradient(90deg, #1c6b4f 0%, rgba(28, 107, 79, 0) 100%);
+.metric-box--return {
+    background: linear-gradient(180deg, rgba(244, 250, 246, 0.98) 0%, rgba(235, 244, 238, 0.98) 100%);
+    border-color: rgba(21, 138, 88, 0.16);
 }
 
-.metrics-grid .metric-box:nth-child(4n + 2)::before {
-    background: linear-gradient(90deg, #2d5b44 0%, rgba(45, 91, 68, 0) 100%);
+.metric-box--risk {
+    background: linear-gradient(180deg, rgba(251, 244, 243, 0.98) 0%, rgba(244, 236, 234, 0.98) 100%);
+    border-color: rgba(196, 69, 54, 0.14);
 }
 
-.metrics-grid .metric-box:nth-child(4n + 3)::before {
-    background: linear-gradient(90deg, #94702b 0%, rgba(148, 112, 43, 0) 100%);
+.metric-box--ratio {
+    background: linear-gradient(180deg, rgba(251, 248, 241, 0.98) 0%, rgba(244, 238, 227, 0.98) 100%);
+    border-color: rgba(148, 112, 43, 0.14);
 }
 
-.metrics-grid .metric-box:nth-child(4n + 4)::before {
-    background: linear-gradient(90deg, #b64b3d 0%, rgba(182, 75, 61, 0) 100%);
+.metric-box--distribution,
+.metric-box--stat {
+    background: linear-gradient(180deg, rgba(246, 248, 248, 0.98) 0%, rgba(237, 241, 240, 0.98) 100%);
+    border-color: rgba(22, 58, 95, 0.1);
 }
 
 .metric-box::before {
@@ -1157,6 +1457,23 @@ tbody tr:last-child td {
     background: linear-gradient(90deg, rgba(24, 53, 40, 0.65) 0%, rgba(24, 53, 40, 0) 100%);
 }
 
+.metric-box--return::before {
+    background: linear-gradient(90deg, #1c6b4f 0%, rgba(28, 107, 79, 0) 100%);
+}
+
+.metric-box--risk::before {
+    background: linear-gradient(90deg, #c44536 0%, rgba(196, 69, 54, 0) 100%);
+}
+
+.metric-box--ratio::before {
+    background: linear-gradient(90deg, #94702b 0%, rgba(148, 112, 43, 0) 100%);
+}
+
+.metric-box--distribution::before,
+.metric-box--stat::before {
+    background: linear-gradient(90deg, #5b6670 0%, rgba(91, 102, 112, 0) 100%);
+}
+
 .metric-box:hover {
     transform: translateY(-2px);
     border-color: #b7c1b7;
@@ -1164,22 +1481,73 @@ tbody tr:last-child td {
     background: linear-gradient(180deg, #ffffff 0%, #edf3ee 100%);
 }
 
+.metric-head {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.metric-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--heading);
+    background: rgba(255, 255, 255, 0.84);
+    border: 1px solid rgba(188, 198, 188, 0.72);
+}
+
+.metric-tag--return {
+    color: var(--positive);
+    border-color: rgba(21, 138, 88, 0.16);
+    background: rgba(240, 249, 243, 0.9);
+}
+
+.metric-tag--risk {
+    color: var(--negative);
+    border-color: rgba(196, 69, 54, 0.14);
+    background: rgba(251, 241, 239, 0.9);
+}
+
+.metric-tag--ratio {
+    color: var(--warning);
+    border-color: rgba(148, 112, 43, 0.14);
+    background: rgba(250, 246, 238, 0.9);
+}
+
+.metric-tag--distribution,
+.metric-tag--stat {
+    color: #4b5b6b;
+    border-color: rgba(91, 102, 112, 0.14);
+    background: rgba(241, 246, 250, 0.9);
+}
+
 .metric-label {
     font-size: 10px;
     color: var(--muted);
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-weight: 700;
 }
 
 .metric-value {
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: var(--heading);
+    line-height: 1.2;
 }
 
+/* States */
 .loading {
     text-align: center;
     padding: 40px;
@@ -1254,6 +1622,7 @@ tbody tr:last-child td {
     font-style: italic;
 }
 
+/* Responsive */
 @media (max-width: 1100px) {
     .control-panel {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1268,11 +1637,13 @@ tbody tr:last-child td {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .composition-layout {
+    .stock-table-summary,
+    .daily-table-summary,
+    .performance-summary {
         grid-template-columns: 1fr;
     }
 
-    .performance-summary {
+    .composition-layout {
         grid-template-columns: 1fr;
     }
 
@@ -1313,36 +1684,35 @@ tbody tr:last-child td {
         grid-template-columns: 1fr;
     }
 
-    .composition-visual {
+    .composition-visual,
+    .performance-visual,
+    .returns-visual,
+    .drawdown-visual,
+    .distribution-visual,
+    .risk-visual,
+    .metrics-shell,
+    .stocks-visual {
         padding: 14px;
     }
 
-    .performance-visual {
-        padding: 14px;
-    }
-
-    .returns-visual {
-        padding: 14px;
-    }
-
-    .drawdown-visual {
-        padding: 14px;
-    }
-
-    .composition-chart-wrapper {
+    .composition-chart-wrapper,
+    .performance-chart-wrapper,
+    #daily .daily-performance-panel .performance-chart-wrapper {
         height: 260px;
     }
 
-    .performance-chart-wrapper {
-        height: 260px;
-    }
-
-    .returns-chart-wrapper {
+    .returns-chart-wrapper,
+    .drawdown-chart-wrapper,
+    #performance .analysis-drawdown-panel .analysis-drawdown-chart-wrapper,
+    .distribution-chart-wrapper,
+    #performance .rolling-panel .rolling-chart-wrapper,
+    #performance .risk-panel .risk-chart-wrapper,
+    .stocks-chart-wrapper {
         height: 220px;
     }
 
-    .drawdown-chart-wrapper {
-        height: 220px;
+    .stocks-summary {
+        grid-template-columns: 1fr;
     }
 
     .tabs {

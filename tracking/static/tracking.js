@@ -233,27 +233,54 @@
                 datasets: [{
                     label: 'Drawdown',
                     data: calculateDrawdown(values),
-                    borderColor: chartTheme.negative,
-                    backgroundColor: 'rgba(192, 58, 50, 0.08)',
-                    borderWidth: 2,
+                    borderColor: '#c44536',
+                    backgroundColor: 'rgba(196, 69, 54, 0.1)',
+                    borderWidth: 2.5,
                     fill: true,
-                    tension: 0.1
+                    tension: 0.22,
+                    pointRadius: 2.5,
+                    pointHoverRadius: 4,
+                    pointBorderWidth: 0,
+                    pointBackgroundColor: '#c44536'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
+                        displayColors: false,
+                        backgroundColor: 'rgba(17, 23, 19, 0.96)',
+                        titleColor: '#f4f7f4',
+                        bodyColor: '#f4f7f4',
+                        padding: 12,
                         callbacks: {
+                            title: function (tooltipItems) {
+                                return tooltipItems.length ? tooltipItems[0].label : '';
+                            },
                             label: function (context) {
-                                return context.parsed.y.toFixed(2) + '%';
+                                return 'Drawdown: ' + formatSignedPercent(context.parsed.y);
                             }
                         }
                     }
                 },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
                     y: {
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.18)'
+                        },
                         ticks: {
                             callback: function (value) {
                                 return value.toFixed(1) + '%';
@@ -271,16 +298,61 @@
                 datasets: [{
                     label: '30-day Rolling Returns',
                     data: calculateRollingReturns(values, 30),
-                    borderColor: chartTheme.warning,
-                    backgroundColor: 'rgba(183, 121, 31, 0.08)',
-                    borderWidth: 2,
+                    borderColor: '#94702b',
+                    backgroundColor: 'rgba(148, 112, 43, 0.12)',
+                    borderWidth: 2.5,
                     fill: true,
-                    tension: 0.1
+                    tension: 0.22,
+                    pointRadius: 2.5,
+                    pointHoverRadius: 4,
+                    pointBorderWidth: 0,
+                    pointBackgroundColor: '#94702b'
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        displayColors: false,
+                        backgroundColor: 'rgba(17, 23, 19, 0.96)',
+                        titleColor: '#f4f7f4',
+                        bodyColor: '#f4f7f4',
+                        padding: 12,
+                        callbacks: {
+                            title: function (tooltipItems) {
+                                return tooltipItems.length ? tooltipItems[0].label : '';
+                            },
+                            label: function (context) {
+                                return 'Rolling Return: ' + formatSignedPercent(context.parsed.y);
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.18)'
+                        },
+                        ticks: {
+                            callback: function (value) {
+                                return formatSignedPercent(value);
+                            }
+                        }
+                    }
+                }
             }
         });
 
@@ -426,39 +498,66 @@
                     data: stockPerformance.map(function (stock) { return stock.return; }),
                     backgroundColor: function (context) {
                         const value = context.dataset.data[context.dataIndex];
-                        return value >= 0 ? 'rgba(11, 122, 90, 0.72)' : 'rgba(192, 58, 50, 0.72)';
+                        return value >= 0 ? 'rgba(21, 138, 88, 0.74)' : 'rgba(196, 69, 54, 0.74)';
                     },
                     borderColor: function (context) {
                         const value = context.dataset.data[context.dataIndex];
                         return value >= 0 ? chartTheme.positive : chartTheme.negative;
                     },
-                    borderWidth: 1
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    borderSkipped: false,
+                    maxBarThickness: 34
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
+                        displayColors: false,
+                        backgroundColor: 'rgba(17, 23, 19, 0.96)',
+                        titleColor: '#f4f7f4',
+                        bodyColor: '#f4f7f4',
+                        padding: 12,
                         callbacks: {
+                            title: function (tooltipItems) {
+                                return tooltipItems.length ? tooltipItems[0].label : '';
+                            },
                             label: function (context) {
-                                return context.label + ': ' + context.parsed.y.toFixed(2) + '%';
+                                return 'Return: ' + formatSignedPercent(context.parsed.y);
                             }
                         }
                     }
                 },
                 scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 8
+                        }
+                    },
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.18)'
+                        },
                         ticks: {
                             callback: function (value) {
-                                return value + '%';
+                                return formatSignedPercent(value);
                             }
                         }
                     }
                 }
             }
         });
+        renderStocksSummary(stockPerformance);
+        renderStockTableSummary(stockPerformance);
 
         const monthlyPortfolio = monthlySeries(dates, values);
         const monthlyBenchmark = monthlySeries(dates, benchmarkValues);
@@ -635,44 +734,90 @@
                 datasets: [{
                     label: 'Daily Portfolio Value',
                     data: values,
-                    borderColor: chartTheme.primary,
-                    backgroundColor: chartTheme.fillPrimary,
-                    borderWidth: 2,
+                    borderColor: '#1c6b4f',
+                    backgroundColor: 'rgba(28, 107, 79, 0.12)',
+                    borderWidth: 3,
                     fill: true,
-                    tension: 0.1
+                    tension: 0.24,
+                    pointRadius: 2.5,
+                    pointHoverRadius: 5,
+                    pointBorderWidth: 0,
+                    pointBackgroundColor: '#1c6b4f'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
+                        displayColors: false,
+                        backgroundColor: 'rgba(17, 23, 19, 0.96)',
+                        titleColor: '#f4f7f4',
+                        bodyColor: '#f4f7f4',
+                        padding: 12,
                         callbacks: {
+                            title: function (tooltipItems) {
+                                return tooltipItems.length ? tooltipItems[0].label : '';
+                            },
                             label: function (context) {
-                                return '$' + context.parsed.y.toFixed(2);
+                                return 'Portfolio Value: ' + currencyFormatter.format(context.parsed.y);
                             }
                         }
                     }
                 },
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 scales: {
                     x: {
+                        grid: {
+                            display: false
+                        },
                         ticks: {
                             maxTicksLimit: 8
                         }
                     },
                     y: {
+                        beginAtZero: false,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.18)'
+                        },
                         ticks: {
                             callback: function (value) {
-                                return '$' + value.toLocaleString();
+                                return currencyFormatter.format(value);
                             }
                         }
                     }
                 }
             }
         });
+        renderDailyPerformanceSummary(values);
+        renderDailyPerformanceLegend(dates);
 
         if (dailyReturns.length > 0) {
             const returnsData = calculateHistogramData(dailyReturns, 20);
+            const distributionBarColors = returnsData.bins.map(function (binValue) {
+                if (Number(binValue) < 0) {
+                    return 'rgba(196, 69, 54, 0.72)';
+                }
+                if (Number(binValue) > 0) {
+                    return 'rgba(21, 138, 88, 0.72)';
+                }
+                return 'rgba(99, 116, 139, 0.68)';
+            });
+            const distributionBorderColors = returnsData.bins.map(function (binValue) {
+                if (Number(binValue) < 0) {
+                    return '#c44536';
+                }
+                if (Number(binValue) > 0) {
+                    return '#158a58';
+                }
+                return '#63748b';
+            });
             charts.returns = createChart('returnsChart', {
                 type: 'bar',
                 data: {
@@ -680,42 +825,66 @@
                     datasets: [{
                         label: 'Frequency',
                         data: returnsData.frequencies,
-                        backgroundColor: 'rgba(99, 116, 139, 0.68)',
-                        borderColor: 'rgba(75, 91, 107, 1)',
-                        borderWidth: 1
+                        backgroundColor: distributionBarColors,
+                        borderColor: distributionBorderColors,
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        borderSkipped: false,
+                        maxBarThickness: 24,
+                        categoryPercentage: 0.9,
+                        barPercentage: 0.95
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        legend: {
+                            display: false
+                        },
                         tooltip: {
+                            displayColors: false,
+                            backgroundColor: 'rgba(17, 23, 19, 0.96)',
+                            titleColor: '#f4f7f4',
+                            bodyColor: '#f4f7f4',
+                            padding: 12,
                             callbacks: {
+                                title: function (tooltipItems) {
+                                    if (!tooltipItems.length) {
+                                        return '';
+                                    }
+                                    return 'Return Bucket: ' + formatSignedPercent(Number(tooltipItems[0].label) * 100);
+                                },
                                 label: function (context) {
-                                    const returnPercent = (context.label * 100).toFixed(2);
-                                    return returnPercent + '%: ' + context.parsed.y + ' days';
+                                    return context.parsed.y + ' trading days';
                                 }
                             }
                         }
                     },
                     scales: {
                         x: {
-                            title: {
-                                display: true,
-                                text: 'Daily Return (%)'
+                            grid: {
+                                display: false
                             },
                             ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                maxTicksLimit: 7,
                                 callback: function (value) {
-                                    return (value * 100).toFixed(1) + '%';
+                                    const rawLabel = Number(this.getLabelForValue(value));
+                                    const sign = rawLabel > 0 ? '+' : '';
+                                    return sign + (rawLabel * 100).toFixed(1) + '%';
                                 }
                             }
                         },
                         y: {
-                            title: {
-                                display: true,
-                                text: 'Frequency'
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(148, 163, 184, 0.18)'
                             },
-                            beginAtZero: true
+                            ticks: {
+                                precision: 0
+                            }
                         }
                     }
                 }
@@ -740,10 +909,17 @@
                             r: 5 + (((stock.current_value || 0) / maxHoldingValue) * 8)
                         };
                     }),
-                    backgroundColor: 'rgba(22, 58, 95, 0.22)',
-                    borderColor: chartTheme.primary,
-                    borderWidth: 1.5,
-                    hoverBackgroundColor: 'rgba(22, 58, 95, 0.32)'
+                    backgroundColor: stockPerformance.map(function (stock) {
+                        return Number(stock.return || 0) >= 0 ? 'rgba(21, 138, 88, 0.24)' : 'rgba(196, 69, 54, 0.24)';
+                    }),
+                    borderColor: stockPerformance.map(function (stock) {
+                        return Number(stock.return || 0) >= 0 ? '#158a58' : '#c44536';
+                    }),
+                    borderWidth: 1.6,
+                    hoverBackgroundColor: stockPerformance.map(function (stock) {
+                        return Number(stock.return || 0) >= 0 ? 'rgba(21, 138, 88, 0.34)' : 'rgba(196, 69, 54, 0.34)';
+                    }),
+                    hoverBorderWidth: 2
                 }]
             },
             options: {
@@ -754,16 +930,38 @@
                         display: false
                     },
                     tooltip: {
+                        displayColors: false,
+                        backgroundColor: 'rgba(17, 23, 19, 0.96)',
+                        titleColor: '#f4f7f4',
+                        bodyColor: '#f4f7f4',
+                        padding: 12,
                         callbacks: {
+                            title: function (tooltipItems) {
+                                if (!tooltipItems.length) {
+                                    return '';
+                                }
+                                const stock = stockPerformance[tooltipItems[0].dataIndex];
+                                return stock ? stock.ticker : '';
+                            },
                             label: function (context) {
                                 const stock = stockPerformance[context.dataIndex];
-                                return stock.ticker + ': ' + stock.weight.toFixed(1) + '% weight, ' + stock.return.toFixed(2) + '% return';
+                                if (!stock) {
+                                    return '';
+                                }
+                                return [
+                                    'Weight: ' + Number(stock.weight).toFixed(1) + '%',
+                                    'Return: ' + formatSignedPercent(stock.return),
+                                    'Value: ' + currencyFormatter.format(stock.current_value || 0)
+                                ];
                             }
                         }
                     }
                 },
                 scales: {
                     x: {
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.16)'
+                        },
                         title: {
                             display: true,
                             text: 'Weight (%)'
@@ -775,14 +973,25 @@
                         }
                     },
                     y: {
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.16)'
+                        },
                         title: {
                             display: true,
                             text: 'Return (%)'
                         },
                         ticks: {
                             callback: function (value) {
-                                return value + '%';
+                                return formatSignedPercent(value);
                             }
+                        }
+                    }
+                },
+                elements: {
+                    point: {
+                        hoverRadius: function (context) {
+                            const point = context.raw || {};
+                            return (point.r || 6) + 1;
                         }
                     }
                 }
@@ -874,6 +1083,132 @@
                     '<span class="performance-legend-title">S&amp;P 500</span>' +
                     '<span class="performance-legend-caption">Normalized benchmark</span>' +
                 '</span>' +
+            '</div>';
+    }
+
+    function renderDailyPerformanceSummary(values) {
+        const summaryElement = document.getElementById('dailyPerformanceSummary');
+        if (!summaryElement) {
+            return;
+        }
+
+        if (!values.length) {
+            summaryElement.innerHTML = '';
+            return;
+        }
+
+        const openingValue = Number(values[0]) || 0;
+        const latestValue = Number(values[values.length - 1]) || 0;
+        const netChange = latestValue - openingValue;
+        const totalReturn = openingValue ? ((latestValue - openingValue) / openingValue) * 100 : 0;
+        const changeCardClass = netChange < 0
+            ? 'performance-summary-card performance-summary-card--change-negative'
+            : 'performance-summary-card performance-summary-card--change-positive';
+        const changeToneClass = netChange < 0 ? 'negative' : 'positive';
+
+        summaryElement.innerHTML =
+            '<div class="performance-summary-card performance-summary-card--start">' +
+                '<span class="performance-summary-label">Opening Value</span>' +
+                '<span class="performance-summary-value">' + currencyFormatter.format(openingValue) + '</span>' +
+                '<span class="performance-summary-note">Starting portfolio value</span>' +
+            '</div>' +
+            '<div class="performance-summary-card performance-summary-card--current">' +
+                '<span class="performance-summary-label">Latest Value</span>' +
+                '<span class="performance-summary-value">' + currencyFormatter.format(latestValue) + '</span>' +
+                '<span class="performance-summary-note">Most recent marked value</span>' +
+            '</div>' +
+            '<div class="' + changeCardClass + '">' +
+                '<span class="performance-summary-label">Net Change</span>' +
+                '<span class="performance-summary-value ' + changeToneClass + '">' + formatSignedCurrency(netChange) + '</span>' +
+                '<span class="performance-summary-note ' + changeToneClass + '">' + formatSignedPercent(totalReturn) + '</span>' +
+            '</div>';
+    }
+
+    function renderDailyPerformanceLegend(dates) {
+        const legendElement = document.getElementById('dailyPerformanceLegend');
+        if (!legendElement) {
+            return;
+        }
+
+        const sessionCount = Array.isArray(dates) ? dates.length : 0;
+        const sessionLabel = sessionCount === 1 ? '1 trading session' : sessionCount + ' trading sessions';
+
+        legendElement.innerHTML =
+            '<div class="performance-legend-item">' +
+                '<span class="performance-legend-swatch performance-legend-swatch--portfolio"></span>' +
+                '<span class="performance-legend-copy">' +
+                    '<span class="performance-legend-title">Portfolio Value</span>' +
+                    '<span class="performance-legend-caption">Daily marked-to-market series</span>' +
+                '</span>' +
+            '</div>' +
+            '<div class="performance-legend-item">' +
+                '<span class="performance-legend-swatch performance-legend-swatch--window"></span>' +
+                '<span class="performance-legend-copy">' +
+                    '<span class="performance-legend-title">Tracking Window</span>' +
+                    '<span class="performance-legend-caption">' + escapeHtml(sessionLabel) + '</span>' +
+                '</span>' +
+            '</div>';
+    }
+
+    function renderStocksSummary(stockPerformance) {
+        const summaryElement = document.getElementById('stocksSummary');
+        if (!summaryElement) {
+            return;
+        }
+
+        if (!stockPerformance.length) {
+            summaryElement.innerHTML = '';
+            return;
+        }
+
+        const sortedStocks = stockPerformance.slice().sort(function (left, right) {
+            return Number(right.return || 0) - Number(left.return || 0);
+        });
+        const bestStock = sortedStocks[0];
+        const worstStock = sortedStocks[sortedStocks.length - 1];
+
+        summaryElement.innerHTML =
+            '<div class="stocks-summary-item stocks-summary-item--best">' +
+                '<span class="stocks-summary-label">Top Gainer</span>' +
+                '<span class="stocks-summary-value">' + escapeHtml(bestStock.ticker) + ' ' + formatSignedPercent(bestStock.return) + '</span>' +
+                '<span class="stocks-summary-note">Best performer in the tracked basket.</span>' +
+            '</div>' +
+            '<div class="stocks-summary-item stocks-summary-item--worst">' +
+                '<span class="stocks-summary-label">Laggard</span>' +
+                '<span class="stocks-summary-value">' + escapeHtml(worstStock.ticker) + ' ' + formatSignedPercent(worstStock.return) + '</span>' +
+                '<span class="stocks-summary-note">Weakest return among active holdings.</span>' +
+            '</div>';
+    }
+
+    function renderStockTableSummary(stockPerformance) {
+        const summaryElement = document.getElementById('stockTableSummary');
+        if (!summaryElement) {
+            return;
+        }
+
+        if (!stockPerformance.length) {
+            summaryElement.innerHTML = '';
+            return;
+        }
+
+        const sortedStocks = stockPerformance.slice().sort(function (left, right) {
+            return Number(right.return || 0) - Number(left.return || 0);
+        });
+        const bestStock = sortedStocks[0];
+        const worstStock = sortedStocks[sortedStocks.length - 1];
+
+        summaryElement.innerHTML =
+            '<div class="stock-table-summary-item stock-table-summary-item--count">' +
+                '<span class="stock-table-summary-label">Tracked Names</span>' +
+                '<span class="stock-table-summary-value">' + stockPerformance.length + '</span>' +
+            '</div>' +
+            '<div class="stock-table-summary-item stock-table-summary-item--best">' +
+                '<span class="stock-table-summary-label">Top Return</span>' +
+                '<span class="stock-table-summary-value">' + escapeHtml(bestStock.ticker) + ' ' + formatSignedPercent(bestStock.return) + '</span>' +
+            '</div>' +
+            '<div class="stock-table-summary-item stock-table-summary-item--worst">' +
+                '<span class="stock-table-summary-label">Lowest Return</span>' +
+                '<span class="stock-table-summary-value">' + escapeHtml(worstStock.ticker) + ' ' + formatSignedPercent(worstStock.return) + '</span>' +
             '</div>';
     }
 
@@ -1166,23 +1501,9 @@
         const initialValue = values[0];
         const currentValue = values[values.length - 1];
         const totalReturn = initialValue ? (((currentValue - initialValue) / initialValue) * 100) : 0;
+        renderDailyTableSummary(dates.length, currentValue, totalReturn);
         let cumulativeReturn = 0;
         let runningMax = initialValue;
-
-        const summaryRow = document.createElement('tr');
-        summaryRow.className = 'summary-row';
-        summaryRow.dataset.summary = 'true';
-        summaryRow.innerHTML = [
-            '<td colspan="7">',
-            'Showing ' + dates.length + ' trading days | ',
-            'Initial: $' + initialValue.toFixed(2) + ' | ',
-            'Current: $' + currentValue.toFixed(2) + ' | ',
-            'Total Return: <span class="' + (totalReturn >= 0 ? 'positive' : 'negative') + '">',
-            totalReturn.toFixed(2) + '%',
-            '</span>',
-            '</td>'
-        ].join('');
-        tableBody.appendChild(summaryRow);
 
         dates.forEach(function (date, index) {
             const value = values[index];
@@ -1204,7 +1525,7 @@
             }
 
             row.innerHTML = [
-                '<td data-order="', escapeHtml(date), '">', formatDate(date), '</td>',
+                '<td data-order="', escapeHtml(date), '"><span class="table-date-chip">', formatDate(date), '</span></td>',
                 '<td>$', value.toFixed(2), '</td>',
                 '<td class="', dailyReturn >= 0 ? 'positive' : 'negative', '">', (dailyReturn * 100).toFixed(2), '%</td>',
                 '<td class="', cumulativeReturn >= 0 ? 'positive' : 'negative', '">', (cumulativeReturn * 100).toFixed(2), '%</td>',
@@ -1217,17 +1538,43 @@
         });
     }
 
+    function renderDailyTableSummary(dayCount, currentValue, totalReturn) {
+        const summaryElement = document.getElementById('dailyTableSummary');
+        if (!summaryElement) {
+            return;
+        }
+
+        summaryElement.innerHTML =
+            '<div class="daily-table-summary-item daily-table-summary-item--days">' +
+                '<span class="daily-table-summary-label">Trading Days</span>' +
+                '<span class="daily-table-summary-value">' + dayCount + '</span>' +
+            '</div>' +
+            '<div class="daily-table-summary-item daily-table-summary-item--value">' +
+                '<span class="daily-table-summary-label">Current Value</span>' +
+                '<span class="daily-table-summary-value">' + currencyFormatter.format(currentValue) + '</span>' +
+            '</div>' +
+            '<div class="daily-table-summary-item daily-table-summary-item--return">' +
+                '<span class="daily-table-summary-label">Total Return</span>' +
+                '<span class="daily-table-summary-value">' + formatSignedPercent(totalReturn) + '</span>' +
+            '</div>';
+    }
+
     function formatDate(dateString) {
         if (!dateString) {
             return '';
         }
 
         try {
-            const date = new Date(dateString);
+            const dateOnlyMatch = String(dateString).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+            const date = dateOnlyMatch
+                ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]), 12)
+                : new Date(dateString);
+
             return date.toLocaleDateString('en-US', {
                 weekday: 'short',
                 month: 'short',
-                day: 'numeric'
+                day: 'numeric',
+                year: 'numeric'
             });
         } catch (error) {
             return dateString;
