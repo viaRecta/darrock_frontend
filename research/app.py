@@ -94,9 +94,9 @@ def v3_research():
     if USE_MOCKDATA:
         data = _load_mock('dashboard_response.json')
     elif request.method == 'POST':
-        _, data = post_form('/api/v2/research/dashboard', data=request.form)
+        _, data = post_form('/research/dashboard', data=request.form)
     else:
-        data = get_json('/api/v2/research/dashboard')
+        data = get_json('/research/dashboard')
     return render_template('v3/research.html', **data)
 
 
@@ -109,7 +109,7 @@ def v3_stock(ticker: str):
             data['ticker'] = ticker
             data['company_name'] = ticker
     else:
-        data = get_json(f'/api/v2/research/stock/{ticker}')
+        data = get_json(f'/research/stock/{ticker}')
 
     # If ?partial=1 → return just the fragment (for slide-over AJAX)
     if request.args.get('partial') == '1':
@@ -135,8 +135,8 @@ def v3_public(portfolio_id: int):
             'results': mock.get('results', []),
         }
     else:
-        _, portfolio_data = get_with_status(f'/api/v2/research/portfolio/{portfolio_id}')
-        dashboard_data = get_json('/api/v2/research/dashboard')
+        _, portfolio_data = get_with_status(f'/research/portfolio/{portfolio_id}')
+        dashboard_data = get_json('/research/dashboard')
         data = {
             'portfolio': portfolio_data.get('portfolio', {}),
             'company_details': dashboard_data.get('company_details', {}),
