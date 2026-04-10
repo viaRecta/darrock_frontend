@@ -1,0 +1,45 @@
+<div id="metrics" class="tab-content">
+    <div class="chart-container panel--metrics metrics-panel">
+        <h2>Complete Performance Metrics</h2>
+        <div class="metrics-shell">
+            <div class="metrics-meta">
+                <div class="metrics-meta-item metrics-meta-item--return">Return Metrics</div>
+                <div class="metrics-meta-item metrics-meta-item--risk">Risk Metrics</div>
+                <div class="metrics-meta-item metrics-meta-item--ratio">Ratios</div>
+                <div class="metrics-meta-item metrics-meta-item--distribution">Distribution</div>
+            </div>
+            <div class="metrics-grid">
+                {% for key, value in report.metrics.items() if value is number %}
+                {% if 'ratio' in key %}
+                    {% set metric_category = 'ratio' %}
+                {% elif 'return' in key or 'alpha' in key %}
+                    {% set metric_category = 'return' %}
+                {% elif 'drawdown' in key or 'volatility' in key or 'var' in key %}
+                    {% set metric_category = 'risk' %}
+                {% elif 'skewness' in key or 'kurtosis' in key %}
+                    {% set metric_category = 'distribution' %}
+                {% else %}
+                    {% set metric_category = 'stat' %}
+                {% endif %}
+                <div class="metric-box metric-box--{{ metric_category }}">
+                    <div class="metric-head">
+                        <span class="metric-tag metric-tag--{{ metric_category }}">{{ metric_category|title }}</span>
+                    </div>
+                    <div class="metric-label">{{ key|replace('_', ' ')|title }}</div>
+                    <div class="metric-value">
+                        {% if 'ratio' in key %}
+                            {{ "%.3f"|format(value) }}
+                        {% elif 'return' in key or 'drawdown' in key or 'volatility' in key or 'alpha' in key or 'var' in key %}
+                            {{ "%.2f"|format(value) }}%
+                        {% elif 'skewness' in key or 'kurtosis' in key %}
+                            {{ "%.4f"|format(value) }}
+                        {% else %}
+                            {{ "%.4f"|format(value) }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

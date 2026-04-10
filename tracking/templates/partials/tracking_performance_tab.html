@@ -1,0 +1,74 @@
+<div id="performance" class="tab-content">
+    <div class="chart-container panel--drawdown drawdown-panel analysis-drawdown-panel">
+        <h2>Drawdown Analysis</h2>
+        <div class="drawdown-visual">
+            <div class="drawdown-meta">
+                <div class="drawdown-meta-item">
+                    <span class="drawdown-meta-swatch drawdown-meta-swatch--portfolio"></span>
+                    <span class="drawdown-meta-copy">
+                        <span class="drawdown-meta-title">Portfolio Drawdown</span>
+                        <span class="drawdown-meta-caption">Peak-to-trough capital path</span>
+                    </span>
+                </div>
+            </div>
+            <div class="chart-wrapper drawdown-chart-wrapper analysis-drawdown-chart-wrapper">
+                <canvas id="drawdownChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container panel--returns returns-panel rolling-panel">
+        <h2>Rolling Returns (30-day)</h2>
+        <div class="returns-visual rolling-visual">
+            <div class="returns-meta">
+                <div class="returns-meta-item">
+                    <span class="returns-meta-swatch returns-meta-swatch--rolling"></span>
+                    <span class="returns-meta-copy">
+                        <span class="returns-meta-title">Rolling Return</span>
+                        <span class="returns-meta-caption">30-day trailing performance</span>
+                    </span>
+                </div>
+            </div>
+            <div class="chart-wrapper returns-chart-wrapper rolling-chart-wrapper">
+                <canvas id="rollingChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container panel--risk risk-panel">
+        <h2>Weight vs Return Snapshot</h2>
+        <div class="risk-visual">
+            <div class="risk-meta">
+                <div class="risk-meta-item">
+                    <span class="risk-meta-copy">
+                        <span class="risk-meta-title">X: Weight</span>
+                        <span class="risk-meta-caption">Portfolio allocation</span>
+                    </span>
+                </div>
+                <div class="risk-meta-item">
+                    <span class="risk-meta-copy">
+                        <span class="risk-meta-title">Y: Return</span>
+                        <span class="risk-meta-caption">Holding performance</span>
+                    </span>
+                </div>
+                <div class="risk-meta-item">
+                    <span class="risk-meta-copy">
+                        <span class="risk-meta-title">Size: Position Value</span>
+                        <span class="risk-meta-caption">Bubble radius by exposure</span>
+                    </span>
+                </div>
+                <div class="risk-meta-item risk-meta-item--tone">
+                    <span class="risk-tone-dot risk-tone-dot--positive"></span>
+                    <span class="risk-tone-dot risk-tone-dot--negative"></span>
+                    <span class="risk-meta-copy">
+                        <span class="risk-meta-title">Color: Return Direction</span>
+                        <span class="risk-meta-caption">Green up, red down</span>
+                    </span>
+                </div>
+            </div>
+            <div class="chart-wrapper risk-chart-wrapper">
+                <canvas id="riskReturnChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>

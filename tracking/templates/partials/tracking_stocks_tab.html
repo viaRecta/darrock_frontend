@@ -1,0 +1,55 @@
+<div id="stocks" class="tab-content">
+    <div class="chart-container panel--stocks stocks-panel">
+        <h2>Individual Stock Performance</h2>
+        <div class="stocks-visual">
+            <div id="stocksSummary" class="stocks-summary"></div>
+            <div class="chart-wrapper stocks-chart-wrapper">
+                <canvas id="stocksChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container panel--table stock-table-panel">
+        <h2>Stock Details</h2>
+        <div id="stockTableSummary" class="stock-table-summary"></div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Buy Price</th>
+                        <th>Current Price</th>
+                        <th>Return</th>
+                        <th>P&amp;L</th>
+                        <th>Weight</th>
+                        <th>Shares</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in report.stock_performance %}
+                    <tr>
+                        <td>
+                            <div class="table-ticker-cell">
+                                <span class="table-ticker-badge">{{ stock.ticker[:2] }}</span>
+                                <strong>{{ stock.ticker }}</strong>
+                            </div>
+                        </td>
+                        <td>${{ "%.2f"|format(stock.buy_price) }}</td>
+                        <td>${{ "%.2f"|format(stock.current_price) }}</td>
+                        <td class="{% if stock.return > 0 %}positive{% else %}negative{% endif %}">
+                            <strong>{{ "%.2f"|format(stock.return) }}%</strong>
+                        </td>
+                        <td class="{% if stock.pl > 0 %}positive{% else %}negative{% endif %}">
+                            ${{ "%.2f"|format(stock.pl) }}
+                        </td>
+                        <td>{{ "%.1f"|format(stock.weight) }}%</td>
+                        <td>{{ "%.2f"|format(stock.shares) }}</td>
+                        <td>${{ "%.2f"|format(stock.current_value) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

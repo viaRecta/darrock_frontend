@@ -1,0 +1,54 @@
+<div id="daily" class="tab-content">
+    <div class="chart-container panel--performance performance-panel daily-performance-panel">
+        <h2>Daily Portfolio Value</h2>
+        <div class="performance-layout">
+            <div id="dailyPerformanceSummary" class="performance-summary"></div>
+            <div class="performance-visual">
+                <div id="dailyPerformanceLegend" class="performance-legend"></div>
+                <div class="chart-wrapper performance-chart-wrapper">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container panel--distribution distribution-panel">
+        <h2>Daily Returns Distribution</h2>
+        <div class="distribution-visual">
+            <div class="distribution-meta">
+                <div class="distribution-meta-item">
+                    <span class="distribution-meta-swatch distribution-meta-swatch--negative"></span>
+                    <span class="distribution-meta-title">Loss Days</span>
+                </div>
+                <div class="distribution-meta-item">
+                    <span class="distribution-meta-swatch distribution-meta-swatch--positive"></span>
+                    <span class="distribution-meta-title">Gain Days</span>
+                </div>
+            </div>
+            <div class="chart-wrapper distribution-chart-wrapper">
+                <canvas id="returnsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container panel--table daily-table-panel">
+        <h2>Recent Daily Performance</h2>
+        <div id="dailyTableSummary" class="daily-table-summary"></div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Portfolio Value</th>
+                        <th>Daily Return</th>
+                        <th>Cumulative Return</th>
+                        <th>Daily P&amp;L</th>
+                        <th>Drawdown</th>
+                        <th>Peak Value</th>
+                    </tr>
+                </thead>
+                <tbody id="dailyTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
