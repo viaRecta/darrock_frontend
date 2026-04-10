@@ -347,7 +347,7 @@
     <div class="flex items-center gap-2 mb-2">
       <span class="label">{{ endDate }} Portfolio</span>
       <div class="port-strip">
-        {% for t in next_year_portfolio|sort(attribute='t')  %}
+        {% for t in next_year_portfolio|sort %}
         <a href="#" data-stock="{{ t }}" class="tag">
           {{ t }}
           {% if company_details and company_details[t] %}
@@ -403,7 +403,7 @@
 
             {# Portfolio tickers #}
             <div class="flex flex-wrap gap-1 mb-2">
-              {% for t in r.portfolio %}
+              {% for t in r.portfolio |sort %}
               <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
               {% endfor %}
             </div>
