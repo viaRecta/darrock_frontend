@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Darrock Research</title>
+  <link rel="stylesheet" href="/static/css/v3.css">
+</head>
+<body class="login-page">
+  <div class="login-wrap">
+    <div class="login-box">
+      <h1>darrock</h1>
+      <p class="sub">quantitative research</p>
+      <form action="/v3/research" method="get">
+        <div class="f-group">
+          <label>username</label>
+          <input type="text" name="username" autocomplete="username">
+        </div>
+        <div class="f-group" style="margin-top:0.5rem;">
+          <label>password</label>
+          <input type="password" name="password" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">enter</button>
+      </form>
+      <p class="text-muted" style="font-family:var(--font-ui);font-size:var(--fs-xs);margin-top:1.5rem;">
+        Authentication is handled by your server. This form redirects to the workspace.
+      </p>
+    </div>
+  </div>
+</body>
+</html>

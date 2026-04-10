@@ -1,0 +1,392 @@
+{% extends "v2/base.html" %}
+{% set active_page = 'dashboard' %}
+{% block title %}Dashboard — Darrock Research{% endblock %}
+
+{% block content %}
+
+{# ============================================================
+   SECTION 1: Portfolio Management
+   ============================================================ #}
+<div class="section">
+  <div class="section-header">Portfolio Management</div>
+  <div class="section-body">
+    <div class="grid-2">
+      {# --- Save --- #}
+      <div>
+        <h3 class="font-ui text-small mb-1">Save Current Portfolio</h3>
+        {% if next_year_portfolio %}
+        <form id="save-portfolio-form">
+          <div class="form-group mb-1">
+            <label for="portfolio_name">Name</label>
+            <input type="text" id="portfolio_name" name="portfolio_name" placeholder="My Portfolio" required>
+          </div>
+          <input type="hidden" name="portfolio_year" value="{{ endDate }}">
+          {% for t in next_year_portfolio %}
+          <input type="hidden" name="portfolio_tickers[]" value="{{ t }}">
+          {% endfor %}
+          <div class="tag-list mb-1">
+            {% for t in next_year_portfolio %}
+            <a href="/v2/stock/{{ t }}" class="tag">{{ t }}</a>
+            {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-sm">save portfolio</button>
+        </form>
+        {% else %}
+        <p class="text-muted text-small">Run an analysis to generate a portfolio.</p>
+        {% endif %}
+      </div>
+
+      {# --- Saved List --- #}
+      <div>
+        <h3 class="font-ui text-small mb-1">Saved Portfolios</h3>
+        {% if saved_portfolios %}
+          {% for p in saved_portfolios %}
+          <div class="portfolio-item">
+            <div>
+              <span class="portfolio-item-name">{{ p.name }}</span>
+              <span class="portfolio-item-meta">{{ p.year }} &middot; {{ p.tickers | length }} stocks</span>
+            </div>
+            <div class="flex gap-1">
+              <button class="btn btn-sm btn-ghost" data-load-portfolio="{{ p.id }}">load</button>
+              <button class="btn btn-sm btn-ghost btn-danger" data-delete-portfolio="{{ p.id }}">delete</button>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted text-small">No saved portfolios yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ============================================================
+   SECTION 2: Filter Parameters
+   ============================================================ #}
+<div class="section collapsed">
+  <div class="section-header">Filter Parameters</div>
+  <div class="section-body">
+    <form id="filter-form" method="post" action="/v2/dashboard">
+
+      {# Rule 1 — 5-Year Thresholds #}
+      <h3 class="font-ui text-small mt-2 mb-1">Rule 1 — 5-Year Thresholds</h3>
+      <div class="form-row mb-2">
+        <div class="form-group">
+          <label>Sales Min Scale</label>
+          <input type="number" name="sales_min_scale" value="{{ rule1_params.sales_min_scale }}" step="100">
+        </div>
+        <div class="form-group">
+          <label>Sales CAGR</label>
+          <input type="number" name="sales_cagr" value="{{ rule1_params.sales_cagr }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>FCF CAGR</label>
+          <input type="number" name="fcf_cagr" value="{{ rule1_params.fcf_cagr }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Price CAGR</label>
+          <input type="number" name="price_cagr" value="{{ rule1_params.price_cagr }}" step="0.01">
+        </div>
+        <div class="form-group" style="justify-content: flex-end;">
+          <div class="form-check">
+            <input type="checkbox" id="omit_negative_fcf" name="omit_negative_fcf" {{ 'checked' if rule1_params.omit_negative_fcf }}>
+            <label for="omit_negative_fcf">Omit negative FCF</label>
+          </div>
+        </div>
+      </div>
+
+      {# Rule 2 — 2-Year Thresholds #}
+      <h3 class="font-ui text-small mb-1">Rule 2 — 2-Year Thresholds</h3>
+      <div class="form-row mb-2">
+        <div class="form-group">
+          <label>Sales CAGR 2Y</label>
+          <input type="number" name="sales_cagr_2y" value="{{ rule2_params.sales_cagr_2y }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>FCF CAGR 2Y</label>
+          <input type="number" name="fcf_cagr_2y" value="{{ rule2_params.fcf_cagr_2y }}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Price CAGR 2Y</label>
+          <input type="number" name="price_cagr_2y" value="{{ rule2_params.price_cagr_2y }}" step="0.01">
+        </div>
+      </div>
+      <div class="flex gap-3 mb-2">
+        <div class="form-check">
+          <input type="checkbox" id="sales_cagr_2y_omit" name="sales_cagr_2y_omit" {{ 'checked' if rule2_params.sales_cagr_2y_omit }}>
+          <label for="sales_cagr_2y_omit">Omit Sales 2Y</label>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" id="fcf_cagr_2y_omit" name="fcf_cagr_2y_omit" {{ 'checked' if rule2_params.fcf_cagr_2y_omit }}>
+          <label for="fcf_cagr_2y_omit">Omit FCF 2Y</label>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" id="price_cagr_2y_omit" name="price_cagr_2y_omit" {{ 'checked' if rule2_params.price_cagr_2y_omit }}>
+          <label for="price_cagr_2y_omit">Omit Price 2Y</label>
+        </div>
+      </div>
+
+      {# Portfolio Filters #}
+      <h3 class="font-ui text-small mb-1">Portfolio Filters</h3>
+      <div class="form-row mb-2">
+        <div class="form-group">
+          <label>Ranking Method</label>
+          <select name="ranking_method">
+            <option value="2" {{ 'selected' if filter_params.ranking_method == '2' }}>2Y Quality</option>
+            <option value="5" {{ 'selected' if filter_params.ranking_method == '5' }}>5Y Quality</option>
+            <option value="6" {{ 'selected' if filter_params.ranking_method == '6' }}>5Y + Price</option>
+            <option value="7" {{ 'selected' if filter_params.ranking_method == '7' }}>Sales Only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Max Portfolio Size</label>
+          <input type="number" name="maxPortfolio" value="{{ filter_params.maxPortfolio }}" min="1" max="50">
+        </div>
+        <div class="form-group">
+          <label>Retention %</label>
+          <input type="number" name="retention" value="{{ filter_params.retention }}" min="0" max="100" step="5">
+        </div>
+        <div class="form-group">
+          <label>Recent Price Filter</label>
+          <select name="recent_price_filter">
+            <option value="omit" {{ 'selected' if filter_params.recent_price_filter == 'omit' }}>Off</option>
+            <option value="3m"   {{ 'selected' if filter_params.recent_price_filter == '3m' }}>3 Month</option>
+            <option value="6m"   {{ 'selected' if filter_params.recent_price_filter == '6m' }}>6 Month</option>
+            <option value="12m"  {{ 'selected' if filter_params.recent_price_filter == '12m' }}>12 Month</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Price Threshold</label>
+          <input type="number" name="recent_price_threshold" value="{{ filter_params.recent_price_threshold }}" step="0.01">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">run analysis</button>
+    </form>
+  </div>
+</div>
+
+{# ============================================================
+   SECTION 3: Results
+   ============================================================ #}
+{% if results %}
+
+{# --- Performance Summary --- #}
+<div class="grid-5 mb-3">
+  <div class="metric-card">
+    <div class="metric-label">Final Value ($1)</div>
+    <div class="metric-value">${{ "%.2f" | format(performance_metrics.final_value) }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Annualized Return</div>
+    <div class="metric-value text-positive">{{ "%.1f" | format(performance_metrics.annualized_return_strategy) }}%</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">S&amp;P 500 Ann.</div>
+    <div class="metric-value">{{ "%.1f" | format(performance_metrics.annualized_return_sp500) }}%</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Win Rate</div>
+    <div class="metric-value">{{ "%.0f" | format(performance_metrics.win_rate) }}%</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Max Drawdown</div>
+    <div class="metric-value text-negative">{{ "%.1f" | format(performance_metrics.max_drawdown) }}%</div>
+  </div>
+</div>
+
+<div class="grid-4 mb-3">
+  <div class="metric-card">
+    <div class="metric-label">Sharpe</div>
+    <div class="metric-value">{{ "%.2f" | format(performance_metrics.sharpe_ratio) }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Sortino</div>
+    <div class="metric-value">{{ "%.2f" | format(performance_metrics.sortino_ratio) }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Calmar</div>
+    <div class="metric-value">{{ "%.2f" | format(performance_metrics.calmar_ratio) }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Volatility</div>
+    <div class="metric-value">{{ "%.1f" | format(performance_metrics.volatility) }}%</div>
+  </div>
+</div>
+
+{# --- Year-by-Year Cards --- #}
+<h2 class="font-ui text-small mt-4 mb-2" style="text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted);">
+  Year-by-Year Analysis
+</h2>
+
+{% for r in results | reverse %}
+<div class="year-card {{ 'open' if loop.first }}">
+  <div class="year-card-header">
+    <h3>{{ r.year }}</h3>
+    <div class="year-card-stats">
+      <span>Strategy: <strong class="{{ 'text-positive' if r.strategy_return > 0 else 'text-negative' }}">{{ "%.1f" | format(r.strategy_return) }}%</strong></span>
+      <span>S&amp;P: <strong>{{ "%.1f" | format(r.sp500_return) }}%</strong></span>
+      <span class="{{ 'text-positive' if r.outperformance > 0 else 'text-negative' }}">{{ "%.1f" | format(r.outperformance) }}%</span>
+      <span>Portfolio: <strong>{{ r.portfolio | length }}</strong></span>
+    </div>
+  </div>
+
+  <div class="year-card-body">
+
+    {# Portfolio Construction Flow #}
+    <div class="flow mb-2">
+      <div class="flow-step">
+        <span class="flow-step-label">5yr Rule</span>
+        <span class="flow-step-value">{{ r.rule1 | length }}</span>
+      </div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">
+        <span class="flow-step-label">2yr Rule</span>
+        <span class="flow-step-value">{{ r.rule2 | length }}</span>
+      </div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">
+        <span class="flow-step-label">Filtered</span>
+        <span class="flow-step-value">{{ r.filtered | length }}</span>
+      </div>
+      <span class="flow-arrow">&rarr;</span>
+      <div class="flow-step">
+        <span class="flow-step-label">Retained</span>
+        <span class="flow-step-value">{{ r.retain_count }}</span>
+      </div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-step">
+        <span class="flow-step-label">New</span>
+        <span class="flow-step-value">{{ r.new_candidates | length }}</span>
+      </div>
+      <span class="flow-arrow">=</span>
+      <div class="flow-step" style="border-color: var(--text);">
+        <span class="flow-step-label">Portfolio</span>
+        <span class="flow-step-value">{{ r.portfolio | length }}</span>
+      </div>
+    </div>
+
+    {# Current Portfolio #}
+    <h3 class="font-ui text-small mb-1">{{ r.year }} Portfolio</h3>
+    <div class="tag-list mb-2">
+      {% for t in r.portfolio %}
+      <a href="/v2/stock/{{ t }}" class="tag">
+        {{ t }}
+        {% if company_details and company_details[t] %}
+          <span class="text-muted text-xs">{{ company_details[t].sector }}</span>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+
+    {# Returns from held portfolio #}
+    {% if r.last_port_returns %}
+    <h3 class="font-ui text-small mb-1">Returns (Portfolio Held During {{ r.year }})</h3>
+    <div class="table-wrap mb-2">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticker</th>
+            <th>Sector</th>
+            <th class="right">Buy</th>
+            <th class="right">Sell</th>
+            <th class="right">Return</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ticker, ret in r.last_port_returns.items() %}
+          <tr>
+            <td><a href="/v2/stock/{{ ticker }}" class="badge badge-ticker">{{ ticker }}</a></td>
+            <td class="text-muted text-xs">
+              {% if r.last_port_info and r.last_port_info[ticker] %}
+                {{ r.last_port_info[ticker].sector or '' }}
+              {% endif %}
+            </td>
+            <td class="right">${{ "%.2f" | format(ret.buy_price) }}</td>
+            <td class="right">${{ "%.2f" | format(ret.sell_price) }}</td>
+            <td class="right {{ 'text-positive' if ret.return > 0 else 'text-negative' }}">
+              {{ "%.1f" | format(ret.return) }}%
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {# Filtered Candidates Details (with new fields) #}
+    {% if r.filtered_candidates_details %}
+    <details class="mt-2">
+      <summary class="font-ui text-small" style="cursor: pointer; color: var(--muted);">
+        Filtered Candidates Details ({{ r.filtered_candidates_details | length }})
+      </summary>
+      <div class="table-wrap mt-1">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Sector</th>
+              <th class="right">Score</th>
+              <th class="right">Sales 5Y</th>
+              <th class="right">FCF 5Y</th>
+              <th class="right">Price 5Y</th>
+              <th class="right">Sales ($M)</th>
+              <th class="right">Gross Profit</th>
+              <th class="right">Op. Income</th>
+              <th class="right">FCF ($M)</th>
+              <th class="right">Op. CF</th>
+              <th class="right">CapEx</th>
+              <th class="right">Cash</th>
+              <th class="right">Debt</th>
+              <th class="right">Equity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in r.filtered_candidates_details %}
+            <tr>
+              <td><a href="/v2/stock/{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
+              <td class="text-muted text-xs">{{ c.sector or '' }}</td>
+              <td class="right">{{ "%.2f" | format(c.score) }}</td>
+              <td class="right {{ 'text-positive' if c.sales_CAGR_5Y and c.sales_CAGR_5Y > 0 else 'text-negative' }}">
+                {{ "%.1f" | format(c.sales_CAGR_5Y * 100) if c.sales_CAGR_5Y else '—' }}%
+              </td>
+              <td class="right {{ 'text-positive' if c.FCF_CAGR_5Y and c.FCF_CAGR_5Y > 0 else 'text-negative' }}">
+                {{ "%.1f" | format(c.FCF_CAGR_5Y * 100) if c.FCF_CAGR_5Y else '—' }}%
+              </td>
+              <td class="right {{ 'text-positive' if c.price_CAGR_5Y and c.price_CAGR_5Y > 0 else 'text-negative' }}">
+                {{ "%.1f" | format(c.price_CAGR_5Y * 100) if c.price_CAGR_5Y else '—' }}%
+              </td>
+              <td class="right">{{ "{:,.0f}".format(c.sales) if c.sales else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.gross_profit) if c.gross_profit else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.operating_income) if c.operating_income else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.free_cash_flow) if c.free_cash_flow else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.operating_cash_flow) if c.operating_cash_flow else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.capex) if c.capex else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.cash) if c.cash else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.total_debt) if c.total_debt else '—' }}</td>
+              <td class="right">{{ "{:,.0f}".format(c.shareholders_equity) if c.shareholders_equity else '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+    {% endif %}
+
+    {# Cumulative #}
+    <div class="flex gap-3 mt-2 font-ui text-small text-muted">
+      <span>$1 &rarr; ${{ "%.2f" | format(r.investment) }}</span>
+      <span>S&amp;P $1 &rarr; ${{ "%.2f" | format(r.investmentsp) }}</span>
+    </div>
+
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="card text-center p-3">
+  <p class="text-muted">No results yet. Open the filter parameters and run an analysis.</p>
+</div>
+{% endif %}
+
+{% endblock %}

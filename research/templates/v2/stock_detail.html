@@ -1,0 +1,259 @@
+{% extends "v2/base.html" %}
+{% set active_page = 'dashboard' %}
+{% block title %}{{ ticker }} — Darrock Research{% endblock %}
+
+{% block content %}
+
+{# --- Header --- #}
+<div class="flex items-center gap-2 mb-2">
+  <a href="/v2/dashboard" class="btn btn-sm btn-ghost">&larr; back</a>
+  <span class="badge badge-ticker" style="font-size: 1rem; padding: 0.3rem 0.8rem;">{{ ticker }}</span>
+  <div>
+    <span style="font-family: var(--font-ui); font-size: 1rem; font-weight: 500;">{{ company_name }}</span>
+    <div class="flex gap-1 mt-1">
+      {% if sector %}<span class="badge badge-sector">{{ sector }}</span>{% endif %}
+      {% if industry %}<span class="badge badge-sector">{{ industry }}</span>{% endif %}
+    </div>
+  </div>
+</div>
+
+{% if sp500_years %}
+<p class="text-muted text-small font-ui mb-3">
+  S&amp;P 500 member since {{ sp500_years | first }}
+  ({{ sp500_years | length }} years)
+</p>
+{% endif %}
+
+{# --- Key Metrics --- #}
+{% if stock_metrics and stock_metrics | length > 0 %}
+{% set latest = stock_metrics[0] %}
+<div class="grid-4 mb-3">
+  <div class="metric-card">
+    <div class="metric-label">Sales ($M)</div>
+    <div class="metric-value">{{ "{:,.0f}".format(latest.sales) if latest.sales else '—' }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Free Cash Flow ($M)</div>
+    <div class="metric-value">{{ "{:,.0f}".format(latest.free_cash_flow) if latest.free_cash_flow else '—' }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Gross Profit ($M)</div>
+    <div class="metric-value">{{ "{:,.0f}".format(latest.gross_profit) if latest.gross_profit else '—' }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Operating Income ($M)</div>
+    <div class="metric-value">{{ "{:,.0f}".format(latest.operating_income) if latest.operating_income else '—' }}</div>
+  </div>
+</div>
+
+<div class="grid-4 mb-3">
+  <div class="metric-card">
+    <div class="metric-label">Op. Cash Flow ($M)</div>
+    <div class="metric-value">{{ "{:,.0f}".format(latest.operating_cash_flow) if latest.operating_cash_flow else '—' }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">CapEx ($M)</div>
+    <div class="metric-value">{{ "{:,.0f}".format(latest.capex) if latest.capex else '—' }}</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">5Y Sales CAGR</div>
+    <div class="metric-value {{ 'text-positive' if latest.sales_CAGR_5Y and latest.sales_CAGR_5Y > 0 else 'text-negative' }}">
+      {{ "%.1f" | format(latest.sales_CAGR_5Y * 100) if latest.sales_CAGR_5Y else '—' }}%
+    </div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">5Y FCF CAGR</div>
+    <div class="metric-value {{ 'text-positive' if latest.FCF_CAGR_5Y and latest.FCF_CAGR_5Y > 0 else 'text-negative' }}">
+      {{ "%.1f" | format(latest.FCF_CAGR_5Y * 100) if latest.FCF_CAGR_5Y else '—' }}%
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# --- Financial History Table --- #}
+<div class="section">
+  <div class="section-header">Financial History</div>
+  <div class="section-body">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th class="right">Price</th>
+            <th class="right">Sales</th>
+            <th class="right">FCF</th>
+            <th class="right">Gross Profit</th>
+            <th class="right">Op. Income</th>
+            <th class="right">Op. CF</th>
+            <th class="right">COGS</th>
+            <th class="right">CapEx</th>
+            <th class="right">5Y Sales</th>
+            <th class="right">5Y FCF</th>
+            <th class="right">5Y Price</th>
+            <th class="right">2Y Sales</th>
+            <th class="right">2Y FCF</th>
+            <th class="right">2Y Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in stock_metrics %}
+          <tr>
+            <td><strong>{{ m.year }}</strong></td>
+            <td class="right">${{ "%.2f" | format(m.price) if m.price else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(m.sales) if m.sales else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(m.free_cash_flow) if m.free_cash_flow else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(m.gross_profit) if m.gross_profit else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(m.operating_income) if m.operating_income else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(m.operating_cash_flow) if m.operating_cash_flow else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(m.cogs) if m.cogs else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(m.capex) if m.capex else '—' }}</td>
+            <td class="right {{ 'text-positive' if m.sales_CAGR_5Y and m.sales_CAGR_5Y > 0 else 'text-negative' }}">
+              {{ "%.1f" | format(m.sales_CAGR_5Y * 100) if m.sales_CAGR_5Y else '—' }}%
+            </td>
+            <td class="right {{ 'text-positive' if m.FCF_CAGR_5Y and m.FCF_CAGR_5Y > 0 else 'text-negative' }}">
+              {{ "%.1f" | format(m.FCF_CAGR_5Y * 100) if m.FCF_CAGR_5Y else '—' }}%
+            </td>
+            <td class="right {{ 'text-positive' if m.price_CAGR_5Y and m.price_CAGR_5Y > 0 else 'text-negative' }}">
+              {{ "%.1f" | format(m.price_CAGR_5Y * 100) if m.price_CAGR_5Y else '—' }}%
+            </td>
+            <td class="right {{ 'text-positive' if m.sales_CAGR_2Y and m.sales_CAGR_2Y > 0 else 'text-negative' }}">
+              {{ "%.1f" | format(m.sales_CAGR_2Y * 100) if m.sales_CAGR_2Y else '—' }}%
+            </td>
+            <td class="right {{ 'text-positive' if m.FCF_CAGR_2Y and m.FCF_CAGR_2Y > 0 else 'text-negative' }}">
+              {{ "%.1f" | format(m.FCF_CAGR_2Y * 100) if m.FCF_CAGR_2Y else '—' }}%
+            </td>
+            <td class="right {{ 'text-positive' if m.price_CAGR_2Y and m.price_CAGR_2Y > 0 else 'text-negative' }}">
+              {{ "%.1f" | format(m.price_CAGR_2Y * 100) if m.price_CAGR_2Y else '—' }}%
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{# --- Balance Sheet --- #}
+{% if stock_metrics and stock_metrics | length > 0 and stock_metrics[0].cash is not none %}
+<div class="section">
+  <div class="section-header">Balance Sheet (Latest Quarter)</div>
+  <div class="section-body">
+    <div class="grid-3">
+      <div>
+        <h3 class="font-ui text-small mb-1" style="color: var(--muted);">Assets</h3>
+        <div class="metric-card mb-1">
+          <div class="metric-label">Cash & Equivalents</div>
+          <div class="metric-value text-small">{{ "{:,.0f}".format(latest.cash) if latest.cash else '—' }}</div>
+        </div>
+        <div class="metric-card mb-1">
+          <div class="metric-label">Short-Term Investments</div>
+          <div class="metric-value text-small">{{ "{:,.0f}".format(latest.short_term_investments) if latest.short_term_investments else '—' }}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Accounts Receivable</div>
+          <div class="metric-value text-small">{{ "{:,.0f}".format(latest.accounts_receivable) if latest.accounts_receivable else '—' }}</div>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-ui text-small mb-1" style="color: var(--muted);">Liabilities</h3>
+        <div class="metric-card mb-1">
+          <div class="metric-label">Total Debt</div>
+          <div class="metric-value text-small">{{ "{:,.0f}".format(latest.total_debt) if latest.total_debt else '—' }}</div>
+        </div>
+        <div class="metric-card mb-1">
+          <div class="metric-label">Accounts Payable</div>
+          <div class="metric-value text-small">{{ "{:,.0f}".format(latest.accounts_payable) if latest.accounts_payable else '—' }}</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Current Liabilities</div>
+          <div class="metric-value text-small">{{ "{:,.0f}".format(latest.current_liabilities) if latest.current_liabilities else '—' }}</div>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-ui text-small mb-1" style="color: var(--muted);">Equity</h3>
+        <div class="metric-card">
+          <div class="metric-label">Shareholders' Equity</div>
+          <div class="metric-value text-small {{ 'text-negative' if latest.shareholders_equity and latest.shareholders_equity < 0 }}">
+            {{ "{:,.0f}".format(latest.shareholders_equity) if latest.shareholders_equity else '—' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# --- Quarterly Financials --- #}
+{% if financial_data %}
+<div class="section collapsed">
+  <div class="section-header">Quarterly Financials</div>
+  <div class="section-body">
+    <div class="table-wrap table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Q</th>
+            <th class="right">Sales ($M)</th>
+            <th class="right">FCF ($M)</th>
+            <th>Filing Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in financial_data %}
+          <tr>
+            <td>{{ q.year }}</td>
+            <td><span class="badge">Q{{ q.quarter }}</span></td>
+            <td class="right">{{ "{:,.0f}".format(q.sales) if q.sales else '—' }}</td>
+            <td class="right">{{ "{:,.0f}".format(q.free_cash_flow) if q.free_cash_flow else '—' }}</td>
+            <td class="text-muted">{{ q.filing_date or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# --- Daily Prices --- #}
+{% if daily_price_data and daily_price_data | length > 0 %}
+<div class="section collapsed">
+  <div class="section-header">Recent Daily Prices</div>
+  <div class="section-body">
+    <div class="table-wrap table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="right">Price</th>
+            <th class="right">Day Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for i in range(daily_price_data | length) %}
+          {% set d = daily_price_data[i] %}
+          <tr>
+            <td>{{ d.date }}</td>
+            <td class="right"><strong>${{ "%.2f" | format(d.price) }}</strong></td>
+            <td class="right">
+              {% if i < (daily_price_data | length) - 1 %}
+                {% set prev = daily_price_data[i + 1].price %}
+                {% if prev and prev > 0 %}
+                  {% set chg = ((d.price - prev) / prev * 100) %}
+                  <span class="{{ 'text-positive' if chg >= 0 else 'text-negative' }}">
+                    {{ "%.2f" | format(chg) }}%
+                  </span>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

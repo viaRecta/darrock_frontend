@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Research — Darrock</title>
+  <link rel="stylesheet" href="/static/css/v3.css">
+</head>
+<body>
+
+{# ============================================================
+   TOP BAR
+   ============================================================ #}
+<header class="topbar">
+  <a href="/v3/research" class="topbar-brand">darrock</a>
+  <div class="topbar-actions">
+    <a href="/v3/research" class="active">research</a>
+    <a href="/v3/p/20" target="_blank">preview share</a>
+  </div>
+</header>
+
+{# ============================================================
+   APP SHELL: Left Panel (filters) + Right Panel (results)
+   ============================================================ #}
+<div class="panels">
+
+  {# ==================== LEFT PANEL ==================== #}
+  <aside class="panel-left">
+    <div class="panel-toggle">
+      <span>Filters</span>
+      <span class="panel-toggle-icon">&#9664;</span>
+    </div>
+    <div class="panel-collapse-label">filters</div>
+
+    <form id="filter-form" method="post" action="/v3/research">
+    <div class="panel-content">
+
+      {# --- ACCORDION 1: Screening Rules --- #}
+      <div class="acc">
+        <div class="acc-head">Screening Rules</div>
+        <div class="acc-body">
+
+          {# Sub-tabs: 5-Year / 2-Year #}
+          <div class="subtabs">
+            <button type="button" class="subtab active" data-target="tab-5yr">5-Year (Rule 1)</button>
+            <button type="button" class="subtab" data-target="tab-2yr">2-Year (Rule 2)</button>
+          </div>
+
+          {# --- 5-Year Rule Tab --- #}
+          <div id="tab-5yr" class="subtab-panel active">
+            <div class="f-grid mb-1">
+              <div class="f-group">
+                <label>Min Sales Scale</label>
+                <input type="number" name="sales_min_scale" value="{{ rule1_params.sales_min_scale }}" step="100">
+              </div>
+              <div class="f-group">
+                <label>Sales CAGR</label>
+                <input type="number" name="sales_cagr" value="{{ rule1_params.sales_cagr }}" step="0.01">
+              </div>
+              <div class="f-group">
+                <label>FCF CAGR</label>
+                <input type="number" name="fcf_cagr" value="{{ rule1_params.fcf_cagr }}" step="0.01">
+              </div>
+              <div class="f-group">
+                <label>Price CAGR</label>
+                <input type="number" name="price_cagr" value="{{ rule1_params.price_cagr }}" step="0.01">
+              </div>
+            </div>
+
+            <p class="label mt-1 mb-1" style="font-size:0.6rem;">New Metrics (5-Year)</p>
+            <div class="f-grid mb-1">
+              <div class="f-group">
+                <label>Gross Profit CAGR</label>
+                <input type="number" name="gross_profit_cagr" value="{{ rule1_params.get('gross_profit_cagr', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="gross_profit_cagr_omit" {{ 'checked' if rule1_params.get('gross_profit_cagr_omit') }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>Op. Cash Flow CAGR</label>
+                <input type="number" name="op_cf_cagr" value="{{ rule1_params.get('op_cf_cagr', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="op_cf_cagr_omit" {{ 'checked' if rule1_params.get('op_cf_cagr_omit') }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>Op. Income CAGR</label>
+                <input type="number" name="op_income_cagr" value="{{ rule1_params.get('op_income_cagr', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="op_income_cagr_omit" {{ 'checked' if rule1_params.get('op_income_cagr_omit') }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>CapEx CAGR</label>
+                <input type="number" name="capex_cagr" value="{{ rule1_params.get('capex_cagr', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="capex_cagr_omit" {{ 'checked' if rule1_params.get('capex_cagr_omit') }}><span>omit</span></div>
+              </div>
+            </div>
+
+            <div class="flex gap-2 flex-wrap mt-1">
+              <div class="f-omit"><input type="checkbox" name="omit_negative_fcf" {{ 'checked' if rule1_params.omit_negative_fcf }}><span>Omit negative FCF</span></div>
+            </div>
+          </div>
+
+          {# --- 2-Year Rule Tab --- #}
+          <div id="tab-2yr" class="subtab-panel">
+            <div class="f-grid mb-1">
+              <div class="f-group">
+                <label>Sales CAGR 2Y</label>
+                <input type="number" name="sales_cagr_2y" value="{{ rule2_params.sales_cagr_2y }}" step="0.01">
+                <div class="f-omit"><input type="checkbox" name="sales_cagr_2y_omit" {{ 'checked' if rule2_params.sales_cagr_2y_omit }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>FCF CAGR 2Y</label>
+                <input type="number" name="fcf_cagr_2y" value="{{ rule2_params.fcf_cagr_2y }}" step="0.01">
+                <div class="f-omit"><input type="checkbox" name="fcf_cagr_2y_omit" {{ 'checked' if rule2_params.fcf_cagr_2y_omit }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>Price CAGR 2Y</label>
+                <input type="number" name="price_cagr_2y" value="{{ rule2_params.price_cagr_2y }}" step="0.01">
+                <div class="f-omit"><input type="checkbox" name="price_cagr_2y_omit" {{ 'checked' if rule2_params.price_cagr_2y_omit }}><span>omit</span></div>
+              </div>
+            </div>
+
+            <p class="label mt-1 mb-1" style="font-size:0.6rem;">New Metrics (2-Year)</p>
+            <div class="f-grid mb-1">
+              <div class="f-group">
+                <label>Gross Profit CAGR</label>
+                <input type="number" name="gross_profit_cagr_2y" value="{{ rule2_params.get('gross_profit_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="gross_profit_cagr_2y_omit" {{ 'checked' if rule2_params.get('gross_profit_cagr_2y_omit') }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>Op. Cash Flow CAGR</label>
+                <input type="number" name="op_cf_cagr_2y" value="{{ rule2_params.get('op_cf_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="op_cf_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_cf_cagr_2y_omit') }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>Op. Income CAGR</label>
+                <input type="number" name="op_income_cagr_2y" value="{{ rule2_params.get('op_income_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="op_income_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_income_cagr_2y_omit') }}><span>omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>CapEx CAGR</label>
+                <input type="number" name="capex_cagr_2y" value="{{ rule2_params.get('capex_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="capex_cagr_2y_omit" {{ 'checked' if rule2_params.get('capex_cagr_2y_omit') }}><span>omit</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {# --- ACCORDION 2: Ranking & Scoring --- #}
+      <div class="acc closed">
+        <div class="acc-head">Ranking &amp; Scoring</div>
+        <div class="acc-body">
+          <div class="f-grid mb-1">
+            <div class="f-group">
+              <label>Method</label>
+              <select name="ranking_method">
+                <option value="2" {{ 'selected' if filter_params.ranking_method == '2' }}>2Y Normalized</option>
+                <option value="5" {{ 'selected' if filter_params.ranking_method == '5' }}>5Y Normalized</option>
+                <option value="6" {{ 'selected' if filter_params.ranking_method == '6' }}>5Y + Price</option>
+                <option value="7" {{ 'selected' if filter_params.ranking_method == '7' }}>Sales Only</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="label mt-1 mb-1" style="font-size:0.6rem;">Weight Adjustments</p>
+          <div class="f-grid-3 f-grid">
+            <div class="f-group">
+              <label>Sales Weight</label>
+              <input type="number" name="salesMomRate" value="{{ filter_params.salesMomRate }}" step="0.01" min="0" max="1">
+            </div>
+            <div class="f-group">
+              <label>FCF Weight</label>
+              <input type="number" name="fcfMomRate" value="{{ filter_params.fcfMomRate }}" step="0.01" min="0" max="1">
+            </div>
+            <div class="f-group">
+              <label>Price Inv. Weight</label>
+              <input type="number" name="priceInvRate" value="{{ filter_params.priceInvRate }}" step="0.01" min="0" max="1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# --- ACCORDION 3: Portfolio Settings --- #}
+      <div class="acc closed">
+        <div class="acc-head">Portfolio Settings</div>
+        <div class="acc-body">
+          <div class="f-grid mb-1">
+            <div class="f-group">
+              <label>Max Size</label>
+              <input type="number" name="maxPortfolio" value="{{ filter_params.maxPortfolio }}" min="1" max="50">
+            </div>
+            <div class="f-group">
+              <label>Retention %</label>
+              <input type="number" name="retention" value="{{ filter_params.retention }}" min="0" max="100" step="5">
+            </div>
+          </div>
+
+          <p class="label mt-1 mb-1" style="font-size:0.6rem;">Recent Price Filter</p>
+          <div class="f-grid">
+            <div class="f-group">
+              <label>Lookback</label>
+              <select name="recent_price_filter">
+                <option value="omit" {{ 'selected' if filter_params.recent_price_filter == 'omit' }}>Off</option>
+                <option value="3m"   {{ 'selected' if filter_params.recent_price_filter == '3m' }}>3 months</option>
+                <option value="6m"   {{ 'selected' if filter_params.recent_price_filter == '6m' }}>6 months</option>
+                <option value="12m"  {{ 'selected' if filter_params.recent_price_filter == '12m' }}>12 months</option>
+              </select>
+            </div>
+            <div class="f-group">
+              <label>Threshold</label>
+              <input type="number" name="recent_price_threshold" value="{{ filter_params.recent_price_threshold }}" step="0.01">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# --- ACCORDION 4: Saved Portfolios --- #}
+      <div class="acc closed">
+        <div class="acc-head">Saved Portfolios</div>
+        <div class="acc-body">
+          {% if next_year_portfolio %}
+          <form id="save-portfolio-form" class="mb-2">
+            <div class="f-group mb-1">
+              <label>Save current as</label>
+              <div class="flex gap-1">
+                <input type="text" name="portfolio_name" placeholder="Name" required style="flex:1;">
+                <button type="submit" class="btn btn-sm">save</button>
+              </div>
+            </div>
+            <input type="hidden" name="portfolio_year" value="{{ endDate }}">
+            {% for t in next_year_portfolio %}
+            <input type="hidden" name="portfolio_tickers[]" value="{{ t }}">
+            {% endfor %}
+          </form>
+          {% endif %}
+
+          {% for p in saved_portfolios or [] %}
+          <div class="portfolio-row flex items-center justify-between" style="padding:0.4rem 0;border-bottom:1px solid var(--divider);font-family:var(--font-ui);font-size:var(--fs-sm);">
+            <div>
+              <strong>{{ p.name }}</strong>
+              <span class="text-muted" style="font-size:var(--fs-xs);">{{ p.year }} &middot; {{ p.tickers|length }}</span>
+            </div>
+            <div class="flex gap-1">
+              <button class="btn btn-sm btn-ghost" data-load-portfolio="{{ p.id }}">load</button>
+              <button class="btn btn-sm btn-ghost btn-danger" data-delete-portfolio="{{ p.id }}">&times;</button>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>{# /panel-content #}
+
+    {# Run button pinned at bottom #}
+    <div class="panel-footer">
+      <button type="submit" class="btn btn-primary btn-full">run analysis</button>
+    </div>
+    </form>
+  </aside>
+
+  {# ==================== RIGHT PANEL: RESULTS ==================== #}
+  <main class="panel-right">
+    {% if results %}
+
+    {# --- Summary Strip --- #}
+    <div class="summary-strip">
+      <div class="summary-item">
+        <span class="label">$1 Invested</span>
+        <span class="value text-pos">${{ "%.2f"|format(performance_metrics.final_value) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Annualized</span>
+        <span class="value">{{ "%.1f"|format(performance_metrics.annualized_return_strategy) }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">S&amp;P Ann.</span>
+        <span class="value">{{ "%.1f"|format(performance_metrics.annualized_return_sp500) }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Win Rate</span>
+        <span class="value">{{ "%.0f"|format(performance_metrics.win_rate) }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Sharpe</span>
+        <span class="value">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Max DD</span>
+        <span class="value text-neg">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</span>
+      </div>
+    </div>
+
+    {# --- Current Portfolio --- #}
+    {% if next_year_portfolio %}
+    <div class="flex items-center gap-2 mb-2">
+      <span class="label">{{ endDate }} Portfolio</span>
+      <div class="port-strip">
+        {% for t in next_year_portfolio %}
+        <a href="#" data-stock="{{ t }}" class="tag">
+          {{ t }}
+          {% if company_details and company_details[t] %}
+            <span class="text-muted" style="font-size:0.6rem;">{{ company_details[t].sector }}</span>
+          {% endif %}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {# --- Year Table --- #}
+    <table class="year-table">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th class="r">Strategy</th>
+          <th class="r">S&amp;P</th>
+          <th class="r">&plusmn;</th>
+          <th class="r">$1</th>
+          <th class="r">Stocks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results|reverse %}
+        <tr class="year-row" data-year="{{ r.year }}">
+          <td><strong>{{ r.year }}</strong></td>
+          <td class="r {{ 'text-pos' if r.strategy_return > 0 else 'text-neg' }}">{{ "%.1f"|format(r.strategy_return) }}%</td>
+          <td class="r">{{ "%.1f"|format(r.sp500_return) }}%</td>
+          <td class="r">
+            <span class="badge {{ 'badge-pos' if r.outperformance > 0 else 'badge-neg' }}">{{ "%.1f"|format(r.outperformance) }}%</span>
+          </td>
+          <td class="r mono">${{ "%.2f"|format(r.investment) }}</td>
+          <td class="r">{{ r.portfolio|length }}</td>
+        </tr>
+        <tr><td colspan="6" style="padding:0;">
+          <div class="year-detail" id="detail-{{ r.year }}">
+
+            {# Flow #}
+            <div class="flow">
+              <div class="flow-step"><span class="label">5yr</span><span class="value">{{ r.rule1|length }}</span></div>
+              <span class="flow-arrow">&rarr;</span>
+              <div class="flow-step"><span class="label">2yr</span><span class="value">{{ r.rule2|length }}</span></div>
+              <span class="flow-arrow">&rarr;</span>
+              <div class="flow-step"><span class="label">Filter</span><span class="value">{{ r.filtered|length }}</span></div>
+              <span class="flow-arrow">&rarr;</span>
+              <div class="flow-step"><span class="label">Kept</span><span class="value">{{ r.retain_count }}</span></div>
+              <span class="flow-arrow">+</span>
+              <div class="flow-step"><span class="label">New</span><span class="value">{{ r.new_candidates|length }}</span></div>
+              <span class="flow-arrow">=</span>
+              <div class="flow-step" style="border-color:var(--text);"><span class="label">Port.</span><span class="value">{{ r.portfolio|length }}</span></div>
+            </div>
+
+            {# Portfolio tickers #}
+            <div class="flex flex-wrap gap-1 mb-2">
+              {% for t in r.portfolio %}
+              <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
+              {% endfor %}
+            </div>
+
+            {# Returns table #}
+            {% if r.last_port_returns %}
+            <div class="tbl-wrap">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Ticker</th><th>Sector</th>
+                    <th class="r">Buy</th><th class="r">Sell</th><th class="r">Return</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for ticker, ret in r.last_port_returns.items() %}
+                  <tr>
+                    <td><a href="#" data-stock="{{ ticker }}" class="badge badge-ticker">{{ ticker }}</a></td>
+                    <td class="text-muted" style="font-size:var(--fs-xs);">{{ r.last_port_info[ticker].sector if r.last_port_info and r.last_port_info[ticker] else '' }}</td>
+                    <td class="r">${{ "%.2f"|format(ret.buy_price) }}</td>
+                    <td class="r">${{ "%.2f"|format(ret.sell_price) }}</td>
+                    <td class="r {{ 'text-pos' if ret.return > 0 else 'text-neg' }}">{{ "%.1f"|format(ret.return) }}%</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+
+            {# Filtered candidates #}
+            {% if r.filtered_candidates_details %}
+            <details class="mt-2" style="font-family:var(--font-ui);font-size:var(--fs-xs);">
+              <summary style="cursor:pointer;color:var(--muted);">Filtered candidates ({{ r.filtered_candidates_details|length }})</summary>
+              <div class="tbl-wrap mt-1">
+                <table class="tbl">
+                  <thead><tr>
+                    <th>Ticker</th><th>Sector</th><th class="r">Score</th>
+                    <th class="r">Sales 5Y</th><th class="r">FCF 5Y</th>
+                    <th class="r">Sales $M</th><th class="r">GP $M</th><th class="r">EBIT $M</th>
+                    <th class="r">FCF $M</th><th class="r">OpCF $M</th><th class="r">CapEx</th>
+                    <th class="r">Cash</th><th class="r">Debt</th><th class="r">Equity</th>
+                  </tr></thead>
+                  <tbody>
+                    {% for c in r.filtered_candidates_details %}
+                    <tr>
+                      <td><a href="#" data-stock="{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
+                      <td class="text-muted">{{ c.sector or '' }}</td>
+                      <td class="r">{{ "%.2f"|format(c.score) }}</td>
+                      <td class="r {{ 'text-pos' if c.sales_CAGR_5Y and c.sales_CAGR_5Y > 0 else 'text-neg' }}">{{ "%.0f"|format(c.sales_CAGR_5Y * 100) if c.sales_CAGR_5Y else '—' }}%</td>
+                      <td class="r {{ 'text-pos' if c.FCF_CAGR_5Y and c.FCF_CAGR_5Y > 0 else 'text-neg' }}">{{ "%.0f"|format(c.FCF_CAGR_5Y * 100) if c.FCF_CAGR_5Y else '—' }}%</td>
+                      <td class="r">{{ "{:,.0f}".format(c.sales) if c.sales else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.gross_profit) if c.gross_profit else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.operating_income) if c.operating_income else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.free_cash_flow) if c.free_cash_flow else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.operating_cash_flow) if c.operating_cash_flow else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.capex) if c.capex else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.cash) if c.cash else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.total_debt) if c.total_debt else '—' }}</td>
+                      <td class="r">{{ "{:,.0f}".format(c.shareholders_equity) if c.shareholders_equity else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+            {% endif %}
+
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% else %}
+    <div class="text-center p-2" style="margin-top:20vh;">
+      <h2 style="color:var(--muted);">darrock</h2>
+      <p class="ui text-muted mt-1" style="font-size:var(--fs-sm);">Set your parameters and run an analysis.</p>
+    </div>
+    {% endif %}
+  </main>
+
+</div>{# /panels #}
+
+{# ============================================================
+   SLIDE-OVER: Stock Detail (loaded via AJAX)
+   ============================================================ #}
+<div id="slide-over-backdrop" class="slide-over-backdrop"></div>
+<div id="slide-over" class="slide-over">
+  <button class="slide-close">&times; close</button>
+  <div id="slide-over-content"></div>
+</div>
+
+<script src="/static/js/v3.js"></script>
+</body>
+</html>
