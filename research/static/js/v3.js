@@ -189,12 +189,21 @@ function closeSlideOver() {
 /* --- Portfolio CRUD --- */
 function initPortfolioActions() {
   // Save
-  const saveForm = document.getElementById('save-portfolio-form');
-  if (saveForm) {
-    saveForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+  const saveBtn = document.getElementById('save-portfolio-btn');
+  const saveContainer = document.getElementById('save-portfolio-form');
+  if (saveBtn && saveContainer) {
+    saveBtn.addEventListener('click', async () => {
+      const nameInput = saveContainer.querySelector('[name="portfolio_name"]');
+      if (!nameInput || !nameInput.value.trim()) {
+        toast('Enter a portfolio name', 'err');
+        return;
+      }
+      const formData = new FormData();
+      saveContainer.querySelectorAll('input[name]').forEach(el => {
+        formData.append(el.name, el.value);
+      });
       try {
-        const res = await fetch('/save_portfolio', { method: 'POST', body: new FormData(saveForm) });
+        const res = await fetch('/save_portfolio', { method: 'POST', body: formData });
         const data = await res.json();
         toast(data.message || 'Saved', data.success ? 'ok' : 'err');
         if (data.success) setTimeout(() => location.reload(), 500);

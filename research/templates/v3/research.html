@@ -225,26 +225,20 @@
         </div>
       </div>
 
+
+    </div>{# /panel-content #}
+
+    {# Run button pinned at bottom #}
+    <div class="panel-footer">
+      <button type="submit" class="btn btn-primary btn-full">run analysis</button>
+    </div>
+    <div class="panel-footer">
       {# --- ACCORDION 4: Saved Portfolios --- #}
       <div class="acc closed">
         <div class="acc-head">Saved Portfolios</div>
         <div class="acc-body">
-          {% if next_year_portfolio %}
-          <div id="save-portfolio-form" class="mb-2">
-            <div class="f-group mb-1">
-              <label>Save current as</label>
-              <div class="flex gap-1">
-                <input type="text" name="portfolio_name" placeholder="Name" required style="flex:1;">
-                <button type="button" class="btn btn-sm" id="save-portfolio-btn">save</button>
-              </div>
-            </div>
-            <input type="hidden" name="portfolio_year" value="{{ endDate }}">
-            {% for t in next_year_portfolio %}
-            <input type="hidden" name="portfolio_tickers[]" value="{{ t }}">
-            {% endfor %}
-          </div>
-          {% endif %}
 
+          {# --- Portfolio List --- #}
           {% for p in saved_portfolios or [] %}
           <div class="portfolio-row flex items-center justify-between" style="padding:0.4rem 0;border-bottom:1px solid var(--divider);font-family:var(--font-ui);font-size:var(--fs-sm);">
             <div>
@@ -253,18 +247,33 @@
             </div>
             <div class="flex gap-1">
               <button class="btn btn-sm btn-ghost" data-load-portfolio="{{ p.id }}">load</button>
+              {# Only show delete for user portfolios (id > 10) #}
+              {% if p.id > 10 %}
               <button class="btn btn-sm btn-ghost btn-danger" data-delete-portfolio="{{ p.id }}">&times;</button>
+              {% endif %}
             </div>
           </div>
           {% endfor %}
+
+          {# --- Save Current --- #}
+          {% if next_year_portfolio %}
+          <div id="save-portfolio-form" style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--divider);">
+            <div class="f-group mb-1">
+              <label>Save current portfolio as</label>
+              <div class="flex gap-1">
+                <input type="text" name="portfolio_name" placeholder="Name" style="flex:1;">
+              </div>
+            </div>
+            <input type="hidden" name="portfolio_year" value="{{ endDate }}">
+            {% for t in next_year_portfolio %}
+            <input type="hidden" name="portfolio_tickers[]" value="{{ t }}">
+            {% endfor %}
+            <button type="button" class="btn btn-sm btn-full" id="save-portfolio-btn" style="margin-top:0.4rem;">save portfolio</button>
+          </div>
+          {% endif %}
+
         </div>
       </div>
-
-    </div>{# /panel-content #}
-
-    {# Run button pinned at bottom #}
-    <div class="panel-footer">
-      <button type="submit" class="btn btn-primary btn-full">run analysis</button>
     </div>
     </form>
   </aside>
@@ -273,31 +282,63 @@
   <main class="panel-right">
     {% if results %}
 
-    {# --- Summary Strip --- #}
-    <div class="summary-strip">
+    {# --- Primary Summary --- #}
+    <div class="summary-strip" style="border-left: 3px solid var(--text);">
       <div class="summary-item">
-        <span class="label">$1 Invested</span>
+        <span class="label">$1 &rarr; Strategy</span>
         <span class="value text-pos">${{ performance_metrics.final_value|f2 }}</span>
       </div>
       <div class="summary-item">
-        <span class="label">Annualized</span>
-        <span class="value">{{ performance_metrics.annualized_return_strategy|f1 }}%</span>
+        <span class="label">$1 &rarr; S&amp;P 500</span>
+        <span class="value">${{ performance_metrics.sp500_final_value|f2 }}</span>
       </div>
       <div class="summary-item">
-        <span class="label">S&amp;P Ann.</span>
-        <span class="value">{{ performance_metrics.annualized_return_sp500|f1 }}%</span>
+        <span class="label">Annualized Return</span>
+        <span class="value">{{ performance_metrics.annualized_return_strategy|f2 }}%</span>
       </div>
+      <div class="summary-item">
+        <span class="label">S&amp;P Annualized</span>
+        <span class="value">{{ performance_metrics.annualized_return_sp500|f2 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Compound Return</span>
+        <span class="value">{{ performance_metrics.total_return|f2 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">S&amp;P 500 Compound</span>
+        <span class="value">{{ performance_metrics.sp500_return|f2 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Outperformance</span>
+        <span class="value {{ 'text-pos' if performance_metrics.outperformance and performance_metrics.outperformance > 0 else 'text-neg' }}">{{ performance_metrics.outperformance|f2 }}%</span>
+      </div>
+    </div>
+
+    {# --- Secondary Metrics --- #}
+    <div class="summary-strip" style="border-left: 3px solid var(--border);">
       <div class="summary-item">
         <span class="label">Win Rate</span>
         <span class="value">{{ performance_metrics.win_rate|f1 }}%</span>
       </div>
       <div class="summary-item">
-        <span class="label">Sharpe</span>
+        <span class="label">Volatility</span>
+        <span class="value">{{ performance_metrics.volatility|f1 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Max Drawdown</span>
+        <span class="value text-neg">{{ performance_metrics.max_drawdown|f1 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Sharpe Ratio</span>
         <span class="value">{{ performance_metrics.sharpe_ratio|f2 }}</span>
       </div>
       <div class="summary-item">
-        <span class="label">Max DD</span>
-        <span class="value text-neg">{{ performance_metrics.max_drawdown|f1 }}%</span>
+        <span class="label">Sortino Ratio</span>
+        <span class="value">{{ performance_metrics.sortino_ratio|f2 }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Calmar Ratio</span>
+        <span class="value">{{ performance_metrics.calmar_ratio|f2 }}</span>
       </div>
     </div>
 
@@ -306,7 +347,7 @@
     <div class="flex items-center gap-2 mb-2">
       <span class="label">{{ endDate }} Portfolio</span>
       <div class="port-strip">
-        {% for t in next_year_portfolio %}
+        {% for t in next_year_portfolio|sort(attribute='t')  %}
         <a href="#" data-stock="{{ t }}" class="tag">
           {{ t }}
           {% if company_details and company_details[t] %}
