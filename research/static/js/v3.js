@@ -17,18 +17,42 @@ document.addEventListener('DOMContentLoaded', () => {
 function initPanelToggle() {
   const toggle = document.querySelector('.panel-toggle');
   const panel = document.querySelector('.panel-left');
-  if (!toggle || !panel) return;
+  const fab = document.getElementById('fab-filters');
+  const backdrop = document.getElementById('sheet-backdrop');
+  if (!panel) return;
 
-  toggle.addEventListener('click', () => {
-    if (window.innerWidth <= 768) {
-      // Mobile: toggle bottom sheet
-      panel.classList.toggle('mobile-open');
-    } else {
-      panel.classList.toggle('collapsed');
-    }
-  });
+  function openMobileSheet() {
+    panel.classList.add('mobile-open');
+    if (backdrop) backdrop.classList.add('open');
+  }
 
-  // Clicking the collapsed label also opens
+  function closeMobileSheet() {
+    panel.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('open');
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        if (panel.classList.contains('mobile-open')) closeMobileSheet();
+        else openMobileSheet();
+      } else {
+        panel.classList.toggle('collapsed');
+      }
+    });
+  }
+
+  // FAB button opens the sheet on mobile
+  if (fab) {
+    fab.addEventListener('click', openMobileSheet);
+  }
+
+  // Backdrop click closes the sheet
+  if (backdrop) {
+    backdrop.addEventListener('click', closeMobileSheet);
+  }
+
+  // Clicking the collapsed label also opens (desktop)
   const collapseLabel = panel.querySelector('.panel-collapse-label');
   if (collapseLabel) {
     collapseLabel.addEventListener('click', () => {
@@ -40,6 +64,7 @@ function initPanelToggle() {
 /* --- Mobile: swipe-down to close bottom sheet --- */
 function initMobileSheet() {
   const panel = document.querySelector('.panel-left');
+  const backdrop = document.getElementById('sheet-backdrop');
   if (!panel) return;
 
   let startY = 0;
@@ -51,6 +76,7 @@ function initMobileSheet() {
     const dy = e.changedTouches[0].clientY - startY;
     if (dy > 60) {
       panel.classList.remove('mobile-open');
+      if (backdrop) backdrop.classList.remove('open');
     }
   }, { passive: true });
 }

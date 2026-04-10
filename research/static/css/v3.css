@@ -4,13 +4,13 @@
    ============================================================ */
 
 /* --- Fonts --- */
-@font-face {
-  font-family: 'Castellar';
-  src: url('/static/fonts/Castellar Regular.ttf') format('truetype');
-  font-weight: normal; font-style: normal; font-display: swap;
-}
 @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Jost:ital,wght@0,100..900;1,100..900&display=swap');
 
+@font-face {
+  font-family: 'Castellar';
+  src: url('/static/fonts/CastellarRegular.ttf') format('truetype');
+  font-weight: normal; font-style: normal; font-display: swap;
+}
 /* --- Tokens --- */
 :root {
   --bg:        #ebebeb;
@@ -133,6 +133,8 @@ h3 { font-size: var(--fs-base); }
 .panel-left.collapsed { width: var(--panel-min); }
 .panel-left.collapsed .panel-content { display: none; }
 .panel-left.collapsed .panel-collapse-label { display: flex; }
+.panel-left.collapsed .panel-toggle span:first-child { display: none; }
+.panel-left.collapsed .panel-toggle { justify-content: center; }
 
 .panel-toggle {
   height: 36px;
@@ -317,14 +319,16 @@ h3 { font-size: var(--fs-base); }
 .year-table thead th.r { text-align: right; }
 
 .year-table tbody td {
-  padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--divider);
+  padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--divider);
   white-space: nowrap; vertical-align: top;
 }
 
 .year-table tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
 
-.year-table tbody tr { cursor: pointer; transition: background 0.1s; }
-.year-table tbody tr:hover { background: rgba(0,0,0,0.02); }
+.year-table tbody tr.year-row { cursor: pointer; transition: background 0.12s; }
+.year-table tbody tr.year-row:nth-child(4n+1) { background: rgba(0,0,0,0.018); }
+.year-table tbody tr.year-row:hover { background: rgba(0,0,0,0.05); }
+.year-table tbody tr.year-row.active { background: rgba(0,0,0,0.06); font-weight: 500; }
 
 /* Expanded year detail (hidden by default, shown below the row) */
 .year-detail {
@@ -573,33 +577,64 @@ body.public-page { overflow: auto; }
    MOBILE RESPONSIVE
    ============================================================ */
 
+/* Floating filter button — hidden on desktop, visible on mobile */
+.fab-filters {
+  display: none;
+  position: fixed; bottom: 1rem; right: 1rem; z-index: 140;
+  width: 48px; height: 48px;
+  border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-ui); font-size: var(--fs-xs);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  cursor: pointer; align-items: center; justify-content: center;
+}
+
+/* Mobile backdrop for filter sheet */
+.sheet-backdrop {
+  display: none;
+  position: fixed; inset: 0; z-index: 149;
+  background: rgba(0,0,0,0.2);
+}
+.sheet-backdrop.open { display: block; }
+
 /* Mobile: bottom sheet for filters */
 @media (max-width: 768px) {
   body { overflow: auto; }
 
   .panels { flex-direction: column; height: auto; min-height: calc(100dvh - 44px); }
 
+  .fab-filters { display: flex; }
+
   .panel-left {
     position: fixed; bottom: 0; left: 0; right: 0;
     width: 100% !important; max-width: 100%;
-    height: 70vh; max-height: 70vh;
+    height: 75vh; max-height: 75vh;
     border-right: none; border-top: 1px solid var(--border);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
     z-index: 150;
-    transform: translateY(calc(100% - 48px));
+    transform: translateY(100%);
     transition: transform 0.3s ease;
   }
 
   .panel-left.mobile-open { transform: translateY(0); }
-  .panel-left.collapsed { width: 100% !important; transform: translateY(calc(100% - 48px)); }
+
+  /* Override desktop collapsed behavior on mobile */
+  .panel-left.collapsed {
+    width: 100% !important;
+    transform: translateY(100%);
+  }
   .panel-left.collapsed .panel-content { display: block; }
   .panel-left.collapsed .panel-collapse-label { display: none; }
   .panel-left.collapsed .panel-footer { display: block; }
+  .panel-left.collapsed .panel-toggle span:first-child { display: inline; }
+  .panel-left.collapsed .panel-toggle { justify-content: space-between; }
 
   .panel-toggle {
     height: 48px;
     justify-content: center; gap: 0.5rem;
+    position: relative;
   }
   .panel-toggle::before {
     content: ''; display: block; width: 32px; height: 3px;
@@ -607,7 +642,7 @@ body.public-page { overflow: auto; }
     position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
   }
 
-  .panel-right { padding: 1rem; padding-bottom: 60px; }
+  .panel-right { padding: 1rem; padding-bottom: 70px; }
 
   .slide-over { width: 100vw; top: 44px; }
 
@@ -618,12 +653,20 @@ body.public-page { overflow: auto; }
   .f-grid-3 { grid-template-columns: 1fr 1fr; }
 
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+
+  /* Fix 4: smaller metric cards on mobile for public page */
+  .public-wrap .metric-card { padding: 0.5rem 0.65rem; }
+  .public-wrap .metric-card .value { font-size: var(--fs-base); }
+  .public-wrap .grid-4 { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .public-wrap .hero { padding: 1.5rem 0.5rem 1rem; }
+  .public-wrap .hero h1 { font-size: var(--fs-lg); }
 }
 
 @media (max-width: 480px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .public-wrap .grid-4 { grid-template-columns: 1fr 1fr; } /* keep 2-col for metrics even on small */
   .f-grid { grid-template-columns: 1fr; }
-  .summary-strip { flex-direction: column; }
+  .summary-strip { flex-direction: row; }
 }
 
 /* ============================================================
