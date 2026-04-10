@@ -25,52 +25,46 @@
 <div class="grid-3 mb-2">
   <div class="metric-card card">
     <span class="label">Sales ($M)</span>
-    <span class="value">{{ "{:,.0f}".format(latest.sales) if latest.sales else '—' }}</span>
+    <span class="value">{{ latest.sales|f0 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">FCF ($M)</span>
-    <span class="value">{{ "{:,.0f}".format(latest.free_cash_flow) if latest.free_cash_flow else '—' }}</span>
+    <span class="value">{{ latest.free_cash_flow|f0 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">Gross Profit ($M)</span>
-    <span class="value">{{ "{:,.0f}".format(latest.gross_profit) if latest.gross_profit else '—' }}</span>
+    <span class="value">{{ latest.gross_profit|f0 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">Op. Income ($M)</span>
-    <span class="value">{{ "{:,.0f}".format(latest.operating_income) if latest.operating_income else '—' }}</span>
+    <span class="value">{{ latest.operating_income|f0 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">Op. Cash Flow ($M)</span>
-    <span class="value">{{ "{:,.0f}".format(latest.operating_cash_flow) if latest.operating_cash_flow else '—' }}</span>
+    <span class="value">{{ latest.operating_cash_flow|f0 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">CapEx ($M)</span>
-    <span class="value">{{ "{:,.0f}".format(latest.capex) if latest.capex else '—' }}</span>
+    <span class="value">{{ latest.capex|f0 }}</span>
   </div>
 </div>
 
 <div class="grid-4 mb-2">
   <div class="metric-card card">
     <span class="label">5Y Sales CAGR</span>
-    <span class="value {{ 'text-pos' if latest.sales_CAGR_5Y and latest.sales_CAGR_5Y > 0 else 'text-neg' }}">
-      {{ "%.1f"|format(latest.sales_CAGR_5Y * 100) if latest.sales_CAGR_5Y else '—' }}%
-    </span>
+    <span class="value">{{ latest.sales_CAGR_5Y|pct1 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">5Y FCF CAGR</span>
-    <span class="value {{ 'text-pos' if latest.FCF_CAGR_5Y and latest.FCF_CAGR_5Y > 0 else 'text-neg' }}">
-      {{ "%.1f"|format(latest.FCF_CAGR_5Y * 100) if latest.FCF_CAGR_5Y else '—' }}%
-    </span>
+    <span class="value">{{ latest.free_cash_flow_CAGR_5Y|pct1 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">2Y Sales CAGR</span>
-    <span class="value {{ 'text-pos' if latest.sales_CAGR_2Y and latest.sales_CAGR_2Y > 0 else 'text-neg' }}">
-      {{ "%.1f"|format(latest.sales_CAGR_2Y * 100) if latest.sales_CAGR_2Y else '—' }}%
-    </span>
+    <span class="value">{{ latest.sales_CAGR_2Y|pct1 }}</span>
   </div>
   <div class="metric-card card">
     <span class="label">Price</span>
-    <span class="value">${{ "%.2f"|format(latest.price) if latest.price else '—' }}</span>
+    <span class="value">${{ latest.price|f2 }}</span>
   </div>
 </div>
 
@@ -80,25 +74,23 @@
   <div class="card" style="padding:0.75rem;">
     <p class="label mb-1">Assets</p>
     <div style="font-family:var(--font-ui);font-size:var(--fs-sm);line-height:1.8;">
-      Cash: <strong>{{ "{:,.0f}".format(latest.cash) if latest.cash else '—' }}</strong><br>
-      ST Inv: <strong>{{ "{:,.0f}".format(latest.short_term_investments) if latest.short_term_investments else '—' }}</strong><br>
-      AR: <strong>{{ "{:,.0f}".format(latest.accounts_receivable) if latest.accounts_receivable else '—' }}</strong>
+      Cash: <strong>{{ latest.cash|f0 }}</strong><br>
+      ST Inv: <strong>{{ latest.short_term_investments|f0 }}</strong><br>
+      AR: <strong>{{ latest.accounts_receivable|f0 }}</strong>
     </div>
   </div>
   <div class="card" style="padding:0.75rem;">
     <p class="label mb-1">Liabilities</p>
     <div style="font-family:var(--font-ui);font-size:var(--fs-sm);line-height:1.8;">
-      Debt: <strong>{{ "{:,.0f}".format(latest.total_debt) if latest.total_debt else '—' }}</strong><br>
-      AP: <strong>{{ "{:,.0f}".format(latest.accounts_payable) if latest.accounts_payable else '—' }}</strong><br>
-      Curr. Liab: <strong>{{ "{:,.0f}".format(latest.current_liabilities) if latest.current_liabilities else '—' }}</strong>
+      Debt: <strong>{{ latest.total_debt|f0 }}</strong><br>
+      AP: <strong>{{ latest.accounts_payable|f0 }}</strong><br>
+      Curr. Liab: <strong>{{ latest.current_liabilities|f0 }}</strong>
     </div>
   </div>
   <div class="card" style="padding:0.75rem;">
     <p class="label mb-1">Equity</p>
     <div style="font-family:var(--font-ui);font-size:var(--fs-sm);line-height:1.8;">
-      Shareholders: <strong class="{{ 'text-neg' if latest.shareholders_equity and latest.shareholders_equity < 0 }}">
-        {{ "{:,.0f}".format(latest.shareholders_equity) if latest.shareholders_equity else '—' }}
-      </strong>
+      Shareholders: <strong>{{ latest.shareholders_equity|f0 }}</strong>
     </div>
   </div>
 </div>
@@ -120,17 +112,17 @@
         {% for m in stock_metrics %}
         <tr>
           <td><strong>{{ m.year }}</strong></td>
-          <td class="r">${{ "%.2f"|format(m.price) if m.price else '—' }}</td>
-          <td class="r">{{ "{:,.0f}".format(m.sales) if m.sales else '—' }}</td>
-          <td class="r">{{ "{:,.0f}".format(m.free_cash_flow) if m.free_cash_flow else '—' }}</td>
-          <td class="r">{{ "{:,.0f}".format(m.gross_profit) if m.gross_profit else '—' }}</td>
-          <td class="r">{{ "{:,.0f}".format(m.operating_income) if m.operating_income else '—' }}</td>
-          <td class="r">{{ "{:,.0f}".format(m.operating_cash_flow) if m.operating_cash_flow else '—' }}</td>
-          <td class="r">{{ "{:,.0f}".format(m.capex) if m.capex else '—' }}</td>
-          <td class="r {{ 'text-pos' if m.sales_CAGR_5Y and m.sales_CAGR_5Y > 0 else 'text-neg' }}">{{ "%.0f"|format(m.sales_CAGR_5Y*100) if m.sales_CAGR_5Y else '—' }}%</td>
-          <td class="r {{ 'text-pos' if m.FCF_CAGR_5Y and m.FCF_CAGR_5Y > 0 else 'text-neg' }}">{{ "%.0f"|format(m.FCF_CAGR_5Y*100) if m.FCF_CAGR_5Y else '—' }}%</td>
-          <td class="r {{ 'text-pos' if m.sales_CAGR_2Y and m.sales_CAGR_2Y > 0 else 'text-neg' }}">{{ "%.0f"|format(m.sales_CAGR_2Y*100) if m.sales_CAGR_2Y else '—' }}%</td>
-          <td class="r {{ 'text-pos' if m.FCF_CAGR_2Y and m.FCF_CAGR_2Y > 0 else 'text-neg' }}">{{ "%.0f"|format(m.FCF_CAGR_2Y*100) if m.FCF_CAGR_2Y else '—' }}%</td>
+          <td class="r">${{ m.price|f2 }}</td>
+          <td class="r">{{ m.sales|f0 }}</td>
+          <td class="r">{{ m.free_cash_flow|f0 }}</td>
+          <td class="r">{{ m.gross_profit|f0 }}</td>
+          <td class="r">{{ m.operating_income|f0 }}</td>
+          <td class="r">{{ m.operating_cash_flow|f0 }}</td>
+          <td class="r">{{ m.capex|f0 }}</td>
+          <td class="r">{{ m.sales_CAGR_5Y|pct0 }}</td>
+          <td class="r">{{ m.free_cash_flow_CAGR_5Y|pct0 }}</td>
+          <td class="r">{{ m.sales_CAGR_2Y|pct0 }}</td>
+          <td class="r">{{ m.free_cash_flow_CAGR_2Y|pct0 }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -151,13 +143,13 @@
         {% set d = daily_price_data[i] %}
         <tr>
           <td>{{ d.date }}</td>
-          <td class="r"><strong>${{ "%.2f"|format(d.price) }}</strong></td>
+          <td class="r"><strong>${{ d.price|f2 }}</strong></td>
           <td class="r">
             {% if i < (daily_price_data|length) - 1 %}
               {% set prev = daily_price_data[i+1].price %}
-              {% if prev and prev > 0 %}
+              {% if prev and prev > 0 and d.price is not none %}
                 {% set chg = ((d.price - prev) / prev * 100) %}
-                <span class="{{ 'text-pos' if chg >= 0 else 'text-neg' }}">{{ "%.2f"|format(chg) }}%</span>
+                <span class="{{ 'text-pos' if chg >= 0 else 'text-neg' }}">{{ chg|f2 }}%</span>
               {% endif %}
             {% endif %}
           </td>

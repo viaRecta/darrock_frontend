@@ -71,8 +71,8 @@
             <div class="f-grid mb-1">
               <div class="f-group">
                 <label>Gross Profit CAGR</label>
-                <input type="number" name="gross_profit_cagr" value="{{ rule1_params.get('gross_profit_cagr', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="gross_profit_cagr_omit" {{ 'checked' if rule1_params.get('gross_profit_cagr_omit') }}><span>omit</span></div>
+                <input type="number" name="gp_cagr" value="{{ rule1_params.get('gp_cagr', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="gp_cagr_omit" {{ 'checked' if rule1_params.get('gp_cagr_omit') }}><span>omit</span></div>
               </div>
               <div class="f-group">
                 <label>Op. Cash Flow CAGR</label>
@@ -120,8 +120,8 @@
             <div class="f-grid mb-1">
               <div class="f-group">
                 <label>Gross Profit CAGR</label>
-                <input type="number" name="gross_profit_cagr_2y" value="{{ rule2_params.get('gross_profit_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="gross_profit_cagr_2y_omit" {{ 'checked' if rule2_params.get('gross_profit_cagr_2y_omit') }}><span>omit</span></div>
+                <input type="number" name="gp_cagr_2y" value="{{ rule2_params.get('gp_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="gp_cagr_2y_omit" {{ 'checked' if rule2_params.get('gp_cagr_2y_omit') }}><span>omit</span></div>
               </div>
               <div class="f-group">
                 <label>Op. Cash Flow CAGR</label>
@@ -160,19 +160,32 @@
             </div>
           </div>
 
-          <p class="label mt-1 mb-1" style="font-size:0.6rem;">Weight Adjustments</p>
+          <p class="label mt-1 mb-1" style="font-size:0.6rem;">Score Weights</p>
+          {% set sw = filter_params.get('score_weights', {}) if filter_params.get is defined else {} %}
           <div class="f-grid-3 f-grid">
             <div class="f-group">
-              <label>Sales Weight</label>
-              <input type="number" name="salesMomRate" value="{{ filter_params.salesMomRate }}" step="0.01" min="0" max="1">
+              <label>Sales</label>
+              <input type="number" name="weight_sales" value="{{ sw.get('sales', 0.33) if sw.get is defined else 0.33 }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
-              <label>FCF Weight</label>
-              <input type="number" name="fcfMomRate" value="{{ filter_params.fcfMomRate }}" step="0.01" min="0" max="1">
+              <label>FCF</label>
+              <input type="number" name="weight_fcf" value="{{ sw.get('fcf', 0.33) if sw.get is defined else 0.33 }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
-              <label>Price Inv. Weight</label>
-              <input type="number" name="priceInvRate" value="{{ filter_params.priceInvRate }}" step="0.01" min="0" max="1">
+              <label>Price</label>
+              <input type="number" name="weight_price" value="{{ sw.get('price', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+            </div>
+            <div class="f-group">
+              <label>Gross Profit</label>
+              <input type="number" name="weight_gp" value="{{ sw.get('gp', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+            </div>
+            <div class="f-group">
+              <label>Op. CF</label>
+              <input type="number" name="weight_op_cf" value="{{ sw.get('op_cf', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+            </div>
+            <div class="f-group">
+              <label>Op. Income</label>
+              <input type="number" name="weight_op_income" value="{{ sw.get('op_income', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
             </div>
           </div>
         </div>
@@ -217,19 +230,19 @@
         <div class="acc-head">Saved Portfolios</div>
         <div class="acc-body">
           {% if next_year_portfolio %}
-          <form id="save-portfolio-form" class="mb-2">
+          <div id="save-portfolio-form" class="mb-2">
             <div class="f-group mb-1">
               <label>Save current as</label>
               <div class="flex gap-1">
                 <input type="text" name="portfolio_name" placeholder="Name" required style="flex:1;">
-                <button type="submit" class="btn btn-sm">save</button>
+                <button type="button" class="btn btn-sm" id="save-portfolio-btn">save</button>
               </div>
             </div>
             <input type="hidden" name="portfolio_year" value="{{ endDate }}">
             {% for t in next_year_portfolio %}
             <input type="hidden" name="portfolio_tickers[]" value="{{ t }}">
             {% endfor %}
-          </form>
+          </div>
           {% endif %}
 
           {% for p in saved_portfolios or [] %}
@@ -264,27 +277,27 @@
     <div class="summary-strip">
       <div class="summary-item">
         <span class="label">$1 Invested</span>
-        <span class="value text-pos">${{ "%.2f"|format(performance_metrics.final_value) }}</span>
+        <span class="value text-pos">${{ performance_metrics.final_value|f2 }}</span>
       </div>
       <div class="summary-item">
         <span class="label">Annualized</span>
-        <span class="value">{{ "%.1f"|format(performance_metrics.annualized_return_strategy) }}%</span>
+        <span class="value">{{ performance_metrics.annualized_return_strategy|f1 }}%</span>
       </div>
       <div class="summary-item">
         <span class="label">S&amp;P Ann.</span>
-        <span class="value">{{ "%.1f"|format(performance_metrics.annualized_return_sp500) }}%</span>
+        <span class="value">{{ performance_metrics.annualized_return_sp500|f1 }}%</span>
       </div>
       <div class="summary-item">
         <span class="label">Win Rate</span>
-        <span class="value">{{ "%.0f"|format(performance_metrics.win_rate) }}%</span>
+        <span class="value">{{ performance_metrics.win_rate|f1 }}%</span>
       </div>
       <div class="summary-item">
         <span class="label">Sharpe</span>
-        <span class="value">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</span>
+        <span class="value">{{ performance_metrics.sharpe_ratio|f2 }}</span>
       </div>
       <div class="summary-item">
         <span class="label">Max DD</span>
-        <span class="value text-neg">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</span>
+        <span class="value text-neg">{{ performance_metrics.max_drawdown|f1 }}%</span>
       </div>
     </div>
 
@@ -321,12 +334,12 @@
         {% for r in results|reverse %}
         <tr class="year-row" data-year="{{ r.year }}">
           <td><strong>{{ r.year }}</strong></td>
-          <td class="r {{ 'text-pos' if r.strategy_return > 0 else 'text-neg' }}">{{ "%.1f"|format(r.strategy_return) }}%</td>
-          <td class="r">{{ "%.1f"|format(r.sp500_return) }}%</td>
+          <td class="r {{ 'text-pos' if r.strategy_return and r.strategy_return > 0 else 'text-neg' }}">{{ r.strategy_return|f1 }}%</td>
+          <td class="r">{{ r.sp500_return|f1 }}%</td>
           <td class="r">
-            <span class="badge {{ 'badge-pos' if r.outperformance > 0 else 'badge-neg' }}">{{ "%.1f"|format(r.outperformance) }}%</span>
+            <span class="badge {{ 'badge-pos' if r.outperformance and r.outperformance > 0 else 'badge-neg' }}">{{ r.outperformance|f1 }}%</span>
           </td>
-          <td class="r mono">${{ "%.2f"|format(r.investment) }}</td>
+          <td class="r mono">${{ r.investment|f2 }}</td>
           <td class="r">{{ r.portfolio|length }}</td>
         </tr>
         <tr><td colspan="6" style="padding:0;">
@@ -369,9 +382,9 @@
                   <tr>
                     <td><a href="#" data-stock="{{ ticker }}" class="badge badge-ticker">{{ ticker }}</a></td>
                     <td class="text-muted" style="font-size:var(--fs-xs);">{{ r.last_port_info[ticker].sector if r.last_port_info and r.last_port_info[ticker] else '' }}</td>
-                    <td class="r">${{ "%.2f"|format(ret.buy_price) }}</td>
-                    <td class="r">${{ "%.2f"|format(ret.sell_price) }}</td>
-                    <td class="r {{ 'text-pos' if ret.return > 0 else 'text-neg' }}">{{ "%.1f"|format(ret.return) }}%</td>
+                    <td class="r">${{ ret.buy_price|f2 }}</td>
+                    <td class="r">${{ ret.sell_price|f2 }}</td>
+                    <td class="r {{ 'text-pos' if ret.return and ret.return > 0 else 'text-neg' }}">{{ ret.return|f1 }}%</td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -397,18 +410,18 @@
                     <tr>
                       <td><a href="#" data-stock="{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
                       <td class="text-muted">{{ c.sector or '' }}</td>
-                      <td class="r">{{ "%.2f"|format(c.score) }}</td>
-                      <td class="r {{ 'text-pos' if c.sales_CAGR_5Y and c.sales_CAGR_5Y > 0 else 'text-neg' }}">{{ "%.0f"|format(c.sales_CAGR_5Y * 100) if c.sales_CAGR_5Y else '—' }}%</td>
-                      <td class="r {{ 'text-pos' if c.FCF_CAGR_5Y and c.FCF_CAGR_5Y > 0 else 'text-neg' }}">{{ "%.0f"|format(c.FCF_CAGR_5Y * 100) if c.FCF_CAGR_5Y else '—' }}%</td>
-                      <td class="r">{{ "{:,.0f}".format(c.sales) if c.sales else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.gross_profit) if c.gross_profit else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.operating_income) if c.operating_income else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.free_cash_flow) if c.free_cash_flow else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.operating_cash_flow) if c.operating_cash_flow else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.capex) if c.capex else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.cash) if c.cash else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.total_debt) if c.total_debt else '—' }}</td>
-                      <td class="r">{{ "{:,.0f}".format(c.shareholders_equity) if c.shareholders_equity else '—' }}</td>
+                      <td class="r">{{ c.score|f2 }}</td>
+                      <td class="r">{{ c.sales_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.sales|f0 }}</td>
+                      <td class="r">{{ c.gross_profit|f0 }}</td>
+                      <td class="r">{{ c.operating_income|f0 }}</td>
+                      <td class="r">{{ c.free_cash_flow|f0 }}</td>
+                      <td class="r">{{ c.operating_cash_flow|f0 }}</td>
+                      <td class="r">{{ c.capex|f0 }}</td>
+                      <td class="r">{{ c.cash|f0 }}</td>
+                      <td class="r">{{ c.total_debt|f0 }}</td>
+                      <td class="r">{{ c.shareholders_equity|f0 }}</td>
                     </tr>
                     {% endfor %}
                   </tbody>

@@ -37,22 +37,22 @@
   <div class="grid-4 mb-2">
     <div class="metric-card card">
       <span class="label">$1 Invested</span>
-      <span class="value text-pos">${{ "%.2f"|format(performance_metrics.final_value) }}</span>
+      <span class="value text-pos">${{ performance_metrics.final_value|f2 }}</span>
     </div>
     <div class="metric-card card">
       <span class="label">Annualized</span>
-      <span class="value">{{ "%.1f"|format(performance_metrics.annualized_return_strategy) }}%</span>
-      <span class="text-muted ui" style="font-size:var(--fs-xs);">vs S&amp;P {{ "%.1f"|format(performance_metrics.annualized_return_sp500) }}%</span>
+      <span class="value">{{ performance_metrics.annualized_return_strategy|f1 }}%</span>
+      <span class="text-muted ui" style="font-size:var(--fs-xs);">vs S&amp;P {{ performance_metrics.annualized_return_sp500|f1 }}%</span>
     </div>
     <div class="metric-card card">
       <span class="label">Win Rate</span>
-      <span class="value">{{ "%.0f"|format(performance_metrics.win_rate) }}%</span>
+      <span class="value">{{ performance_metrics.win_rate|f1 }}%</span>
       <span class="text-muted ui" style="font-size:var(--fs-xs);">beat S&amp;P</span>
     </div>
     <div class="metric-card card">
       <span class="label">Outperformance</span>
-      <span class="value {{ 'text-pos' if performance_metrics.outperformance > 0 else 'text-neg' }}">
-        {{ "%.1f"|format(performance_metrics.outperformance) }}%
+      <span class="value {{ 'text-pos' if performance_metrics.outperformance and performance_metrics.outperformance > 0 else 'text-neg' }}">
+        {{ performance_metrics.outperformance|f1 }}%
       </span>
       <span class="text-muted ui" style="font-size:var(--fs-xs);">total vs S&amp;P</span>
     </div>
@@ -61,19 +61,19 @@
   <div class="grid-4 mb-2">
     <div class="metric-card card">
       <span class="label">Sharpe Ratio</span>
-      <span class="value">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</span>
+      <span class="value">{{ performance_metrics.sharpe_ratio|f2 }}</span>
     </div>
     <div class="metric-card card">
       <span class="label">Sortino Ratio</span>
-      <span class="value">{{ "%.2f"|format(performance_metrics.sortino_ratio) }}</span>
+      <span class="value">{{ performance_metrics.sortino_ratio|f2 }}</span>
     </div>
     <div class="metric-card card">
       <span class="label">Max Drawdown</span>
-      <span class="value text-neg">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</span>
+      <span class="value text-neg">{{ performance_metrics.max_drawdown|f1 }}%</span>
     </div>
     <div class="metric-card card">
       <span class="label">Volatility</span>
-      <span class="value">{{ "%.1f"|format(performance_metrics.volatility) }}%</span>
+      <span class="value">{{ performance_metrics.volatility|f1 }}%</span>
     </div>
   </div>
   {% endif %}
@@ -98,16 +98,16 @@
             {% for r in results|reverse %}
             <tr>
               <td><strong>{{ r.year }}</strong></td>
-              <td class="r {{ 'text-pos' if r.strategy_return > 0 else 'text-neg' }}">
-                {{ "%.1f"|format(r.strategy_return) }}%
+              <td class="r {{ 'text-pos' if r.strategy_return and r.strategy_return > 0 else 'text-neg' }}">
+                {{ r.strategy_return|f1 }}%
               </td>
-              <td class="r">{{ "%.1f"|format(r.sp500_return) }}%</td>
+              <td class="r">{{ r.sp500_return|f1 }}%</td>
               <td class="r">
-                <span class="badge {{ 'badge-pos' if r.outperformance > 0 else 'badge-neg' }}">
-                  {{ "%.1f"|format(r.outperformance) }}%
+                <span class="badge {{ 'badge-pos' if r.outperformance and r.outperformance > 0 else 'badge-neg' }}">
+                  {{ r.outperformance|f1 }}%
                 </span>
               </td>
-              <td class="r mono">${{ "%.2f"|format(r.investment) }}</td>
+              <td class="r mono">${{ r.investment|f2 }}</td>
             </tr>
             {% endfor %}
           </tbody>
