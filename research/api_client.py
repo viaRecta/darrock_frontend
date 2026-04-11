@@ -11,7 +11,7 @@ headers = {
 }
 
 BACKEND_URL = os.environ.get('DARROCK_BACKEND_URL', 'http://127.0.0.1:6100/api/v2')
-# BACKEND_URL = os.environ.get('DARROCK_BACKEND_URL', 'https://darrock-backend.viasyazilim.com')
+# BACKEND_URL = os.environ.get('DARROCK_BACKEND_URL', 'https://darrock-backend.viasyazilim.com/api/v2')
 TIMEOUT = 300
 
 

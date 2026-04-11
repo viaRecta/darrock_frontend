@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initMobileSheet();
   initAccordions();
   initSubtabs();
+  initMetricRows();
   initYearRows();
   initSlideOver();
   initPortfolioActions();
@@ -106,6 +107,40 @@ function initSubtabs() {
         if (target) target.classList.add('active');
       });
     });
+  });
+}
+
+/* --- Per-metric filter rows (method select, posrate visibility, omit dimming) --- */
+function initMetricRows() {
+  document.querySelectorAll('.metric-filter-row').forEach(row => {
+    const method = row.querySelector('.metric-filter-method');
+    const posrate = row.querySelector('.metric-filter-posrate');
+    const omitCb = row.querySelector('.metric-filter-omit input[type="checkbox"]');
+
+    function updatePosrate() {
+      if (!method || !posrate) return;
+      if (method.value === 'consistency') {
+        posrate.classList.remove('hidden');
+      } else {
+        posrate.classList.add('hidden');
+      }
+    }
+
+    function updateOmitted() {
+      if (!omitCb) return;
+      if (omitCb.checked) {
+        row.classList.add('omitted');
+      } else {
+        row.classList.remove('omitted');
+      }
+    }
+
+    if (method) method.addEventListener('change', updatePosrate);
+    if (omitCb) omitCb.addEventListener('change', updateOmitted);
+
+    // Set initial state
+    updatePosrate();
+    updateOmitted();
   });
 }
 

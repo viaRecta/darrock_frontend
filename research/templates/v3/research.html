@@ -48,52 +48,52 @@
 
           {# --- 5-Year Rule Tab --- #}
           <div id="tab-5yr" class="subtab-panel active">
-            <div class="f-grid mb-1">
-              <div class="f-group">
-                <label>Min Sales Scale</label>
-                <input type="number" name="sales_min_scale" value="{{ rule1_params.sales_min_scale }}" step="100">
-              </div>
-              <div class="f-group">
-                <label>Sales CAGR</label>
-                <input type="number" name="sales_cagr" value="{{ rule1_params.sales_cagr }}" step="0.01">
-              </div>
-              <div class="f-group">
-                <label>FCF CAGR</label>
-                <input type="number" name="fcf_cagr" value="{{ rule1_params.fcf_cagr }}" step="0.01">
-              </div>
-              <div class="f-group">
-                <label>Price CAGR</label>
-                <input type="number" name="price_cagr" value="{{ rule1_params.price_cagr }}" step="0.01">
-              </div>
+
+            <div class="f-group mb-1" style="max-width:160px;">
+              <label>Min Sales Scale</label>
+              <input type="number" name="sales_min_scale" value="{{ rule1_params.sales_min_scale }}" step="100">
             </div>
 
-            <p class="label mt-1 mb-1" style="font-size:0.6rem;">New Metrics (5-Year)</p>
-            <div class="f-grid mb-1">
-              <div class="f-group">
-                <label>Gross Profit CAGR</label>
-                <input type="number" name="gp_cagr" value="{{ rule1_params.get('gp_cagr', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="gp_cagr_omit" {{ 'checked' if rule1_params.get('gp_cagr_omit') }}><span>omit</span></div>
-              </div>
-              <div class="f-group">
-                <label>Op. Cash Flow CAGR</label>
-                <input type="number" name="op_cf_cagr" value="{{ rule1_params.get('op_cf_cagr', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="op_cf_cagr_omit" {{ 'checked' if rule1_params.get('op_cf_cagr_omit') }}><span>omit</span></div>
-              </div>
-              <div class="f-group">
-                <label>Op. Income CAGR</label>
-                <input type="number" name="op_income_cagr" value="{{ rule1_params.get('op_income_cagr', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="op_income_cagr_omit" {{ 'checked' if rule1_params.get('op_income_cagr_omit') }}><span>omit</span></div>
-              </div>
-              <div class="f-group">
-                <label>CapEx CAGR</label>
-                <input type="number" name="capex_cagr" value="{{ rule1_params.get('capex_cagr', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="capex_cagr_omit" {{ 'checked' if rule1_params.get('capex_cagr_omit') }}><span>omit</span></div>
-              </div>
-            </div>
+            {# Per-metric filter rows: method | threshold | posrate | omit #}
+            <p class="label mt-1 mb-1" style="font-size:0.55rem; display:flex; gap:0.5rem;">
+              <span style="flex:1;">metric</span>
+              <span style="width:80px;">method</span>
+              <span style="width:70px;">threshold</span>
+              <span style="width:50px;">pos %</span>
+              <span style="width:30px;">skip</span>
+            </p>
 
-            <div class="flex gap-2 flex-wrap mt-1">
-              <div class="f-omit"><input type="checkbox" name="omit_negative_fcf" {{ 'checked' if rule1_params.omit_negative_fcf }}><span>Omit negative FCF</span></div>
+            {# --- Macro for a metric row --- #}
+            {% macro metric_row(key, label, threshold_val, omit_val, method_val, posrate_val) %}
+            <div class="metric-filter-row" data-metric="{{ key }}">
+              <span class="metric-filter-label">{{ label }}</span>
+              <select name="{{ key }}_method" class="metric-filter-method">
+                <option value="cagr" {{ 'selected' if method_val == 'cagr' }}>CAGR</option>
+                <option value="slope" {{ 'selected' if method_val == 'slope' }}>Slope</option>
+                <option value="consistency" {{ 'selected' if method_val == 'consistency' }}>Consist.</option>
+              </select>
+              <input type="number" name="{{ key }}_cagr" value="{{ threshold_val }}" step="0.01" class="metric-filter-threshold" placeholder="—">
+              <input type="number" name="{{ key }}_min_posrate" value="{{ posrate_val }}" step="0.1" min="0" max="1" class="metric-filter-posrate {{ 'hidden' if method_val != 'consistency' }}" placeholder="—">
+              <div class="metric-filter-omit">
+                <input type="checkbox" name="{{ key }}_cagr_omit" {{ 'checked' if omit_val }}>
+              </div>
             </div>
+            {% endmacro %}
+
+            {{ metric_row('sales', 'Sales', rule1_params.sales_cagr, rule1_params.sales_cagr_omit, rule1_params.get('sales_method', 'cagr'), rule1_params.get('sales_min_posrate', 0.6)) }}
+            {{ metric_row('fcf', 'FCF', rule1_params.fcf_cagr, rule1_params.fcf_cagr_omit, rule1_params.get('fcf_method', 'cagr'), rule1_params.get('fcf_min_posrate', 0.6)) }}
+            {{ metric_row('price', 'Price', rule1_params.price_cagr, rule1_params.price_cagr_omit, rule1_params.get('price_method', 'cagr'), rule1_params.get('price_min_posrate', 0.6)) }}
+            {{ metric_row('gp', 'Gross Profit', rule1_params.get('gp_cagr', 0), rule1_params.get('gp_cagr_omit', true), rule1_params.get('gp_method', 'cagr'), rule1_params.get('gp_min_posrate', 0.6)) }}
+            {{ metric_row('op_cf', 'Op. Cash Flow', rule1_params.get('op_cf_cagr', 0), rule1_params.get('op_cf_cagr_omit', true), rule1_params.get('op_cf_method', 'cagr'), rule1_params.get('op_cf_min_posrate', 0.6)) }}
+            {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', 0), rule1_params.get('op_income_cagr_omit', true), rule1_params.get('op_income_method', 'cagr'), rule1_params.get('op_income_min_posrate', 0.6)) }}
+            {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', 0), rule1_params.get('capex_cagr_omit', true), rule1_params.get('capex_method', 'cagr'), rule1_params.get('capex_min_posrate', 0.6)) }}
+            {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', 0), rule1_params.get('cogs_cagr_omit', true), rule1_params.get('cogs_method', 'cagr'), rule1_params.get('cogs_min_posrate', 0.6)) }}
+
+            <div class="f-omit mt-1"><input type="checkbox" name="omit_negative_fcf" {{ 'checked' if rule1_params.omit_negative_fcf }}><span>Omit negative FCF</span></div>
+
+            <p class="label mt-2" style="font-size:0.5rem; color:var(--muted); line-height:1.4;">
+              <strong>CAGR</strong>: start-to-end growth (2 points). <strong>Slope</strong>: linear trend across all 6 years. <strong>Consist.</strong>: median year-over-year growth + minimum positive rate. Threshold applies to the growth rate; Pos% is only used with Consistency.
+            </p>
           </div>
 
           {# --- 2-Year Rule Tab --- #}
