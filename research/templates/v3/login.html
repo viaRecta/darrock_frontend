@@ -11,21 +11,56 @@
     <div class="login-box">
       <h1>darrock</h1>
       <p class="sub">quantitative research</p>
-      <form action="/v3/research" method="get">
-        <div class="f-group">
-          <label>username</label>
-          <input type="text" name="username" autocomplete="username">
-        </div>
-        <div class="f-group" style="margin-top:0.5rem;">
-          <label>password</label>
-          <input type="password" name="password" autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top:1rem;">enter</button>
-      </form>
-      <p class="text-muted" style="font-family:var(--font-ui);font-size:var(--fs-xs);margin-top:1.5rem;">
-        Authentication is handled by your server. This form redirects to the workspace.
-      </p>
+
+      <div id="login-error" class="hidden" style="font-family:var(--font-ui);font-size:var(--fs-xs);color:var(--negative);margin-bottom:1rem;"></div>
+
+      <div class="f-group" style="text-align:left;">
+        <label>username</label>
+        <input type="text" id="login-user" autocomplete="username">
+      </div>
+      <div class="f-group" style="text-align:left;margin-top:0.5rem;">
+        <label>password</label>
+        <input type="password" id="login-pass" autocomplete="current-password">
+      </div>
+      <button id="login-btn" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:1rem;">enter</button>
     </div>
   </div>
+
+  <script>
+    const btn = document.getElementById('login-btn');
+    const userEl = document.getElementById('login-user');
+    const passEl = document.getElementById('login-pass');
+    const errEl = document.getElementById('login-error');
+
+    async function doLogin() {
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'signing in...';
+
+      try {
+        const res = await fetch('/v3/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: userEl.value, password: passEl.value }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/v3/research';
+        } else {
+          errEl.textContent = data.message || 'Invalid credentials';
+          errEl.classList.remove('hidden');
+        }
+      } catch (e) {
+        errEl.textContent = 'Connection error';
+        errEl.classList.remove('hidden');
+      }
+      btn.disabled = false;
+      btn.textContent = 'enter';
+    }
+
+    btn.addEventListener('click', doLogin);
+    passEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+    userEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') passEl.focus(); });
+  </script>
 </body>
 </html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Darrock Research</title>
+  <link rel="stylesheet" href="/static/css/v3.css">
+  <style>body { overflow: auto; }</style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/v3/research" class="topbar-brand">darrock</a>
+    <div class="topbar-actions">
+      <a href="/v3/research">research</a>
+      <a href="/v3/admin" class="active">admin</a>
+      <span class="ui" style="color:var(--muted);font-size:var(--fs-xs);padding:0 0.5rem;">{{ user.display_name }}</span>
+      <button id="logout-btn" class="btn btn-sm btn-ghost">logout</button>
+    </div>
+  </header>
+
+  <div style="max-width:800px;margin:0 auto;padding:calc(44px + 1.5rem) 1rem 2rem;">
+    <h2 class="ui" style="font-size:var(--fs-lg);margin-bottom:1.5rem;">User Management</h2>
+
+    {# --- Add User --- #}
+    <div class="section" style="margin-bottom:1.5rem;">
+      <div class="section-head">Add User</div>
+      <div class="section-body">
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:flex-end;">
+          <div class="f-group" style="flex:1;min-width:120px;">
+            <label>Username</label>
+            <input type="text" id="new-username" placeholder="username">
+          </div>
+          <div class="f-group" style="flex:1;min-width:120px;">
+            <label>Display Name</label>
+            <input type="text" id="new-display" placeholder="optional">
+          </div>
+          <div class="f-group" style="flex:1;min-width:120px;">
+            <label>Password</label>
+            <input type="password" id="new-password" placeholder="password">
+          </div>
+          <div class="f-group" style="width:120px;">
+            <label>Role</label>
+            <select id="new-role">
+              <option value="researcher">Researcher</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-primary" id="add-user-btn" style="height:34px;">add user</button>
+        </div>
+      </div>
+    </div>
+
+    {# --- User List --- #}
+    <div class="section">
+      <div class="section-head">Users ({{ users|length }})</div>
+      <div class="section-body">
+        <div class="tbl-wrap">
+          <table class="tbl" id="users-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Display Name</th>
+                <th>Role</th>
+                <th>Last Login</th>
+                <th>Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+              <tr id="user-row-{{ u.id }}">
+                <td>{{ u.id }}</td>
+                <td><strong>{{ u.username }}</strong></td>
+                <td>{{ u.display_name or '—' }}</td>
+                <td>
+                  <span class="badge {{ 'badge-ticker' if u.role == 'admin' }}">{{ u.role }}</span>
+                </td>
+                <td class="text-muted" style="font-size:var(--fs-xs);">{{ u.last_login or 'never' }}</td>
+                <td class="text-muted" style="font-size:var(--fs-xs);">{{ u.created_at or '—' }}</td>
+                <td>
+                  {% if u.id != user.id %}
+                  <div class="flex gap-1">
+                    <button class="btn btn-sm btn-ghost" onclick="resetPassword({{ u.id }}, '{{ u.username }}')">reset pw</button>
+                    <button class="btn btn-sm btn-ghost btn-danger" onclick="deleteUser({{ u.id }}, '{{ u.username }}')">&times;</button>
+                  </div>
+                  {% else %}
+                  <span class="text-muted" style="font-size:var(--fs-xs);">you</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toast(msg, type) {
+      document.querySelectorAll('.toast').forEach(t => t.remove());
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      el.style.cssText = 'position:fixed;top:0.75rem;right:0.75rem;z-index:9999;font-family:var(--font-ui);font-size:var(--fs-sm);padding:0.55rem 1rem;border-radius:4px;color:white;box-shadow:0 8px 24px rgba(0,0,0,0.12);';
+      el.style.background = type === 'ok' ? 'var(--positive)' : 'var(--negative)';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    document.getElementById('add-user-btn').addEventListener('click', async () => {
+      const username = document.getElementById('new-username').value.trim();
+      const password = document.getElementById('new-password').value;
+      const display_name = document.getElementById('new-display').value.trim();
+      const role = document.getElementById('new-role').value;
+      if (!username || !password) { toast('Username and password required', 'err'); return; }
+      try {
+        const res = await fetch('/v3/admin/add_user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, display_name, role }),
+        });
+        const data = await res.json();
+        toast(data.message, data.success ? 'ok' : 'err');
+        if (data.success) setTimeout(() => location.reload(), 500);
+      } catch { toast('Failed', 'err'); }
+    });
+
+    async function resetPassword(id, username) {
+      const pw = prompt(`New password for ${username}:`);
+      if (!pw) return;
+      try {
+        const res = await fetch(`/v3/admin/reset_password/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pw }),
+        });
+        const data = await res.json();
+        toast(data.message, data.success ? 'ok' : 'err');
+      } catch { toast('Failed', 'err'); }
+    }
+
+    async function deleteUser(id, username) {
+      if (!confirm(`Delete user "${username}"?`)) return;
+      try {
+        const res = await fetch(`/v3/admin/delete_user/${id}`, { method: 'POST' });
+        const data = await res.json();
+        toast(data.message, data.success ? 'ok' : 'err');
+        if (data.success) document.getElementById(`user-row-${id}`)?.remove();
+      } catch { toast('Failed', 'err'); }
+    }
+
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      await fetch('/v3/logout', { method: 'POST' });
+      window.location.href = '/v3/';
+    });
+  </script>
+</body>
+</html>

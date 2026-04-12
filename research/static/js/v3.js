@@ -12,7 +12,18 @@ document.addEventListener('DOMContentLoaded', () => {
   initSlideOver();
   initPortfolioActions();
   initFilterForm();
+  initLogout();
 });
+
+/* --- Logout --- */
+function initLogout() {
+  const btn = document.getElementById('logout-btn');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    await fetch('/v3/logout', { method: 'POST' });
+    window.location.href = '/v3/';
+  });
+}
 
 /* --- Panel Toggle (desktop: collapse/expand left panel) --- */
 function initPanelToggle() {
@@ -270,6 +281,48 @@ function initPortfolioActions() {
           toast('Parameters loaded', 'ok');
         }
       } catch { toast('Load failed', 'err'); }
+    });
+  });
+
+  // Share toggle
+  document.querySelectorAll('[data-share-portfolio]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.sharePortfolio;
+      const currentlyShared = btn.dataset.shared === '1';
+      const newState = !currentlyShared;
+      try {
+        const res = await fetch(`/share_portfolio/${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ shared: newState }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          btn.dataset.shared = newState ? '1' : '0';
+          btn.textContent = newState ? '🔗' : '🔒';
+          btn.title = newState ? 'Unshare' : 'Share publicly';
+          toast(newState ? 'Portfolio shared' : 'Portfolio unshared', 'ok');
+          // Toggle badge
+          const row = btn.closest('.portfolio-row');
+          const badge = row?.querySelector('.badge-pos');
+          if (newState && !badge) {
+            const nameEl = row?.querySelector('strong');
+            if (nameEl) {
+              const a = document.createElement('a');
+              a.href = `/v3/p/${id}`;
+              a.target = '_blank';
+              a.className = 'badge badge-pos';
+              a.style.cssText = 'font-size:0.5rem;margin-left:0.3rem;';
+              a.textContent = 'shared';
+              nameEl.parentNode.appendChild(a);
+            }
+          } else if (!newState && badge) {
+            badge.remove();
+          }
+        } else {
+          toast(data.message || 'Failed', 'err');
+        }
+      } catch { toast('Share failed', 'err'); }
     });
   });
 }

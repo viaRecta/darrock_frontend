@@ -84,9 +84,20 @@ def _load_mock(filename: str) -> dict:
 USE_MOCKDATA = False
 
 @app.route('/v3/')
-@app.route('/v3/login')
+@app.route('/v3/login', methods=['GET', 'POST'])
 def v3_login():
+    if request.method == 'POST':
+        # AJAX login — proxy to backend
+        _, data = post_form('/auth/login', data=request.get_data())
+        status = 200 if data.get('success') else 401
+        return jsonify(data), status
     return render_template('v3/login.html')
+
+
+@app.post('/v3/logout')
+def v3_logout():
+    post_form('/auth/logout', data='{}')
+    return jsonify({"success": True})
 
 
 @app.route('/v3/research', methods=['GET', 'POST'])
@@ -98,6 +109,35 @@ def v3_research():
     else:
         data = get_json('/research/dashboard')
     return render_template('v3/research.html', **data)
+
+
+@app.route('/v3/admin')
+def v3_admin():
+    if USE_MOCKDATA:
+        return 'Admin requires live backend', 503
+    data = get_json('/admin/users')
+    if not data.get('success'):
+        return 'Admin access required', 403
+    me = get_json('/auth/me')
+    return render_template('v3/admin.html', users=data['users'], user=me.get('user', {}))
+
+
+@app.post('/v3/admin/add_user')
+def v3_admin_add_user():
+    _, data = post_form('/admin/users', data=request.get_data())
+    return jsonify(data)
+
+
+@app.post('/v3/admin/reset_password/<int:user_id>')
+def v3_admin_reset_pw(user_id: int):
+    _, data = post_form(f'/admin/users/{user_id}/password', data=request.get_data())
+    return jsonify(data)
+
+
+@app.post('/v3/admin/delete_user/<int:user_id>')
+def v3_admin_delete(user_id: int):
+    _, data = delete_json(f'/admin/users/{user_id}')
+    return jsonify(data)
 
 
 @app.route('/v3/stock/<ticker>')
@@ -144,6 +184,16 @@ def v3_public(portfolio_id: int):
             'results': dashboard_data.get('results', []),
         }
     return render_template('v3/public.html', **data)
+
+
+# v3 portfolio share toggle (proxies to backend)
+@app.post('/share_portfolio/<int:portfolio_id>')
+def share_portfolio_route(portfolio_id: int):
+    status_code, data = post_form(
+        f'/research/portfolio/{portfolio_id}/share',
+        data=request.get_data(),
+    )
+    return jsonify(data), status_code
 
 
 ##

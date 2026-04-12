@@ -16,6 +16,11 @@
   <div class="topbar-actions">
     <a href="/v3/research" class="active">research</a>
     <a href="/v3/p/20" target="_blank">preview share</a>
+    {% if user %}
+    {% if user.role == 'admin' %}<a href="/v3/admin">admin</a>{% endif %}
+    <span class="ui" style="color:var(--muted);font-size:var(--fs-xs);padding:0 0.5rem;">{{ user.display_name }}</span>
+    <button id="logout-btn" class="btn btn-sm btn-ghost" style="font-size:var(--fs-xs);">logout</button>
+    {% endif %}
   </div>
 </header>
 
@@ -240,15 +245,25 @@
 
           {# --- Portfolio List --- #}
           {% for p in saved_portfolios or [] %}
+          {% set is_own = user and p.user_id == user.id %}
+          {% set is_system = p.id <= 10 %}
           <div class="portfolio-row flex items-center justify-between" style="padding:0.4rem 0;border-bottom:1px solid var(--divider);font-family:var(--font-ui);font-size:var(--fs-sm);">
-            <div>
+            <div style="flex:1;min-width:0;">
               <strong>{{ p.name }}</strong>
-              <span class="text-muted" style="font-size:var(--fs-xs);">{{ p.year }} &middot; {{ p.tickers|length }}</span>
+              <span class="text-muted" style="font-size:var(--fs-xs);">
+                {{ p.year }} &middot; {{ p.tickers|length }}
+                {% if is_system %}&middot; preset{% endif %}
+              </span>
+              {% if is_own and p.is_shared %}
+                <a href="/v3/p/{{ p.id }}" target="_blank" class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;">shared</a>
+              {% endif %}
             </div>
-            <div class="flex gap-1">
+            <div class="flex gap-1" style="flex-shrink:0;">
               <button class="btn btn-sm btn-ghost" data-load-portfolio="{{ p.id }}">load</button>
-              {# Only show delete for user portfolios (id > 10) #}
-              {% if p.id > 10 %}
+              {% if is_own %}
+              <button class="btn btn-sm btn-ghost" data-share-portfolio="{{ p.id }}" data-shared="{{ p.is_shared }}" title="{{ 'Unshare' if p.is_shared else 'Share publicly' }}">
+                {{ '🔗' if p.is_shared else '🔒' }}
+              </button>
               <button class="btn btn-sm btn-ghost btn-danger" data-delete-portfolio="{{ p.id }}">&times;</button>
               {% endif %}
             </div>
