@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import os
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, redirect, render_template, request, session
 
-from api_client import delete_json, get_json, get_with_status, post_form
+from api_client import delete_json, get_json, get_with_status, post_form, post_json
 
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'darrock-research-frontend-dev-key')
 
 MOCK_DIR = os.path.join(os.path.dirname(__file__), 'mock_data')
 
@@ -87,27 +88,39 @@ USE_MOCKDATA = False
 @app.route('/v3/login', methods=['GET', 'POST'])
 def v3_login():
     if request.method == 'POST':
-        # AJAX login — proxy to backend
-        _, data = post_form('/auth/login', data=request.get_data())
+        # AJAX login — proxy to backend, store result in frontend session
+        req_data = request.get_json() or {}
+        _, data = post_json('/auth/login', data=request.get_data())
+        if data.get('success') and data.get('user'):
+            session['user'] = data['user']
+            session['password'] = req_data.get('password', '')
         status = 200 if data.get('success') else 401
         return jsonify(data), status
+    # Already logged in? Go to research
+    if session.get('user'):
+        return redirect('/v3/research')
     return render_template('v3/login.html')
 
 
 @app.post('/v3/logout')
 def v3_logout():
-    post_form('/auth/logout', data='{}')
+    session.clear()
     return jsonify({"success": True})
 
 
 @app.route('/v3/research', methods=['GET', 'POST'])
 def v3_research():
+    if not USE_MOCKDATA and not session.get('user'):
+        return redirect('/v3/')
     if USE_MOCKDATA:
         data = _load_mock('dashboard_response.json')
     elif request.method == 'POST':
         _, data = post_form('/research/dashboard', data=request.form)
     else:
         data = get_json('/research/dashboard')
+    # Inject user from frontend session into template data
+    if not data.get('user') and session.get('user'):
+        data['user'] = session['user']
     return render_template('v3/research.html', **data)
 
 
@@ -124,13 +137,13 @@ def v3_admin():
 
 @app.post('/v3/admin/add_user')
 def v3_admin_add_user():
-    _, data = post_form('/admin/users', data=request.get_data())
+    _, data = post_json('/admin/users', data=request.get_data())
     return jsonify(data)
 
 
 @app.post('/v3/admin/reset_password/<int:user_id>')
 def v3_admin_reset_pw(user_id: int):
-    _, data = post_form(f'/admin/users/{user_id}/password', data=request.get_data())
+    _, data = post_json(f'/admin/users/{user_id}/password', data=request.get_data())
     return jsonify(data)
 
 
