@@ -111,6 +111,23 @@ def v3_research():
     return render_template('v3/research.html', **data)
 
 
+def get_dashboard_payload():
+    if request.args.get('mock') == '1':
+        return _load_mock('dashboard_response.json'), 'Mock data'
+
+    try:
+        if request.method == 'POST':
+            status_code, data = post_form('/api/research/dashboard', data=request.form)
+            if status_code >= 400:
+                raise RuntimeError(f'Dashboard POST failed with status {status_code}: {data}')
+        else:
+            data = get_json('/api/research/dashboard')
+        return data, 'Live dashboard'
+    except Exception as exc:
+        app.logger.warning('Dashboard data fallback: %s', exc)
+        return _load_mock('dashboard_response.json'), 'Mock fallback'
+
+
 @app.route('/v3/admin')
 def v3_admin():
     if USE_MOCKDATA:
@@ -210,6 +227,16 @@ def investor_view():
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard_view():
+    data, data_source = get_dashboard_payload()
+    return render_template(
+        'financial_dashboard_tailwind.html',
+        dashboard_data=data,
+        prototype_data_source=data_source,
+    )
+
+
+@app.route('/dashboard-legacy', methods=['GET', 'POST'])
+def dashboard_legacy_view():
     if request.method == 'POST':
         status_code, data = post_form('/api/research/dashboard', data=request.form)
         if status_code >= 400:

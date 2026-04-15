@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darrock Market Intelligence Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        terminal: {
+                            950: '#05080d',
+                            900: '#0b1118',
+                            850: '#101821',
+                            800: '#141f2b',
+                            700: '#1d2b3a',
+                            500: '#526174',
+                            300: '#9ba8b8',
+                            200: '#c6d0dc'
+                        },
+                        signal: {
+                            green: '#28d18c',
+                            red: '#ff5e57',
+                            amber: '#d6a94a',
+                            blue: '#68a8ff'
+                        }
+                    },
+                    boxShadow: {
+                        panel: '0 24px 80px rgba(0, 0, 0, 0.34)',
+                        soft: '0 12px 32px rgba(0, 0, 0, 0.22)'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+                        mono: ['IBM Plex Mono', 'ui-monospace', 'SFMono-Regular']
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(104, 168, 255, 0.13), transparent 30rem),
+                radial-gradient(circle at top right, rgba(214, 169, 74, 0.12), transparent 26rem),
+                #05080d;
+        }
+
+        .glass-panel {
+            background: linear-gradient(180deg, rgba(16, 24, 33, 0.92), rgba(11, 17, 24, 0.92));
+            border: 1px solid rgba(198, 208, 220, 0.11);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+        }
+
+        .market-grid {
+            background-image:
+                linear-gradient(rgba(198, 208, 220, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(198, 208, 220, 0.045) 1px, transparent 1px);
+            background-size: 44px 44px;
+        }
+
+        .candlestick {
+            transition: opacity 160ms ease, transform 160ms ease;
+        }
+
+        .candlestick:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        body,
+        .glass-panel,
+        header,
+        input,
+        select,
+        button,
+        a {
+            transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+        }
+
+        body[data-theme="light"] {
+            color: #101820;
+            background:
+                radial-gradient(circle at top left, rgba(104, 168, 255, 0.12), transparent 30rem),
+                radial-gradient(circle at top right, rgba(214, 169, 74, 0.13), transparent 26rem),
+                #f4f7fb;
+        }
+
+        body[data-theme="light"] .market-grid {
+            background-image:
+                linear-gradient(rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+        }
+
+        body[data-theme="light"] header {
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-bottom-color: rgba(15, 23, 42, 0.12) !important;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        body[data-theme="light"] .glass-panel {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 249, 252, 0.96));
+            border-color: rgba(15, 23, 42, 0.12);
+            box-shadow: 0 18px 46px rgba(15, 23, 42, 0.11);
+        }
+
+        body[data-theme="light"] .text-white {
+            color: #101820 !important;
+        }
+
+        body[data-theme="light"] .text-terminal-200,
+        body[data-theme="light"] .text-terminal-300 {
+            color: #526174 !important;
+        }
+
+        body[data-theme="light"] .text-terminal-500 {
+            color: #7c8a9a !important;
+        }
+
+        body[data-theme="light"] .bg-terminal-950 {
+            background-color: #f8fafc !important;
+        }
+
+        body[data-theme="light"] [class*="bg-terminal-950/"] {
+            background-color: rgba(248, 250, 252, 0.86) !important;
+        }
+
+        body[data-theme="light"] .bg-white {
+            color: #ffffff !important;
+            background-color: #0b1720 !important;
+        }
+
+        body[data-theme="light"] [class*="bg-white/["] {
+            background-color: rgba(15, 23, 42, 0.045) !important;
+        }
+
+        body[data-theme="light"] [class*="border-white/"] {
+            border-color: rgba(15, 23, 42, 0.12) !important;
+        }
+
+        body[data-theme="light"] [class*="divide-white/"] > :not([hidden]) ~ :not([hidden]) {
+            border-color: rgba(15, 23, 42, 0.11) !important;
+        }
+
+        body[data-theme="light"] #savePortfolioPanel,
+        body[data-theme="light"] #filterPanel fieldset {
+            background-color: rgba(255, 255, 255, 0.82) !important;
+            border-color: rgba(15, 23, 42, 0.12) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+        }
+
+        body[data-theme="light"] #yearlyAnalysis {
+            background:
+                radial-gradient(circle at top right, rgba(214, 169, 74, 0.09), transparent 24rem),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 248, 0.96)) !important;
+        }
+
+        body[data-theme="light"] #yearlyAnalysis > div:first-child label {
+            background-color: rgba(255, 255, 255, 0.84) !important;
+            border-color: rgba(15, 23, 42, 0.14) !important;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+        }
+
+        body[data-theme="light"] .year-card {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 253, 246, 0.96) 48%, rgba(246, 251, 247, 0.94)) !important;
+            border-color: rgba(15, 23, 42, 0.13) !important;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.075);
+        }
+
+        body[data-theme="light"] .year-card-toggle {
+            background-color: transparent !important;
+        }
+
+        body[data-theme="light"] .year-card-toggle:hover {
+            background-color: rgba(214, 169, 74, 0.08) !important;
+        }
+
+        body[data-theme="light"] [data-year-content] {
+            background: rgba(255, 255, 255, 0.62);
+            border-top-color: rgba(15, 23, 42, 0.11) !important;
+        }
+
+        body[data-theme="light"] .year-card-surface {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            border-color: rgba(15, 23, 42, 0.11) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        body[data-theme="light"] .year-card-muted {
+            background-color: rgba(15, 23, 42, 0.055) !important;
+        }
+
+        .year-flow-arrow svg,
+        .year-card-chevron {
+            transition: transform 180ms ease;
+        }
+
+        body[data-theme="light"] input,
+        body[data-theme="light"] select {
+            color: #101820 !important;
+            background-color: rgba(255, 255, 255, 0.78) !important;
+        }
+
+        body[data-theme="light"] input::placeholder {
+            color: #7c8a9a !important;
+        }
+
+        body[data-theme="light"] option {
+            color: #101820;
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body data-theme="dark" class="min-h-screen text-slate-100 antialiased">
+    {% set rule1_params = dashboard_data.rule1_params|default({}, true) %}
+    {% set rule2_params = dashboard_data.rule2_params|default({}, true) %}
+    {% set filter_params = dashboard_data.filter_params|default({}, true) %}
+    <div class="market-grid min-h-screen">
+        <header class="sticky top-0 z-40 border-b border-white/10 bg-terminal-950/88 backdrop-blur-xl">
+            <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+                <a href="/" class="flex items-center gap-3" aria-label="Super Duper Waffle home">
+                    <span class="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-signal-amber to-amber-700 font-mono text-sm font-black text-terminal-950 shadow-soft">W</span>
+                    <span>
+                        <span class="block text-sm font-extrabold tracking-tight text-white">Super Duper Waffle</span>
+                        <span class="block font-mono text-[10px] uppercase tracking-[0.28em] text-terminal-300">Stock Selection Annual Analysis</span>
+                    </span>
+                </a>
+
+                <nav class="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1 lg:flex" aria-label="Primary navigation">
+                    <a href="#recommended" class="rounded-full px-4 py-2 text-sm font-semibold text-terminal-300 transition hover:bg-white/10 hover:text-white">Portfolio</a>
+                    <a href="#save" class="rounded-full px-4 py-2 text-sm font-semibold text-terminal-300 transition hover:bg-white/10 hover:text-white">Save</a>
+                    <a href="#filters" class="rounded-full px-4 py-2 text-sm font-semibold text-terminal-300 transition hover:bg-white/10 hover:text-white">Filters</a>
+                    <a href="#performanceSnapshot" class="rounded-full px-4 py-2 text-sm font-semibold text-terminal-300 transition hover:bg-white/10 hover:text-white">Snapshot</a>
+                    <a href="#performanceSummary" class="rounded-full px-4 py-2 text-sm font-semibold text-terminal-300 transition hover:bg-white/10 hover:text-white">Metrics</a>
+                    <a href="#yearlyAnalysis" class="rounded-full px-4 py-2 text-sm font-semibold text-white">Yearly</a>
+                </nav>
+
+                <div class="flex items-center gap-2">
+                    <button id="themeToggle" type="button" aria-pressed="false" class="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-bold text-terminal-200 transition hover:bg-white/10 hover:text-white">
+                        Light
+                    </button>
+                    <a href="/" class="hidden items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-terminal-200 transition hover:bg-white/10 hover:text-white sm:inline-flex">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M3.5 10.8 12 4l8.5 6.8V20a1 1 0 0 1-1 1h-5v-6h-5v6h-5a1 1 0 0 1-1-1v-9.2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        </svg>
+                        Home
+                    </a>
+                    <a href="/dashboard" aria-current="page" class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-extrabold text-terminal-950 transition hover:bg-signal-amber">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M4 19V5m0 14h16M8 16v-5m4 5V8m4 8v-3m4 3V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="/performance" class="hidden items-center gap-2 rounded-full px-4 py-2 text-sm font-bold text-terminal-200 transition hover:bg-white/10 hover:text-white sm:inline-flex">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M4 17 9 12l3 3 7-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M15 7h4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Performance
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+            <section id="recommended" class="mb-8 glass-panel overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <div class="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+                    <div>
+                        <p class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-signal-amber">Forward Portfolio</p>
+                        <h2 id="recommendedTitle" class="mt-1 text-2xl font-black tracking-tight text-white">Recommended Portfolio for {{ dashboard_data.endDate|default('2026', true) }}</h2>
+                        <p id="recommendedSubtitle" class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-terminal-300">Generated using {{ (dashboard_data.endDate|default(2026, true)|int) - 1 }} data available in December {{ (dashboard_data.endDate|default(2026, true)|int) - 1 }}.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <a href="/performance" class="rounded-full bg-signal-amber px-4 py-2 text-sm font-extrabold text-terminal-950 transition hover:-translate-y-0.5 hover:bg-amber-300">Performance Analysis</a>
+                        <a href="/dashboard-legacy" class="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10">Legacy View</a>
+                    </div>
+                </div>
+                <div id="recommendedStats" class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"></div>
+                <div id="recommendedGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-5"></div>
+            </section>
+
+            <section id="save" class="mb-8 glass-panel overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <div class="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                    <div>
+                        <p class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-signal-amber">Portfolio Actions</p>
+                        <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Save Tab</h2>
+                        <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-terminal-300">Save the recommended portfolio as a separate scenario without changing the dashboard view.</p>
+                    </div>
+                    <button id="saveTabToggle" type="button" aria-expanded="false" aria-controls="savePortfolioPanel" class="w-full rounded-full border border-signal-amber/30 bg-signal-amber/10 px-4 py-2 text-sm font-extrabold text-signal-amber transition hover:-translate-y-0.5 hover:bg-signal-amber hover:text-terminal-950 sm:w-auto">Open Save Tab</button>
+                </div>
+                <div id="savePortfolioPanel" class="hidden rounded-3xl border border-white/10 bg-terminal-950/40 p-5">
+                    <div class="mb-5 flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
+                        <div>
+                            <p class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-terminal-300">Save Tab</p>
+                            <h3 class="mt-1 text-xl font-black tracking-tight text-white">Save This Portfolio</h3>
+                            <p class="mt-2 text-sm font-semibold text-terminal-300">Save the current recommended basket for later analysis.</p>
+                        </div>
+                        <span id="savePortfolioYear" class="rounded-full bg-white/[0.06] px-3 py-1 font-mono text-xs font-bold text-terminal-200"></span>
+                    </div>
+                    <div class="grid gap-3 lg:grid-cols-[1fr_auto]">
+                        <label class="sr-only" for="portfolioName">Portfolio Name</label>
+                        <input type="text" id="portfolioName" placeholder="Portfolio Name" required class="rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-terminal-500 focus:border-signal-amber/70 focus:ring-4 focus:ring-signal-amber/10">
+                        <button id="savePortfolioButton" type="button" class="rounded-2xl bg-signal-amber px-5 py-3 text-sm font-extrabold text-terminal-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60">Save Portfolio</button>
+                    </div>
+                    <div id="saveStatus" class="mt-3 hidden rounded-2xl border px-4 py-3 text-sm font-bold"></div>
+                    <div class="mt-6">
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <h4 class="text-sm font-extrabold uppercase tracking-[0.18em] text-terminal-300">Saved Portfolios</h4>
+                            <span id="savedPortfolioCount" class="font-mono text-xs font-bold text-terminal-300"></span>
+                        </div>
+                        <div id="savedPortfolioList" class="grid gap-3 md:grid-cols-2 xl:grid-cols-3"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="filters" class="mb-8 glass-panel overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <form method="POST" action="/dashboard" class="param-form">
+                    <div class="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+                        <div>
+                            <p class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-signal-amber">Strategy Filters</p>
+                            <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Analysis Parameters</h2>
+                            <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-terminal-300">Fine-tune the rule set and rerun the dashboard with the same backend fields as the legacy screen.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <button id="filterTabToggle" type="button" aria-expanded="false" aria-controls="filterPanel" class="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-extrabold text-white transition hover:-translate-y-0.5 hover:bg-white/10">Open Filters</button>
+                            <button type="submit" class="rounded-full bg-signal-amber px-4 py-2 text-sm font-extrabold text-terminal-950 transition hover:-translate-y-0.5 hover:bg-amber-300">Update Analysis</button>
+                        </div>
+                    </div>
+
+                    <div id="filterPanel" class="hidden grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                        <fieldset class="rounded-3xl border border-white/10 bg-terminal-950/30 p-5">
+                            <legend class="mb-4 text-lg font-extrabold tracking-tight text-white">Rule 1 Parameters - 5yr</legend>
+                            <div class="grid gap-4">
+                                <label class="block text-sm font-bold text-terminal-300">Sales Min (Mil.)
+                                    <input type="number" name="sales_min_scale" min="1" max="10000" value="{{ rule1_params.sales_min_scale|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">Sales CAGR (%)
+                                    <input type="number" name="sales_cagr" step="0.01" min="0" max="1" value="{{ rule1_params.sales_cagr|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">FCF CAGR (%)
+                                    <input type="number" name="fcf_cagr" step="0.01" min="0" max="1" value="{{ rule1_params.fcf_cagr|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">Price CAGR (%)
+                                    <input type="number" name="price_cagr" step="0.01" min="0" max="1" value="{{ rule1_params.price_cagr|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-terminal-200">
+                                    <span>Omit Negative FCF</span>
+                                    <input type="checkbox" name="omit_negative_fcf" class="h-4 w-4 accent-[#d6a94a]" {% if rule1_params.omit_negative_fcf %}checked{% endif %}>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="rounded-3xl border border-white/10 bg-terminal-950/30 p-5">
+                            <legend class="mb-4 text-lg font-extrabold tracking-tight text-white">Rule 2 Parameters - 2yr</legend>
+                            <div class="grid gap-4">
+                                <label class="block text-sm font-bold text-terminal-300">2Y Sales CAGR (%)
+                                    <input type="number" name="sales_cagr_2y" step="0.01" min="0" max="1" value="{{ rule2_params.sales_cagr_2y|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-terminal-200">
+                                    <span>Omit 2Y Sales CAGR</span>
+                                    <input type="checkbox" name="sales_cagr_2y_omit" class="h-4 w-4 accent-[#d6a94a]" {% if rule2_params.sales_cagr_2y_omit %}checked{% endif %}>
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">2Y FCF CAGR (%)
+                                    <input type="number" name="fcf_cagr_2y" step="0.01" min="0" max="1" value="{{ rule2_params.fcf_cagr_2y|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-terminal-200">
+                                    <span>Omit 2Y FCF CAGR</span>
+                                    <input type="checkbox" name="fcf_cagr_2y_omit" class="h-4 w-4 accent-[#d6a94a]" {% if rule2_params.fcf_cagr_2y_omit %}checked{% endif %}>
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">2Y Price CAGR (%)
+                                    <input type="number" name="price_cagr_2y" step="0.01" min="0" max="1" value="{{ rule2_params.price_cagr_2y|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-bold text-terminal-200">
+                                    <span>Omit 2Y Price CAGR</span>
+                                    <input type="checkbox" name="price_cagr_2y_omit" class="h-4 w-4 accent-[#d6a94a]" {% if rule2_params.price_cagr_2y_omit %}checked{% endif %}>
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="rounded-3xl border border-white/10 bg-terminal-950/30 p-5">
+                            <legend class="mb-4 text-lg font-extrabold tracking-tight text-white">Portfolio Filters</legend>
+                            <div class="grid gap-4">
+                                <label class="block text-sm font-bold text-terminal-300">Portfolio Filter
+                                    <select name="ranking_method" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none focus:border-signal-amber/70">
+                                        <option value="2" {% if filter_params.ranking_method == '2' %}selected{% endif %}>Normalize 2YR Comp.</option>
+                                        <option value="5" {% if filter_params.ranking_method == '5' %}selected{% endif %}>Norm 5YR No Price</option>
+                                        <option value="6" {% if filter_params.ranking_method == '6' %}selected{% endif %}>Norm 5YR With Price</option>
+                                        <option value="7" {% if filter_params.ranking_method == '7' %}selected{% endif %}>Norm 5YR Only Sales</option>
+                                    </select>
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">Max Portfolio
+                                    <input type="number" name="maxPortfolio" step="1" min="1" max="100" value="{{ filter_params.maxPortfolio|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">Retention Policy (%)
+                                    <input type="number" name="retention" step="0.5" min="0" max="100" value="{{ filter_params.retention|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="rounded-3xl border border-white/10 bg-terminal-950/30 p-5">
+                            <legend class="mb-4 text-lg font-extrabold tracking-tight text-white">Weight Adjustments</legend>
+                            <div class="grid gap-4">
+                                <label class="block text-sm font-bold text-terminal-300">Sales Momentum
+                                    <input type="number" name="salesMomRate" step="0.01" min="0" max="1" value="{{ filter_params.salesMomRate|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">FCF Momentum
+                                    <input type="number" name="fcfMomRate" step="0.01" min="0" max="1" value="{{ filter_params.fcfMomRate|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">Price Inverse
+                                    <input type="number" name="priceInvRate" step="0.01" min="0" max="1" value="{{ filter_params.priceInvRate|default('', true) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="rounded-3xl border border-white/10 bg-terminal-950/30 p-5 lg:col-span-2 xl:col-span-2">
+                            <legend class="mb-4 text-lg font-extrabold tracking-tight text-white">Recent Price Filter</legend>
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <label class="block text-sm font-bold text-terminal-300">Price Lookback
+                                    <select name="recent_price_filter" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none focus:border-signal-amber/70">
+                                        <option value="omit" {% if filter_params.get('recent_price_filter', 'omit') == 'omit' %}selected{% endif %}>Omit</option>
+                                        <option value="3m" {% if filter_params.get('recent_price_filter', 'omit') == '3m' %}selected{% endif %}>3 Months</option>
+                                        <option value="6m" {% if filter_params.get('recent_price_filter', 'omit') == '6m' %}selected{% endif %}>6 Months</option>
+                                        <option value="12m" {% if filter_params.get('recent_price_filter', 'omit') == '12m' %}selected{% endif %}>12 Months</option>
+                                    </select>
+                                </label>
+                                <label class="block text-sm font-bold text-terminal-300">Max Return Threshold (%)
+                                    <input type="number" name="recent_price_threshold" step="0.01" min="-1" max="0" value="{{ filter_params.get('recent_price_threshold', -0.1) }}" class="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 font-mono text-sm text-white outline-none focus:border-signal-amber/70">
+                                    <span class="mt-2 block text-xs font-semibold text-terminal-300">Enter minus values between -1 and 0.</span>
+                                </label>
+                                <label class="flex items-center justify-between gap-3 rounded-2xl border border-signal-amber/20 bg-signal-amber/10 px-4 py-3 text-sm font-bold text-signal-amber md:col-span-2">
+                                    <span>SELECT GROWTH</span>
+                                    <input type="checkbox" name="growth" id="growth" class="h-4 w-4 accent-[#d6a94a]" {% if filter_params.growth %}checked{% endif %}>
+                                </label>
+                            </div>
+                        </fieldset>
+                    </div>
+                </form>
+            </section>
+
+            <section id="performanceSnapshot" class="mb-8 glass-panel overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <div class="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+                    <div>
+                        <p class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-signal-amber">Performance Snapshot</p>
+                        <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Return of $1 Investment</h2>
+                        <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-terminal-300">Legacy summary for strategy value, benchmark value, annualized return, and cumulative outperformance.</p>
+                    </div>
+                    <span id="performanceSnapshotYear" class="rounded-full bg-white/[0.06] px-3 py-1 font-mono text-xs font-bold text-terminal-200"></span>
+                </div>
+                <div id="performanceSnapshotGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-5"></div>
+            </section>
+
+            <section id="performanceSummary" class="mb-8 glass-panel overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <div class="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+                    <div>
+                        <p class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-signal-amber">Performance Summary</p>
+                        <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Strategy Metrics</h2>
+                        <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-terminal-300">Detailed legacy metrics for return, risk, drawdown, and risk-adjusted performance.</p>
+                    </div>
+                    <span class="rounded-full bg-white/[0.06] px-3 py-1 font-mono text-xs font-bold text-terminal-200">Legacy metric set</span>
+                </div>
+                <div id="performanceSummaryGrid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"></div>
+            </section>
+
+            <section id="yearlyAnalysis" class="mb-8 glass-panel overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                <div class="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+                    <div>
+                        <p class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-signal-amber">Yearly Analysis</p>
+                        <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Annual Strategy Review</h2>
+                        <p class="mt-2 max-w-3xl text-sm font-semibold leading-6 text-terminal-300">Year-by-year construction flow, portfolio changes, and strategy versus benchmark performance.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-3">
+                        <label class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-bold text-terminal-200">
+                            <input type="checkbox" id="returnDebug" class="h-4 w-4 accent-[#d6a94a]">
+                            Show Return Prices
+                        </label>
+                        <label class="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-bold text-terminal-200">
+                            <input type="checkbox" id="showFilteredCandidates" class="h-4 w-4 accent-[#d6a94a]">
+                            Show Filtered Candidates
+                        </label>
+                    </div>
+                </div>
+                <div id="yearlyAnalysisGrid" class="space-y-4"></div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        const dashboardData = {{ dashboard_data|default({}, true)|tojson }};
+        const dashboardResults = dashboardData.results || [];
+        const latestResult = dashboardResults[dashboardResults.length - 1] || {};
+        const performanceMetrics = dashboardData.performance_metrics || {};
+        const companies = dashboardData.companies || {};
+        const companyDetails = dashboardData.company_details || {};
+        const buyPrices = dashboardData.buy_prices || {};
+        const savedPortfolios = dashboardData.saved_portfolios || [];
+        const visibleSavedPortfolios = savedPortfolios.filter((portfolio) => portfolio?.name !== '___LATEST___');
+        let selectedSavedPortfolio = null;
+
+        const marketCards = [
+            { label: 'BIST 100', value: '9,814.22', change: 1.24, meta: 'Equity index' },
+            { label: 'USD/TRY', value: '32.41', change: 0.18, meta: 'Spot FX' },
+            { label: 'Gold', value: '$2,382.10', change: -0.34, meta: 'Ounce' },
+            { label: 'BTC', value: '$66,920', change: 2.86, meta: 'Crypto' }
+        ];
+
+        const toNumber = (value, fallback = 0) => {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : fallback;
+        };
+
+        const unique = (items) => [...new Set(items.filter(Boolean))];
+
+        const getCompanyName = (symbol) => (
+            companies[symbol] ||
+            companyDetails[symbol]?.name ||
+            latestResult.current_port_info?.[symbol]?.name ||
+            symbol
+        );
+
+        const getCompanyMeta = (symbol) => {
+            const meta = [
+                companyDetails[symbol]?.sector,
+                latestResult.current_port_info?.[symbol]?.sector,
+                latestResult.current_port_info?.[symbol]?.industry
+            ].find((value) => {
+                const normalized = String(value || '').trim().toLowerCase();
+                return normalized && !['unknown', 'n/a', 'na', 'none', 'null'].includes(normalized);
+            });
+
+            return meta || '';
+        };
+
+        const getSymbolReturn = (symbol) => {
+            const returns = latestResult.last_port_returns || {};
+            if (returns[symbol]?.return !== undefined) return toNumber(returns[symbol].return);
+            return toNumber(latestResult.outperformance, 0);
+        };
+
+        const getSymbolPrice = (symbol) => {
+            const returns = latestResult.last_port_returns || {};
+            const info = latestResult.current_port_info || {};
+            return toNumber(
+                buyPrices[symbol] ??
+                returns[symbol]?.sell_price ??
+                returns[symbol]?.buy_price ??
+                info[symbol]?.price,
+                0
+            );
+        };
+
+        const getRisk = (change) => {
+            const absolute = Math.abs(change);
+            if (absolute >= 35) return 'High';
+            if (absolute >= 12) return 'Medium';
+            return 'Low';
+        };
+
+        const getRating = (change) => {
+            if (change >= 12) return 'Buy';
+            if (change >= 0) return 'Hold';
+            return 'Watch';
+        };
+
+        const portfolioSymbols = unique([
+            ...(dashboardData.next_year_portfolio || []),
+            ...(latestResult.portfolio || []),
+            ...(latestResult.lastPort || [])
+        ]);
+        const recommendedSymbols = dashboardData.next_year_portfolio?.length
+            ? dashboardData.next_year_portfolio
+            : portfolioSymbols;
+        const portfolioYear = dashboardData.endDate || latestResult.year || new Date().getFullYear();
+        const sourceYear = portfolioYear ? portfolioYear - 1 : '';
+
+        const watchlist = portfolioSymbols.map((symbol) => {
+            const change = getSymbolReturn(symbol);
+
+            return {
+                symbol,
+                name: getCompanyName(symbol),
+                asset: 'Stock',
+                price: getSymbolPrice(symbol),
+                change,
+                aum: getCompanyMeta(symbol),
+                risk: getRisk(change),
+                rating: getRating(change)
+            };
+        });
+
+        const news = [
+            { source: 'Macro Desk', time: '09:42', title: 'Central bank commentary keeps FX volatility elevated', tag: 'FX' },
+            { source: 'Equity Research', time: '10:18', title: 'Banking names lead early session as yields stabilize', tag: 'Stocks' },
+            { source: 'Digital Assets', time: '11:05', title: 'Bitcoin extends gains while liquidity remains concentrated', tag: 'Crypto' }
+        ];
+
+        const funds = (savedPortfolios.length ? savedPortfolios : [{
+            name: `Model Portfolio ${dashboardData.endDate || ''}`.trim(),
+            year: dashboardData.endDate || '',
+            tickers: portfolioSymbols
+        }]).map((portfolio, index) => {
+            const returnYtd = toNumber(
+                index === 0 ? performanceMetrics.annualized_return_strategy : performanceMetrics.total_return,
+                0
+            );
+
+            return {
+                name: portfolio.name || `Portfolio Scenario ${index + 1}`,
+                focus: `${portfolio.year || dashboardData.endDate || 'Current'} strategy basket`,
+                returnYtd,
+                risk: getRisk(returnYtd),
+                allocation: portfolio.tickers || portfolioSymbols
+            };
+        });
+
+        const candles = dashboardResults.map((result) => {
+            const open = toNumber(result.investmentsp, 1) * 100;
+            const close = toNumber(result.investment, 1) * 100;
+            const spread = Math.max(8, Math.abs(close - open) * 0.28);
+
+            return [
+                Math.max(1, Math.min(open, close) - spread),
+                Math.max(open, close) + spread,
+                open,
+                close,
+                result.year
+            ];
+        });
+
+        const columns = [
+            { key: 'symbol', label: 'Symbol' },
+            { key: 'name', label: 'Name' },
+            { key: 'asset', label: 'Asset' },
+            { key: 'price', label: 'Price' },
+            { key: 'change', label: 'Signal' },
+            { key: 'aum', label: 'Sector / Basket' },
+            { key: 'risk', label: 'Risk' },
+            { key: 'rating', label: 'Rating' }
+        ];
+
+        const state = {
+            sortKey: 'change',
+            sortDir: 'desc',
+            search: '',
+            asset: 'all',
+            risk: 'all'
+        };
+
+        const formatPrice = (value) => {
+            if (!value) return 'N/A';
+            if (value >= 1000) return '$' + value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+            return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+        const toOptionalNumber = (value) => {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : null;
+        };
+        const formatNumber = (value, digits = 4) => {
+            const number = toOptionalNumber(value);
+            return number === null ? 'N/A' : number.toLocaleString('en-US', {
+                minimumFractionDigits: digits,
+                maximumFractionDigits: digits
+            });
+        };
+        const formatSnapshotCurrency = (value) => {
+            const number = toOptionalNumber(value);
+            if (Number.isNaN(Number(value))) return 'nan USD';
+            return number === null ? 'N/A' : `$${formatNumber(number, 4)} USD`;
+        };
+        const formatSnapshotPercent = (value) => {
+            const number = toOptionalNumber(value);
+            if (Number.isNaN(Number(value))) return 'nan%';
+            return number === null ? 'N/A' : `${formatNumber(number, 4)}%`;
+        };
+        const annualizedReturn = (value, years = 20) => {
+            if (Number.isNaN(Number(value))) return NaN;
+
+            const number = toOptionalNumber(value);
+            if (number === null || number < 0 || !years) return null;
+
+            return ((number ** (1 / years)) - 1) * 100;
+        };
+        const formatMetricPercent = (value, digits = 2) => {
+            if (value === undefined || value === null || value === '') return 'N/A';
+            if (Number.isNaN(Number(value))) return 'nan%';
+            return `${formatNumber(value, digits)}%`;
+        };
+        const formatMetricNumber = (value, digits = 2) => {
+            if (value === undefined || value === null || value === '') return 'N/A';
+            if (Number.isNaN(Number(value))) return 'nan';
+            return formatNumber(value, digits);
+        };
+        const formatMetricCurrency = (value, digits = 2) => {
+            if (value === undefined || value === null || value === '') return 'N/A';
+            if (Number.isNaN(Number(value))) return 'nan USD';
+            return `$${formatNumber(value, digits)} USD`;
+        };
+
+        const changeClass = (value) => value >= 0 ? 'text-signal-green' : 'text-signal-red';
+        const changeText = (value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+        const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        })[char]);
+        const escapeSelector = (value) => (
+            window.CSS?.escape ? CSS.escape(value) : String(value).replace(/["\\]/g, '\\$&')
+        );
+
+        function setSaveStatus(message, tone = 'info') {
+            const status = document.getElementById('saveStatus');
+            if (!status) return;
+
+            const classes = {
+                info: 'border-signal-blue/30 bg-signal-blue/10 text-signal-blue',
+                success: 'border-signal-green/30 bg-signal-green/10 text-signal-green',
+                error: 'border-signal-red/30 bg-signal-red/10 text-signal-red'
+            };
+
+            status.textContent = message;
+            status.className = `mt-3 rounded-2xl border px-4 py-3 text-sm font-bold ${classes[tone] || classes.info}`;
+            status.classList.remove('hidden');
+        }
+
+        function appendPortfolioParameters(formData, parameters = {}) {
+            Object.entries(parameters).forEach(([key, value]) => {
+                if (value === undefined || value === null || value === false) return;
+
+                if (Array.isArray(value)) {
+                    value.forEach((item) => formData.append(key, item));
+                    return;
+                }
+
+                formData.append(key, value === true ? 'on' : String(value));
+            });
+        }
+
+        function buildPortfolioFormData(name) {
+            const form = document.querySelector('.param-form');
+            const formData = form ? new FormData(form) : new FormData();
+            formData.append('portfolio_name', name);
+            formData.append('portfolio_year', String(portfolioYear));
+
+            recommendedSymbols.forEach((symbol) => {
+                formData.append('portfolio_tickers[]', symbol);
+            });
+
+            if (!form) {
+                appendPortfolioParameters(formData, dashboardData.rule1_params || {});
+                appendPortfolioParameters(formData, dashboardData.rule2_params || {});
+                appendPortfolioParameters(formData, dashboardData.filter_params || {});
+            }
+
+            return formData;
+        }
+
+        function fillParameterForm(parameters = {}) {
+            const form = document.querySelector('.param-form');
+            if (!form) return false;
+
+            Object.entries(parameters).forEach(([key, value]) => {
+                const elements = form.querySelectorAll(`[name="${escapeSelector(key)}"]`);
+                if (!elements.length) return;
+
+                elements.forEach((element) => {
+                    if (element.type === 'checkbox') {
+                        element.checked = value === true || value === 'true' || value === 'on' || value === 1 || value === '1';
+                    } else if (element.type === 'radio') {
+                        element.checked = String(element.value) === String(value);
+                    } else {
+                        element.value = value ?? '';
+                    }
+                });
+            });
+
+            return true;
+        }
+
+        async function fetchSavedPortfolio(portfolioId) {
+            const response = await fetch(`/get_portfolio/${portfolioId}`);
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Portfolio could not be loaded.');
+            }
+
+            return data.portfolio || {};
+        }
+
+        async function loadSavedPortfolioParameters(portfolioId) {
+            try {
+                setSaveStatus('Loading portfolio parameters...', 'info');
+                selectedSavedPortfolio = await fetchSavedPortfolio(portfolioId);
+                const loaded = fillParameterForm(selectedSavedPortfolio.parameters || {});
+
+                if (!loaded) {
+                    throw new Error('Filter form is not available on this screen.');
+                }
+
+                toggleFilterPanel(true);
+                setSaveStatus(`Loaded parameters for "${selectedSavedPortfolio.name || 'Saved Portfolio'}".`, 'success');
+            } catch (error) {
+                setSaveStatus(`Error loading portfolio: ${error.message || error}`, 'error');
+            }
+        }
+
+        async function loadSavedPortfolioAndRun(portfolioId) {
+            try {
+                setSaveStatus('Loading portfolio and running analysis...', 'info');
+                selectedSavedPortfolio = await fetchSavedPortfolio(portfolioId);
+                const loaded = fillParameterForm(selectedSavedPortfolio.parameters || {});
+                const form = document.querySelector('.param-form');
+
+                if (!loaded || !form) {
+                    throw new Error('Filter form is not available on this screen.');
+                }
+
+                form.submit();
+            } catch (error) {
+                setSaveStatus(`Error loading portfolio: ${error.message || error}`, 'error');
+            }
+        }
+
+        function toggleSavePanel(forceOpen) {
+            const panel = document.getElementById('savePortfolioPanel');
+            const toggle = document.getElementById('saveTabToggle');
+            if (!panel || !toggle) return;
+
+            const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !shouldOpen);
+            toggle.setAttribute('aria-expanded', String(shouldOpen));
+            toggle.textContent = shouldOpen ? 'Close Save Tab' : 'Open Save Tab';
+
+            if (shouldOpen) {
+                document.getElementById('portfolioName')?.focus();
+            }
+        }
+
+        function toggleFilterPanel(forceOpen) {
+            const panel = document.getElementById('filterPanel');
+            const toggle = document.getElementById('filterTabToggle');
+            if (!panel || !toggle) return;
+
+            const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !shouldOpen);
+            toggle.setAttribute('aria-expanded', String(shouldOpen));
+            toggle.textContent = shouldOpen ? 'Close Filters' : 'Open Filters';
+        }
+
+        async function savePortfolio() {
+            const input = document.getElementById('portfolioName');
+            const button = document.getElementById('savePortfolioButton');
+            const portfolioName = input?.value.trim();
+
+            if (!portfolioName) {
+                setSaveStatus('Please enter a portfolio name.', 'error');
+                input?.focus();
+                return;
+            }
+
+            if (!recommendedSymbols.length) {
+                setSaveStatus('There is no recommended basket to save.', 'error');
+                return;
+            }
+
+            setSaveStatus('Saving portfolio...', 'info');
+            if (button) button.disabled = true;
+
+            try {
+                const response = await fetch('/save_portfolio', {
+                    method: 'POST',
+                    body: buildPortfolioFormData(portfolioName)
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Portfolio could not be saved.');
+                }
+
+                setSaveStatus('Portfolio saved successfully. Refreshing list...', 'success');
+                setTimeout(() => window.location.reload(), 1200);
+            } catch (error) {
+                setSaveStatus(`Error saving portfolio: ${error.message || error}`, 'error');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        async function deleteSavedPortfolio(portfolioId) {
+            if (!portfolioId || !confirm('Are you sure you want to delete this portfolio?')) return;
+
+            try {
+                setSaveStatus('Deleting portfolio...', 'info');
+                const response = await fetch(`/delete_portfolio/${portfolioId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Portfolio could not be deleted.');
+                }
+
+                setSaveStatus('Portfolio deleted successfully. Refreshing list...', 'success');
+                setTimeout(() => window.location.reload(), 900);
+            } catch (error) {
+                setSaveStatus(`Error deleting portfolio: ${error.message || error}`, 'error');
+            }
+        }
+
+        function renderMarketCards() {
+            const root = document.getElementById('marketCards');
+            root.innerHTML = marketCards.map(card => `
+                <article class="glass-panel rounded-3xl p-5 transition hover:-translate-y-1 hover:border-white/20">
+                    <div class="mb-5 flex items-center justify-between">
+                        <span class="font-mono text-xs font-bold uppercase tracking-[0.22em] text-terminal-300">${card.meta}</span>
+                        <span class="rounded-full ${card.change >= 0 ? 'bg-signal-green/10 text-signal-green' : 'bg-signal-red/10 text-signal-red'} px-3 py-1 font-mono text-xs font-bold">${changeText(card.change)}</span>
+                    </div>
+                    <h3 class="text-lg font-black tracking-tight text-white">${card.label}</h3>
+                    <p class="mt-3 font-mono text-3xl font-bold text-white">${card.value}</p>
+                    <div class="mt-5 h-1.5 rounded-full bg-white/10">
+                        <div class="h-1.5 rounded-full ${card.change >= 0 ? 'bg-signal-green' : 'bg-signal-red'}" style="width: ${Math.min(92, 34 + Math.abs(card.change) * 16)}%"></div>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function renderRecommendedPortfolio() {
+            const section = document.getElementById('recommended');
+            const saveSection = document.getElementById('save');
+            const title = document.getElementById('recommendedTitle');
+            const subtitle = document.getElementById('recommendedSubtitle');
+            const stats = document.getElementById('recommendedStats');
+            const grid = document.getElementById('recommendedGrid');
+
+            if (!recommendedSymbols.length) {
+                section.classList.add('hidden');
+                saveSection?.classList.add('hidden');
+                return;
+            }
+
+            title.textContent = `Recommended Portfolio for ${portfolioYear}`;
+            subtitle.textContent = sourceYear
+                ? `Generated using ${sourceYear} data available in December ${sourceYear}.`
+                : 'Generated from the latest available strategy run.';
+
+            const summary = [
+                { label: 'Basket Size', value: `${recommendedSymbols.length} names`, tone: 'text-white' },
+                { label: 'Strategy CAGR', value: changeText(toNumber(performanceMetrics.annualized_return_strategy)), tone: changeClass(toNumber(performanceMetrics.annualized_return_strategy)) },
+                { label: 'S&P 500 CAGR', value: changeText(toNumber(performanceMetrics.annualized_return_sp500)), tone: changeClass(toNumber(performanceMetrics.annualized_return_sp500)) },
+                { label: 'Outperformance', value: changeText(toNumber(performanceMetrics.outperformance)), tone: changeClass(toNumber(performanceMetrics.outperformance)) }
+            ];
+
+            stats.innerHTML = summary.map(item => `
+                <article class="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <p class="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-terminal-300">${item.label}</p>
+                    <p class="mt-2 font-mono text-xl font-bold ${item.tone}">${item.value}</p>
+                </article>
+            `).join('');
+
+            grid.innerHTML = recommendedSymbols.map((symbol) => {
+                const price = getSymbolPrice(symbol);
+                const signal = getSymbolReturn(symbol);
+                const meta = getCompanyMeta(symbol);
+
+                return `
+                    <article class="group rounded-3xl border border-white/10 bg-white/[0.04] p-5 transition hover:-translate-y-1 hover:border-signal-amber/40 hover:bg-white/[0.07]">
+                        <div class="mb-5 flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="mt-2 font-mono text-2xl font-black tracking-tight text-white">${symbol}</h3>
+                            </div>
+                            ${meta ? `<span class="rounded-full bg-signal-amber/10 px-3 py-1 font-mono text-xs font-bold text-signal-amber">${meta}</span>` : ''}
+                        </div>
+                        <p class="min-h-[44px] text-sm font-semibold leading-6 text-terminal-200">${getCompanyName(symbol)}</p>
+                        <div class="mt-5 grid grid-cols-2 gap-3">
+                            <div class="rounded-2xl border border-white/10 bg-terminal-950/30 p-3">
+                                <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-terminal-300">Buy Price</p>
+                                <p class="mt-2 font-mono text-sm font-bold text-white">${formatPrice(price)}</p>
+                            </div>
+                            <div class="rounded-2xl border border-white/10 bg-terminal-950/30 p-3">
+                                <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-terminal-300">Signal</p>
+                                <p class="mt-2 font-mono text-sm font-bold ${changeClass(signal)}">${changeText(signal)}</p>
+                            </div>
+                        </div>
+                        <a href="/stock/${symbol}" class="mt-5 inline-flex items-center gap-2 text-sm font-extrabold text-signal-amber transition group-hover:translate-x-1">
+                            View stock
+                            <span aria-hidden="true">-&gt;</span>
+                        </a>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function renderPerformanceSnapshot() {
+            const section = document.getElementById('performanceSnapshot');
+            const grid = document.getElementById('performanceSnapshotGrid');
+            const year = document.getElementById('performanceSnapshotYear');
+            if (!grid) return;
+
+            const strategyValue = latestResult.investment ?? performanceMetrics.final_value;
+            const benchmarkValue = latestResult.investmentsp;
+            const strategyCompound = latestResult.car ?? performanceMetrics.total_return;
+            const benchmarkCompound = latestResult.carsp ?? performanceMetrics.sp500_return;
+            const strategyCompoundNumber = toOptionalNumber(strategyCompound);
+            const benchmarkCompoundNumber = toOptionalNumber(benchmarkCompound);
+            const strategyAnnualized = annualizedReturn(strategyValue);
+            const benchmarkAnnualized = annualizedReturn(benchmarkValue);
+            const outperformance = strategyCompound !== null && benchmarkCompound !== null
+                ? Number(strategyCompound) - Number(benchmarkCompound)
+                : performanceMetrics.outperformance;
+
+            if (year) {
+                year.textContent = latestResult.year ? `Through ${latestResult.year}` : 'Latest available';
+            }
+
+            const cards = [
+                { label: 'My 1 USD in here', value: formatSnapshotCurrency(strategyValue), tone: 'text-white', helper: `Annualized Return ${formatSnapshotPercent(strategyAnnualized)}` },
+                { label: 'My 1 USD in S&P 500', value: formatSnapshotCurrency(benchmarkValue), tone: 'text-white', helper: `Annualized Return ${formatSnapshotPercent(benchmarkAnnualized)}` },
+                { label: 'Compound Return', value: formatSnapshotPercent(strategyCompound), tone: changeClass(toNumber(strategyCompoundNumber, 0)), helper: 'Strategy cumulative return' },
+                { label: 'S&P 500 Comp Return', value: formatSnapshotPercent(benchmarkCompound), tone: changeClass(toNumber(benchmarkCompoundNumber, 0)), helper: 'Benchmark cumulative return' },
+                { label: 'Outperformance', value: formatSnapshotPercent(outperformance), tone: changeClass(toNumber(outperformance, 0)), helper: 'Strategy minus benchmark' }
+            ];
+
+            if (cards.every((card) => card.value === 'N/A')) {
+                section?.classList.add('hidden');
+                return;
+            }
+
+            grid.innerHTML = cards.map((card) => `
+                <article class="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+                    <p class="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-terminal-300">${card.label}</p>
+                    <p class="mt-3 font-mono text-2xl font-black tracking-tight ${card.tone}">${card.value}</p>
+                    <p class="mt-2 text-xs font-semibold text-terminal-300">${card.helper}</p>
+                </article>
+            `).join('');
+        }
+
+        function renderPerformanceSummary() {
+            const section = document.getElementById('performanceSummary');
+            const grid = document.getElementById('performanceSummaryGrid');
+            if (!grid) return;
+
+            const strategyValue = latestResult.investment ?? performanceMetrics.final_value;
+            const benchmarkValue = latestResult.investmentsp;
+            const strategyCompound = latestResult.car ?? performanceMetrics.total_return;
+            const benchmarkCompound = latestResult.carsp ?? performanceMetrics.sp500_return;
+            const strategyAnnualized = annualizedReturn(strategyValue);
+            const benchmarkAnnualized = annualizedReturn(benchmarkValue);
+            const outperformance = strategyCompound !== null && benchmarkCompound !== null
+                ? Number(strategyCompound) - Number(benchmarkCompound)
+                : performanceMetrics.outperformance;
+
+            const summaryCards = [
+                { label: 'Strategy vs SP500', value: formatMetricPercent(outperformance), helper: 'Cumulative Outperformance', tone: changeClass(toNumber(outperformance, 0)) },
+                { label: 'Strategy CAGR', value: formatMetricPercent(strategyCompound), helper: 'Compound Annual Growth', tone: changeClass(toNumber(strategyCompound, 0)) },
+                { label: 'SP500 CAGR', value: formatMetricPercent(benchmarkCompound), helper: 'Benchmark Growth', tone: changeClass(toNumber(benchmarkCompound, 0)) },
+                { label: 'Final Value', value: formatMetricCurrency(strategyValue), helper: 'From $1 Investment', tone: 'text-white' },
+                { label: 'Annualized Return', value: formatMetricPercent(strategyAnnualized), helper: `vs SP500 ${formatMetricPercent(benchmarkAnnualized)}`, tone: changeClass(toNumber(strategyAnnualized, 0)) },
+                { label: 'Win Rate', value: formatMetricPercent(performanceMetrics.win_rate, 1), helper: 'Winning periods', tone: 'text-white' },
+                { label: 'Volatility', value: formatMetricPercent(performanceMetrics.volatility, 1), helper: 'Return variability', tone: 'text-white' },
+                { label: 'Max Drawdown', value: formatMetricPercent(performanceMetrics.max_drawdown, 1), helper: 'Drawdown metric', tone: changeClass(toNumber(performanceMetrics.max_drawdown, 0)) },
+                { label: 'Sharpe Ratio', value: formatMetricNumber(performanceMetrics.sharpe_ratio), helper: 'Risk-Adjusted Return', tone: 'text-white' },
+                { label: 'Sortino Ratio', value: formatMetricNumber(performanceMetrics.sortino_ratio), helper: 'Downside Risk Adjusted', tone: 'text-white' },
+                { label: 'Calmar Ratio', value: formatMetricNumber(performanceMetrics.calmar_ratio), helper: 'Return vs Max DD', tone: 'text-white' },
+                { label: 'Max Drawdown', value: formatMetricPercent(performanceMetrics.max_drawdown, 1), helper: 'Worst Decline', tone: changeClass(toNumber(performanceMetrics.max_drawdown, 0)) }
+            ];
+
+            if (summaryCards.every((card) => card.value === 'N/A')) {
+                section?.classList.add('hidden');
+                return;
+            }
+
+            grid.innerHTML = summaryCards.map((card) => `
+                <article class="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+                    <p class="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-terminal-300">${card.label}</p>
+                    <p class="mt-3 font-mono text-2xl font-black tracking-tight ${card.tone}">${card.value}</p>
+                    <p class="mt-2 text-xs font-semibold text-terminal-300">${card.helper}</p>
+                </article>
+            `).join('');
+        }
+
+        const asArray = (value) => Array.isArray(value) ? value : [];
+
+        function renderTickerPills(symbols, info = {}, returns = {}, benchmarkReturn = null) {
+            const items = asArray(symbols);
+            if (!items.length) {
+                return '<p class="text-sm font-semibold text-terminal-300">No tickers available.</p>';
+            }
+
+            return items.map((symbol) => {
+                const stockInfo = info?.[symbol] || {};
+                const stockReturn = returns?.[symbol];
+                const returnValue = stockReturn?.return;
+                const benchmarkDiff = returnValue !== undefined && benchmarkReturn !== null
+                    ? Number(returnValue) - Number(benchmarkReturn)
+                    : null;
+                const details = [
+                    stockInfo.name || getCompanyName(symbol),
+                    stockInfo.sector || stockInfo.industry || '',
+                    stockInfo.sales !== undefined ? `Sales: ${formatMetricNumber(stockInfo.sales)}` : '',
+                    stockInfo.fcf !== undefined ? `FCF: ${formatMetricNumber(stockInfo.fcf)}` : '',
+                    stockInfo.price !== undefined ? `Price: ${formatMetricCurrency(stockInfo.price)}` : '',
+                    stockReturn?.buy_price !== undefined ? `Buy: ${formatMetricCurrency(stockReturn.buy_price)}` : '',
+                    stockReturn?.sell_price !== undefined ? `Sell: ${formatMetricCurrency(stockReturn.sell_price)}` : '',
+                    returnValue !== undefined ? `Return: ${formatMetricPercent(returnValue)}` : '',
+                    benchmarkDiff !== null && Number.isFinite(benchmarkDiff) ? `Return - SP500: ${formatMetricPercent(benchmarkDiff)}` : ''
+                ].filter(Boolean).join(' | ');
+
+                return `
+                    <a href="/stock/${encodeURIComponent(symbol)}" title="${escapeHtml(details || symbol)}" class="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 font-mono text-xs font-bold text-terminal-200 transition hover:border-signal-amber/40 hover:text-signal-amber">
+                        ${escapeHtml(symbol)}
+                    </a>
+                `;
+            }).join('');
+        }
+
+        function renderConstructionSteps(result) {
+            const steps = [
+                { label: 'Retained', value: asArray(result.retained).length, detail: asArray(result.retained).join(', '), tone: 'text-signal-green' },
+                { label: '5yr Rule', value: asArray(result.rule1).length, detail: '', tone: 'text-signal-blue' },
+                { label: '2yr Rule', value: asArray(result.rule2).length, detail: '', tone: 'text-signal-amber' },
+                { label: 'Filtered', value: asArray(result.filtered).length, detail: '', tone: 'text-white' },
+                { label: 'New Candidates', value: asArray(result.new_candidates).length, detail: asArray(result.new_candidates).join(', '), tone: 'text-signal-green' },
+                { label: 'Final Portfolio', value: asArray(result.portfolio).length, detail: '', tone: 'text-white' }
+            ];
+
+            return `
+                <div class="year-flow flex flex-col gap-3 xl:flex-row xl:items-stretch">
+                    ${steps.map((step, index) => `
+                        <article class="year-card-surface min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                            <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-terminal-300">${step.label}</p>
+                            <p class="mt-2 font-mono text-2xl font-black ${step.tone}">${step.value}</p>
+                            ${step.detail ? `<p class="mt-2 truncate text-xs font-semibold text-terminal-300" title="${escapeHtml(step.detail)}">${escapeHtml(step.detail)}</p>` : ''}
+                        </article>
+                        ${index < steps.length - 1 ? `
+                            <div class="year-flow-arrow flex items-center justify-center text-signal-amber xl:px-1" aria-hidden="true">
+                                <span class="grid h-8 w-8 place-items-center rounded-full border border-signal-amber/25 bg-signal-amber/10">
+                                    <svg class="h-4 w-4 rotate-90 xl:rotate-0" viewBox="0 0 24 24" fill="none">
+                                        <path d="M5 12h13m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                            </div>
+                        ` : ''}
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderFilteredCandidatesTable(result) {
+            const rows = asArray(result.filtered_candidates_details);
+            if (!rows.length) {
+                return '<p class="text-sm font-semibold text-terminal-300">No filtered candidate details available.</p>';
+            }
+
+            const hasNorm = rows.some((row) => row.sales_norm !== undefined || row.fcf_norm !== undefined || row.price_norm !== undefined);
+            const hasMomentum = rows.some((row) => row.sales_momentum !== undefined || row.fcf_momentum !== undefined);
+
+            return `
+                <div class="overflow-hidden rounded-3xl border border-white/10">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-white/10 text-left text-xs">
+                            <thead class="bg-white/[0.04] uppercase tracking-[0.16em] text-terminal-300">
+                                <tr>
+                                    ${['Rank', 'Ticker', 'Score', 'Sales 5Y', 'FCF 5Y', 'Price 5Y', 'Sales 2Y', 'FCF 2Y', 'Price 2Y'].map((heading) => `<th class="whitespace-nowrap px-4 py-3">${heading}</th>`).join('')}
+                                    ${hasNorm ? ['Sales Norm', 'FCF Norm', 'Price Norm'].map((heading) => `<th class="whitespace-nowrap px-4 py-3">${heading}</th>`).join('') : ''}
+                                    ${hasMomentum ? ['Sales Momentum', 'FCF Momentum'].map((heading) => `<th class="whitespace-nowrap px-4 py-3">${heading}</th>`).join('') : ''}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-white/10">
+                                ${rows.map((stock, index) => `
+                                    <tr class="transition hover:bg-white/[0.04]">
+                                        <td class="px-4 py-3 font-mono font-bold text-terminal-200">${index + 1}</td>
+                                        <td class="px-4 py-3 font-mono font-bold text-white">${escapeHtml(stock.ticker || '')}</td>
+                                        <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.score, 4)}</td>
+                                        <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.sales_CAGR_5Y, 4)}</td>
+                                        <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.FCF_CAGR_5Y, 4)}</td>
+                                        <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.price_CAGR_5Y, 4)}</td>
+                                        <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.sales_CAGR_2Y, 4)}</td>
+                                        <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.FCF_CAGR_2Y, 4)}</td>
+                                        <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.price_CAGR_2Y, 4)}</td>
+                                        ${hasNorm ? `
+                                            <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.sales_norm, 4)}</td>
+                                            <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.fcf_norm, 4)}</td>
+                                            <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.price_norm, 4)}</td>
+                                        ` : ''}
+                                        ${hasMomentum ? `
+                                            <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.sales_momentum, 4)}</td>
+                                            <td class="px-4 py-3 font-mono text-terminal-200">${formatMetricNumber(stock.fcf_momentum, 4)}</td>
+                                        ` : ''}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderYearlyAnalysis() {
+            const section = document.getElementById('yearlyAnalysis');
+            const grid = document.getElementById('yearlyAnalysisGrid');
+            if (!grid) return;
+
+            if (!dashboardResults.length) {
+                section?.classList.add('hidden');
+                return;
+            }
+
+            grid.innerHTML = dashboardResults.map((result, index) => {
+                const strategyReturn = toOptionalNumber(result.strategy_return);
+                const sp500Return = toOptionalNumber(result.sp500_return);
+                const outperformance = toOptionalNumber(result.outperformance);
+                const isLatest = index === dashboardResults.length - 1;
+
+                return `
+                    <article class="year-card overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04]">
+                        <button type="button" data-year-toggle="${index}" aria-expanded="false" class="year-card-toggle flex w-full flex-col gap-4 p-5 text-left transition hover:bg-white/[0.04] lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <h3 class="font-mono text-2xl font-black tracking-tight text-white">${escapeHtml(result.year || `Year ${index + 1}`)}</h3>
+                                    ${isLatest ? '<span class="rounded-full bg-signal-amber/10 px-3 py-1 font-mono text-[11px] font-bold text-signal-amber">Latest</span>' : ''}
+                                </div>
+                                <p class="mt-2 text-sm font-semibold text-terminal-300">Click to review construction flow, portfolio changes, and yearly return details.</p>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="rounded-full bg-signal-green/10 px-3 py-1 font-mono text-xs font-bold text-signal-green">Strategy: ${formatMetricPercent(strategyReturn)}</span>
+                                <span class="rounded-full bg-white/[0.06] px-3 py-1 font-mono text-xs font-bold text-terminal-200">SP500: ${formatMetricPercent(sp500Return)}</span>
+                                <span class="rounded-full ${toNumber(outperformance, 0) >= 0 ? 'bg-signal-green/10 text-signal-green' : 'bg-signal-red/10 text-signal-red'} px-3 py-1 font-mono text-xs font-bold">Out: ${formatMetricPercent(outperformance)}</span>
+                                <span class="flex items-center gap-2 rounded-full border border-white/10 px-3 py-1 font-mono text-xs font-bold text-terminal-300">
+                                    Details
+                                    <svg class="year-card-chevron h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                            </div>
+                        </button>
+                        <div data-year-content="${index}" class="hidden border-t border-white/10 p-5">
+                            <div class="mb-6">
+                                <h4 class="mb-3 text-lg font-extrabold tracking-tight text-white">Portfolio Construction</h4>
+                                ${renderConstructionSteps(result)}
+                            </div>
+
+                            <div class="mb-6 grid gap-4 lg:grid-cols-2">
+                                <article class="year-card-surface rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+                                    <h4 class="text-lg font-extrabold tracking-tight text-white">Previous Portfolio (Held during ${escapeHtml(result.year || '')})</h4>
+                                    <div class="mt-4 flex flex-wrap gap-2">
+                                        ${renderTickerPills(result.lastPort, result.last_port_info, result.last_port_returns, result.sp500_return_prev)}
+                                    </div>
+                                </article>
+                                <article class="year-card-surface rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+                                    <h4 class="text-lg font-extrabold tracking-tight text-white">New Portfolio (For ${escapeHtml((Number(result.year) || 0) + 1 || '')})</h4>
+                                    <div class="mt-4 flex flex-wrap gap-2">
+                                        ${renderTickerPills(result.portfolio, result.current_port_info, {}, null)}
+                                    </div>
+                                </article>
+                            </div>
+
+                            <div class="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                                ${[
+                                    ['Strategy Return', formatMetricPercent(result.strategy_return, 4), changeClass(toNumber(result.strategy_return, 0))],
+                                    ['S&P 500 Return', formatMetricPercent(result.sp500_return, 4), 'text-white'],
+                                    ['Outperformance', formatMetricPercent(result.outperformance, 4), changeClass(toNumber(result.outperformance, 0))],
+                                    ['My 1 USD IS', formatSnapshotCurrency(result.investment), 'text-white'],
+                                    ['Compound Return', formatMetricPercent(result.car, 4), changeClass(toNumber(result.car, 0))],
+                                    ['SP500', formatSnapshotCurrency(result.investmentsp), 'text-white'],
+                                    ['SP500 CAR', formatMetricPercent(result.carsp, 4), changeClass(toNumber(result.carsp, 0))]
+                                ].map(([label, value, tone]) => `
+                                    <article class="year-card-surface rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                                        <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-terminal-300">${label}</p>
+                                        <p class="mt-2 font-mono text-lg font-black ${tone}">${value}</p>
+                                    </article>
+                                `).join('')}
+                            </div>
+
+                            <div class="yearly-filtered-details hidden">
+                                <h4 class="mb-3 text-lg font-extrabold tracking-tight text-white">Filtered Candidates Details</h4>
+                                ${renderFilteredCandidatesTable(result)}
+                            </div>
+
+                            <div class="return-debug hidden">
+                                <h4 class="mb-3 mt-6 text-lg font-extrabold tracking-tight text-white">Return Calculation Details</h4>
+                                <div class="year-card-surface overflow-x-auto rounded-3xl border border-white/10 bg-white/[0.04] p-5 text-sm text-terminal-200">
+                                    ${result.return_html || '<p>No return details available.</p>'}
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+
+            document.querySelectorAll('[data-year-toggle]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const index = button.dataset.yearToggle;
+                    const content = document.querySelector(`[data-year-content="${index}"]`);
+                    const isOpening = content?.classList.contains('hidden');
+                    const chevron = button.querySelector('.year-card-chevron');
+                    content?.classList.toggle('hidden', !isOpening);
+                    button.setAttribute('aria-expanded', String(Boolean(isOpening)));
+                    chevron?.classList.toggle('rotate-180', Boolean(isOpening));
+                });
+            });
+
+            bindYearlyAnalysisToggles();
+        }
+
+        function bindYearlyAnalysisToggles() {
+            const returnDebug = document.getElementById('returnDebug');
+            const showFilteredCandidates = document.getElementById('showFilteredCandidates');
+
+            const sync = () => {
+                document.querySelectorAll('.return-debug').forEach((element) => {
+                    element.classList.toggle('hidden', !returnDebug?.checked);
+                });
+                document.querySelectorAll('.yearly-filtered-details').forEach((element) => {
+                    element.classList.toggle('hidden', !showFilteredCandidates?.checked);
+                });
+            };
+
+            returnDebug?.addEventListener('change', sync);
+            showFilteredCandidates?.addEventListener('change', sync);
+            sync();
+        }
+
+        function renderCandles() {
+            const svg = document.getElementById('candleChart');
+            if (!svg) return;
+
+            const width = svg.clientWidth || 900;
+            const height = 360;
+            const series = candles.length ? candles : [[38, 112, 64, 92], [50, 126, 74, 58], [42, 104, 55, 83], [70, 138, 118, 76]];
+            const highValues = series.map(candle => candle[1]);
+            const lowValues = series.map(candle => candle[0]);
+            const max = Math.max(...highValues) + 12;
+            const min = Math.min(...lowValues) - 12;
+            const isLight = document.body.dataset.theme === 'light';
+            const gridStroke = isLight ? 'rgba(15, 23, 42, 0.10)' : 'rgba(198, 208, 220, 0.10)';
+            const scale = (value) => height - ((value - min) / (max - min)) * (height - 44) - 22;
+            const step = width / series.length;
+
+            const grid = Array.from({ length: 6 }, (_, index) => {
+                const y = 26 + index * 58;
+                return `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="${gridStroke}" stroke-width="1" />`;
+            }).join('');
+
+            const shapes = series.map((candle, index) => {
+                const [low, high, open, close] = candle;
+                const x = index * step + step / 2;
+                const bodyTop = Math.min(scale(open), scale(close));
+                const bodyHeight = Math.max(8, Math.abs(scale(open) - scale(close)));
+                const up = close >= open;
+                return `
+                    <g class="candlestick opacity-90">
+                        <line x1="${x}" y1="${scale(high)}" x2="${x}" y2="${scale(low)}" stroke="${up ? '#28d18c' : '#ff5e57'}" stroke-width="2" stroke-linecap="round" />
+                        <rect x="${x - Math.min(14, step * 0.28)}" y="${bodyTop}" width="${Math.min(28, step * 0.56)}" height="${bodyHeight}" rx="4" fill="${up ? '#28d18c' : '#ff5e57'}" />
+                    </g>
+                `;
+            }).join('');
+
+            svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svg.innerHTML = grid + shapes;
+        }
+
+        function applyTheme(theme) {
+            const safeTheme = theme === 'light' ? 'light' : 'dark';
+            const toggle = document.getElementById('themeToggle');
+
+            document.body.dataset.theme = safeTheme;
+            localStorage.setItem('financial-dashboard-theme', safeTheme);
+
+            if (toggle) {
+                toggle.textContent = safeTheme === 'light' ? 'Dark' : 'Light';
+                toggle.setAttribute('aria-pressed', String(safeTheme === 'light'));
+            }
+
+            renderCandles();
+        }
+
+        function initThemeToggle() {
+            const savedTheme = localStorage.getItem('financial-dashboard-theme') || 'dark';
+            const toggle = document.getElementById('themeToggle');
+
+            applyTheme(savedTheme);
+
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    applyTheme(document.body.dataset.theme === 'light' ? 'dark' : 'light');
+                });
+            }
+        }
+
+        function renderFlow() {
+            const flow = [
+                { label: 'Institutional bids', value: 78, color: 'bg-signal-green' },
+                { label: 'Retail activity', value: 52, color: 'bg-signal-blue' },
+                { label: 'Volatility pressure', value: 36, color: 'bg-signal-amber' },
+                { label: 'Sell imbalance', value: 24, color: 'bg-signal-red' }
+            ];
+            document.getElementById('flowList').innerHTML = flow.map(item => `
+                <div class="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div class="mb-3 flex items-center justify-between">
+                        <span class="text-sm font-semibold text-terminal-200">${item.label}</span>
+                        <span class="font-mono text-sm font-bold text-white">${item.value}%</span>
+                    </div>
+                    <div class="h-2 rounded-full bg-white/10">
+                        <div class="h-2 rounded-full ${item.color}" style="width: ${item.value}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTableHead() {
+            document.getElementById('tableHead').innerHTML = columns.map(column => `
+                <th scope="col" class="whitespace-nowrap px-5 py-4">
+                    <button class="flex items-center gap-2 font-bold" data-sort="${column.key}">
+                        ${column.label}
+                        <span class="text-terminal-500">${state.sortKey === column.key ? (state.sortDir === 'asc' ? 'up' : 'down') : '-'}</span>
+                    </button>
+                </th>
+            `).join('');
+
+            document.querySelectorAll('[data-sort]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const key = button.dataset.sort;
+                    if (state.sortKey === key) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+                    else {
+                        state.sortKey = key;
+                        state.sortDir = 'asc';
+                    }
+                    renderTable();
+                    renderTableHead();
+                });
+            });
+        }
+
+        function getFilteredRows() {
+            return watchlist
+                .filter(row => state.asset === 'all' || row.asset === state.asset)
+                .filter(row => state.risk === 'all' || row.risk === state.risk)
+                .filter(row => {
+                    const haystack = `${row.symbol} ${row.name} ${row.asset} ${row.rating}`.toLowerCase();
+                    return haystack.includes(state.search.toLowerCase());
+                })
+                .sort((a, b) => {
+                    const aValue = a[state.sortKey];
+                    const bValue = b[state.sortKey];
+                    const result = typeof aValue === 'number' ? aValue - bValue : String(aValue).localeCompare(String(bValue));
+                    return state.sortDir === 'asc' ? result : -result;
+                });
+        }
+
+        function renderTable() {
+            const root = document.getElementById('watchlistRows');
+            const rows = getFilteredRows();
+            root.innerHTML = rows.map(row => `
+                <tr class="transition hover:bg-white/[0.04]">
+                    <td class="whitespace-nowrap px-5 py-4 font-mono text-sm font-bold text-white">${row.symbol}</td>
+                    <td class="min-w-[220px] px-5 py-4 text-sm font-semibold text-terminal-200">${row.name}</td>
+                    <td class="px-5 py-4"><span class="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-bold text-terminal-200">${row.asset}</span></td>
+                    <td class="whitespace-nowrap px-5 py-4 font-mono text-sm font-bold text-white">${formatPrice(row.price)}</td>
+                    <td class="whitespace-nowrap px-5 py-4 font-mono text-sm font-bold ${changeClass(row.change)}">${changeText(row.change)}</td>
+                    <td class="whitespace-nowrap px-5 py-4 font-mono text-sm text-terminal-200">${row.aum}</td>
+                    <td class="px-5 py-4"><span class="rounded-full ${row.risk === 'High' ? 'bg-signal-red/10 text-signal-red' : row.risk === 'Medium' ? 'bg-signal-amber/10 text-signal-amber' : 'bg-signal-green/10 text-signal-green'} px-3 py-1 text-xs font-bold">${row.risk}</span></td>
+                    <td class="px-5 py-4 text-sm font-bold text-white">${row.rating}</td>
+                </tr>
+            `).join('') || `<tr><td colspan="8" class="px-5 py-8 text-center text-terminal-300">No matching instruments.</td></tr>`;
+        }
+
+        function renderNews() {
+            document.getElementById('newsGrid').innerHTML = news.map(item => `
+                <article class="glass-panel rounded-3xl p-5 transition hover:-translate-y-1 hover:border-white/20">
+                    <div class="mb-6 flex items-center justify-between">
+                        <span class="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-bold text-terminal-200">${item.tag}</span>
+                        <span class="font-mono text-xs text-terminal-300">${item.time}</span>
+                    </div>
+                    <h3 class="text-lg font-extrabold leading-7 tracking-tight text-white">${item.title}</h3>
+                    <p class="mt-4 text-sm font-semibold text-terminal-300">${item.source}</p>
+                </article>
+            `).join('');
+        }
+
+        function renderFunds() {
+            document.getElementById('fundGrid').innerHTML = funds.map(fund => `
+                <article class="glass-panel rounded-3xl p-5 transition hover:-translate-y-1 hover:border-white/20">
+                    <div class="mb-5 flex items-start justify-between gap-3">
+                        <div>
+                            <h3 class="text-lg font-extrabold tracking-tight text-white">${fund.name}</h3>
+                            <p class="mt-1 text-sm font-semibold text-terminal-300">${fund.focus}</p>
+                        </div>
+                        <span class="rounded-full ${fund.risk === 'High' ? 'bg-signal-red/10 text-signal-red' : fund.risk === 'Medium' ? 'bg-signal-amber/10 text-signal-amber' : 'bg-signal-green/10 text-signal-green'} px-3 py-1 text-xs font-bold">${fund.risk}</span>
+                    </div>
+                    <p class="font-mono text-3xl font-bold ${changeClass(fund.returnYtd)}">${changeText(fund.returnYtd)}</p>
+                    <p class="mt-1 text-xs font-bold uppercase tracking-[0.18em] text-terminal-300">Model return</p>
+                    <div class="mt-5 flex flex-wrap gap-2">
+                        ${fund.allocation.map(symbol => `<span class="rounded-full border border-white/10 px-3 py-1 font-mono text-xs font-bold text-terminal-200">${symbol}</span>`).join('')}
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        function renderSavedPortfolios() {
+            const list = document.getElementById('savedPortfolioList');
+            const count = document.getElementById('savedPortfolioCount');
+            const year = document.getElementById('savePortfolioYear');
+            if (!list) return;
+
+            if (year) {
+                year.textContent = `Portfolio year ${portfolioYear}`;
+            }
+
+            if (count) {
+                count.textContent = `${visibleSavedPortfolios.length} saved`;
+            }
+
+            if (!visibleSavedPortfolios.length) {
+                list.innerHTML = `
+                    <article class="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-5 text-sm font-semibold text-terminal-300 md:col-span-2 xl:col-span-3">
+                        No saved portfolios yet. Save the current recommended basket to create one.
+                    </article>
+                `;
+                return;
+            }
+
+            list.innerHTML = visibleSavedPortfolios.map((portfolio) => {
+                const tickers = portfolio.tickers || [];
+                const savedDate = portfolio.saved_date ? String(portfolio.saved_date).slice(0, 10) : 'N/A';
+
+                return `
+                    <article class="rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+                        <div class="mb-4 flex items-start justify-between gap-3">
+                            <div>
+                                <h5 class="text-base font-extrabold tracking-tight text-white">${escapeHtml(portfolio.name || 'Saved Portfolio')}</h5>
+                                <p class="mt-1 font-mono text-xs font-bold text-terminal-300">${escapeHtml(portfolio.year || portfolioYear)} • ${tickers.length} stocks</p>
+                            </div>
+                            <span class="rounded-full bg-white/[0.06] px-3 py-1 font-mono text-[11px] font-bold text-terminal-200">${escapeHtml(savedDate)}</span>
+                        </div>
+                        <div class="mb-4 flex max-h-24 flex-wrap gap-2 overflow-y-auto">
+                            ${tickers.map((ticker) => `<span class="rounded-full border border-white/10 px-3 py-1 font-mono text-xs font-bold text-terminal-200">${escapeHtml(ticker)}</span>`).join('')}
+                        </div>
+                        ${portfolio.id ? `
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" data-load-portfolio="${portfolio.id}" class="rounded-full border border-white/10 bg-white/[0.05] px-3 py-2 text-xs font-extrabold text-terminal-200 transition hover:bg-white/10 hover:text-white">
+                                    Load Parameters
+                                </button>
+                                <button type="button" data-run-portfolio="${portfolio.id}" class="rounded-full bg-signal-amber px-3 py-2 text-xs font-extrabold text-terminal-950 transition hover:bg-amber-300">
+                                    Load &amp; Run
+                                </button>
+                                <button type="button" data-delete-portfolio="${portfolio.id}" class="rounded-full border border-signal-red/30 bg-signal-red/10 px-3 py-2 text-xs font-extrabold text-signal-red transition hover:bg-signal-red hover:text-white">
+                                    Delete
+                                </button>
+                            </div>
+                        ` : ''}
+                    </article>
+                `;
+            }).join('');
+
+            list.querySelectorAll('[data-load-portfolio]').forEach((button) => {
+                button.addEventListener('click', () => loadSavedPortfolioParameters(button.dataset.loadPortfolio));
+            });
+
+            list.querySelectorAll('[data-run-portfolio]').forEach((button) => {
+                button.addEventListener('click', () => loadSavedPortfolioAndRun(button.dataset.runPortfolio));
+            });
+
+            list.querySelectorAll('[data-delete-portfolio]').forEach((button) => {
+                button.addEventListener('click', () => deleteSavedPortfolio(button.dataset.deletePortfolio));
+            });
+        }
+
+        function bindSavePortfolio() {
+            const toggle = document.getElementById('saveTabToggle');
+            const filterToggle = document.getElementById('filterTabToggle');
+            const saveButton = document.getElementById('savePortfolioButton');
+            const input = document.getElementById('portfolioName');
+
+            toggle?.addEventListener('click', () => toggleSavePanel());
+            filterToggle?.addEventListener('click', () => toggleFilterPanel());
+            saveButton?.addEventListener('click', savePortfolio);
+            input?.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    savePortfolio();
+                }
+            });
+        }
+
+        function bindFilters() {
+            const tableSearch = document.getElementById('tableSearch');
+            const globalSearch = document.getElementById('globalSearch');
+            const assetFilter = document.getElementById('assetFilter');
+            const riskFilter = document.getElementById('riskFilter');
+
+            [tableSearch, globalSearch].forEach(input => {
+                input.addEventListener('input', (event) => {
+                    state.search = event.target.value;
+                    tableSearch.value = state.search;
+                    globalSearch.value = state.search;
+                    renderTable();
+                });
+            });
+
+            assetFilter.addEventListener('change', (event) => {
+                state.asset = event.target.value;
+                renderTable();
+            });
+
+            riskFilter.addEventListener('change', (event) => {
+                state.risk = event.target.value;
+                renderTable();
+            });
+        }
+
+        function boot() {
+            initThemeToggle();
+            renderRecommendedPortfolio();
+            renderPerformanceSnapshot();
+            renderPerformanceSummary();
+            renderYearlyAnalysis();
+            renderSavedPortfolios();
+            bindSavePortfolio();
+        }
+
+        window.addEventListener('resize', renderCandles);
+        document.addEventListener('DOMContentLoaded', boot);
+    </script>
+</body>
+</html>
