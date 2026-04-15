@@ -36,6 +36,7 @@
 {% endblock %}
 
 {% block content %}
+{% set metrics = performance_metrics|default({}, true) %}
 <!-- Future Portfolio -->
 <div class="container mt-4">
     <div class="future-portfolio">
@@ -87,27 +88,27 @@
     <div class="row g-3 mb-4">
         <div class="col-md-3 col-6">
             <div class="metric-card text-center">
-                <div class="metric-value text-success">{{ "%.1f"|format(performance_metrics.total_return) }}%</div>
+                <div class="metric-value text-success">{{ "%.1f"|format(metrics.total_return|default(0, true)|float) }}%</div>
                 <div class="metric-label">Total Return</div>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="metric-card text-center">
-                <div class="metric-value {% if performance_metrics.outperformance > 0 %}text-success{% else %}text-danger{% endif %}">
-                    {{ "%.1f"|format(performance_metrics.outperformance) }}%
+                <div class="metric-value {% if metrics.outperformance|default(0, true)|float > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ "%.1f"|format(metrics.outperformance|default(0, true)|float) }}%
                 </div>
                 <div class="metric-label">vs S&P 500</div>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="metric-card text-center">
-                <div class="metric-value text-info">{{ "%.0f"|format(performance_metrics.win_rate) }}%</div>
+                <div class="metric-value text-info">{{ "%.0f"|format(metrics.win_rate|default(0, true)|float) }}%</div>
                 <div class="metric-label">Win Rate</div>
             </div>
         </div>
         <div class="col-md-3 col-6">
             <div class="metric-card text-center">
-                <div class="metric-value text-warning">{{ "%.1f"|format(performance_metrics.volatility) }}%</div>
+                <div class="metric-value text-warning">{{ "%.1f"|format(metrics.volatility|default(0, true)|float) }}%</div>
                 <div class="metric-label">Volatility</div>
             </div>
         </div>
@@ -124,7 +125,7 @@
                         <i class="fas fa-balance-scale"></i>
                     </div>
                     <h6>Sharpe Ratio</h6>
-                    <div class="metric-value h3">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</div>
+                    <div class="metric-value h3">{{ "%.2f"|format(metrics.sharpe_ratio|default(0, true)|float) }}</div>
                     <small class="text-muted">Risk-Adjusted Return</small>
                 </div>
             </div>
@@ -135,7 +136,7 @@
                         <i class="fas fa-shield-alt"></i>
                     </div>
                     <h6>Sortino Ratio</h6>
-                    <div class="metric-value h3">{{ "%.2f"|format(performance_metrics.sortino_ratio) }}</div>
+                    <div class="metric-value h3">{{ "%.2f"|format(metrics.sortino_ratio|default(0, true)|float) }}</div>
                     <small class="text-muted">Downside Risk Adjusted</small>
                 </div>
             </div>
@@ -146,7 +147,7 @@
                         <i class="fas fa-tachometer-alt"></i>
                     </div>
                     <h6>Calmar Ratio</h6>
-                    <div class="metric-value h3">{{ "%.2f"|format(performance_metrics.calmar_ratio) }}</div>
+                    <div class="metric-value h3">{{ "%.2f"|format(metrics.calmar_ratio|default(0, true)|float) }}</div>
                     <small class="text-muted">Return vs Max Drawdown</small>
                 </div>
             </div>
@@ -157,7 +158,7 @@
                         <i class="fas fa-arrow-down"></i>
                     </div>
                     <h6>Max Drawdown</h6>
-                    <div class="metric-value h3">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+                    <div class="metric-value h3">{{ "%.1f"|format(metrics.max_drawdown|default(0, true)|float) }}%</div>
                     <small class="text-muted">Worst Decline</small>
                 </div>
             </div>
@@ -185,26 +186,26 @@
         <div class="col-md-4">
             <div class="metric-card text-center">
                 <h6 class="mb-3">Annualized Return</h6>
-                <div class="metric-value h4 text-success">{{ "%.2f"|format(performance_metrics.annualized_return_strategy) }}%</div>
+                <div class="metric-value h4 text-success">{{ "%.2f"|format(metrics.annualized_return_strategy|default(0, true)|float) }}%</div>
                 <div class="metric-label">Strategy</div>
-                <div class="metric-value h4 text-primary mt-2">{{ "%.2f"|format(performance_metrics.annualized_return_sp500) }}%</div>
+                <div class="metric-value h4 text-primary mt-2">{{ "%.2f"|format(metrics.annualized_return_sp500|default(0, true)|float) }}%</div>
                 <div class="metric-label">S&P 500</div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="metric-card text-center">
                 <h6 class="mb-3">Final Value</h6>
-                <div class="metric-value h4">${{ "%.2f"|format(performance_metrics.final_value) }}</div>
+                <div class="metric-value h4">${{ "%.2f"|format(metrics.final_value|default(0, true)|float) }}</div>
                 <div class="metric-label">From $1 Investment</div>
                 <div class="mt-3">
-                    <small class="text-muted">{{ performance_metrics.years_analyzed }} Years Analyzed</small>
+                    <small class="text-muted">{{ metrics.years_analyzed|default(0, true) }} Years Analyzed</small>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="metric-card text-center">
                 <h6 class="mb-3">Risk Management</h6>
-                <div class="metric-value h4 text-warning">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+                <div class="metric-value h4 text-warning">{{ "%.1f"|format(metrics.max_drawdown|default(0, true)|float) }}%</div>
                 <div class="metric-label">Max Drawdown</div>
                 <div class="mt-3">
                     <small class="text-muted">Conservative Construction</small>
@@ -245,10 +246,10 @@
     new Chart(document.getElementById('growthChart'), {
         type: 'line',
         data: {
-            labels: [{% for r in results %}'{{ r.year }}',{% endfor %}],
+            labels: [{% for r in results|default([], true) %}'{{ r.year|default('', true) }}',{% endfor %}],
             datasets: [{
                 label: 'Waffle Strategy',
-                data: [{% for r in results %}{{ r.investment }},{% endfor %}],
+                data: [{% for r in results|default([], true) %}{{ r.investment|default(0, true)|float }},{% endfor %}],
                 borderColor: '#667eea',
                 backgroundColor: 'rgba(102, 126, 234, 0.1)',
                 tension: 0.4,
@@ -256,7 +257,7 @@
                 borderWidth: 3
             }, {
                 label: 'S&P 500',
-                data: [{% for r in results %}{{ r.investmentsp }},{% endfor %}],
+                data: [{% for r in results|default([], true) %}{{ r.investmentsp|default(0, true)|float }},{% endfor %}],
                 borderColor: '#764ba2',
                 backgroundColor: 'rgba(118, 75, 162, 0.1)',
                 tension: 0.4,
@@ -274,11 +275,11 @@
     new Chart(document.getElementById('annualChart'), {
         type: 'bar',
         data: {
-            labels: [{% for r in results if r.year > 2006 %}'{{ r.year }}',{% endfor %}],
+            labels: [{% for r in results|default([], true) if (r.year|default(0, true)|int) > 2006 %}'{{ r.year|default('', true) }}',{% endfor %}],
             datasets: [{
                 label: 'Outperformance',
-                data: [{% for r in results if r.year > 2006 %}{{ r.outperformance }},{% endfor %}],
-                backgroundColor: [{% for r in results if r.year > 2006 %}'{% if r.outperformance > 0 %}#10b981{% else %}#ef4444{% endif %}',{% endfor %}]
+                data: [{% for r in results|default([], true) if (r.year|default(0, true)|int) > 2006 %}{{ r.outperformance|default(0, true)|float }},{% endfor %}],
+                backgroundColor: [{% for r in results|default([], true) if (r.year|default(0, true)|int) > 2006 %}'{% if r.outperformance|default(0, true)|float > 0 %}#10b981{% else %}#ef4444{% endif %}',{% endfor %}]
             }]
         },
         options: {

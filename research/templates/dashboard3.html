@@ -10,6 +10,8 @@
 {% endblock %}
 
 {% block content %}
+{% set dashboard_results = results|default([], true) %}
+{% set dashboard_metrics = performance_metrics|default({}, true) %}
 
     <!-- Next Year Portfolio Section -->
     {% if next_year_portfolio %}
@@ -224,13 +226,13 @@
         outperformance=0
     ) %}
     
-    {% for result in results %}
+    {% for result in dashboard_results %}
         {% if loop.last %}
-            {% set cumulative_data.returnMy1USD = result.investment %}
-            {% set cumulative_data.compoundR = result.car %}
-            {% set cumulative_data.returnMy1USDSP500 = result.investmentsp %}
-            {% set cumulative_data.compoundRSP500 = result.carsp %}
-            {% set cumulative_data.outperformance = result.car - result.carsp %}
+            {% set cumulative_data.returnMy1USD = result.investment|default(0, true)|float %}
+            {% set cumulative_data.compoundR = result.car|default(0, true)|float %}
+            {% set cumulative_data.returnMy1USDSP500 = result.investmentsp|default(0, true)|float %}
+            {% set cumulative_data.compoundRSP500 = result.carsp|default(0, true)|float %}
+            {% set cumulative_data.outperformance = result.car|default(0, true)|float - result.carsp|default(0, true)|float %}
         {% endif %}
     {% endfor %}
 
@@ -288,36 +290,36 @@
             </div>
             <div class="metric-card">
                 <h3>Win RateVolatility</h3>
-                <div class="metric-value">{{ "%.1f"|format(performance_metrics.win_rate) }}%</div>
+                <div class="metric-value">{{ "%.1f"|format(dashboard_metrics.win_rate|default(0, true)|float) }}%</div>
             </div>
             <div class="metric-card">
                 <h3>Volatility</h3>
-                <div class="metric-value">{{ "%.1f"|format(performance_metrics.volatility) }}%</div>
+                <div class="metric-value">{{ "%.1f"|format(dashboard_metrics.volatility|default(0, true)|float) }}%</div>
             </div>
             <div class="metric-card">
                 <h3>Max Drawdown</h3>
-                <div class="metric-value">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+                <div class="metric-value">{{ "%.1f"|format(dashboard_metrics.max_drawdown|default(0, true)|float) }}%</div>
             </div>
         </div>
         <div class="summary-cards">
             <div class="metric-card">
                 <h3>Sharpe Ratio</h3>
-                <div class="metric-value">{{ "%.2f"|format(performance_metrics.sharpe_ratio) }}</div>
+                <div class="metric-value">{{ "%.2f"|format(dashboard_metrics.sharpe_ratio|default(0, true)|float) }}</div>
                 <div class="metric-label">Risk-Adjusted Return</div>
             </div>
             <div class="metric-card">
                 <h3>Sortino Ratio</h3>
-                <div class="metric-value">{{ "%.2f"|format(performance_metrics.sortino_ratio) }}</div>
+                <div class="metric-value">{{ "%.2f"|format(dashboard_metrics.sortino_ratio|default(0, true)|float) }}</div>
                 <div class="metric-label">Downside Risk Adjusted</div>
             </div>
             <div class="metric-card">
                 <h3>Calmar Ratio</h3>
-                <div class="metric-value">{{ "%.2f"|format(performance_metrics.calmar_ratio) }}</div>
+                <div class="metric-value">{{ "%.2f"|format(dashboard_metrics.calmar_ratio|default(0, true)|float) }}</div>
                 <div class="metric-label">Return vs Max DD</div>
             </div>
             <div class="metric-card">
                 <h3>Max Drawdown</h3>
-                <div class="metric-value">{{ "%.1f"|format(performance_metrics.max_drawdown) }}%</div>
+                <div class="metric-value">{{ "%.1f"|format(dashboard_metrics.max_drawdown|default(0, true)|float) }}%</div>
                 <div class="metric-label">Worst Decline</div>
             </div>
         </div>
@@ -336,19 +338,19 @@
 
     <!-- Yearly Analysis Cards -->
     <div class="yearly-analysis">
-        {% for result in results %}
+        {% for result in dashboard_results %}
         <div class="analysis-card" data-year="{{ result.year }}">
             <div class="card-header" onclick="toggleCard(this)">
                 <h3>{{ result.year }}</h3>
                 <div class="year-performance">
-                    <span class="return-badge strategy {% if result.outperformance| int  > 0 %}positive{% else %}negative{% endif %}">
-                        Strategy: {{ '{:0.2f}'.format(result.strategy_return|int|default(0)) }}%
+                    <span class="return-badge strategy {% if result.outperformance|default(0, true)|float > 0 %}positive{% else %}negative{% endif %}">
+                        Strategy: {{ '{:0.2f}'.format(result.strategy_return|default(0, true)|float) }}%
                     </span>
                     <span class="return-badge sp500">
-                        SP500: {{ '{:0.2f}'.format(result.sp500_return) }}%
+                        SP500: {{ '{:0.2f}'.format(result.sp500_return|default(0, true)|float) }}%
                     </span>
-                    <span class="return-badge outperformance {% if result.outperformance| int  > 0 %}positive{% else %}negative{% endif %}">
-                        Out: {{ '{:0.2f}'.format(result.outperformance|int|default(0)) }}%
+                    <span class="return-badge outperformance {% if result.outperformance|default(0, true)|float > 0 %}positive{% else %}negative{% endif %}">
+                        Out: {{ '{:0.2f}'.format(result.outperformance|default(0, true)|float) }}%
                     </span>
                 </div>
                 <button class="expand-btn">▼ Details</button>
@@ -438,21 +440,21 @@
                             <tr>
                                 <td>{{ loop.index }}</td>
                                 <td>{{ stock.ticker }}</td>
-                                <td>{{ "%.4f"|format(stock.score) }}</td>
-                                <td>{{ "%.4f"|format(stock.sales_CAGR_5Y) }}</td>
-                                <td>{{ "%.4f"|format(stock.FCF_CAGR_5Y) }}</td>
-                                <td>{{ "%.4f"|format(stock.price_CAGR_5Y) }}</td>
-                                <td>{{ "%.4f"|format(stock.sales_CAGR_2Y) }}</td>
-                                <td>{{ "%.4f"|format(stock.FCF_CAGR_2Y) }}</td>
-                                <td>{{ "%.4f"|format(stock.price_CAGR_2Y) }}</td>
+                                <td>{{ "%.4f"|format(stock.score|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.sales_CAGR_5Y|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.FCF_CAGR_5Y|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.price_CAGR_5Y|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.sales_CAGR_2Y|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.FCF_CAGR_2Y|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.price_CAGR_2Y|default(0, true)|float) }}</td>
                                 {% if stock.sales_norm is defined %}
-                                <td>{{ "%.4f"|format(stock.sales_norm) }}</td>
-                                <td>{{ "%.4f"|format(stock.fcf_norm) }}</td>
-                                <td>{{ "%.4f"|format(stock.price_norm) }}</td>
+                                <td>{{ "%.4f"|format(stock.sales_norm|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.fcf_norm|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.price_norm|default(0, true)|float) }}</td>
                                 {% endif %}
                                 {% if stock.sales_momentum is defined %}
-                                <td>{{ "%.4f"|format(stock.sales_momentum) }}</td>
-                                <td>{{ "%.4f"|format(stock.fcf_momentum) }}</td>
+                                <td>{{ "%.4f"|format(stock.sales_momentum|default(0, true)|float) }}</td>
+                                <td>{{ "%.4f"|format(stock.fcf_momentum|default(0, true)|float) }}</td>
                                 {% endif %}
                             </tr>
                             {% endfor %}
@@ -474,26 +476,26 @@
                                         Ticker: {{ ticker }}<br/>
                                         Year: {{ result.year - 1 }} Data<br>
                                         {% if result.last_port_returns and ticker in result.last_port_returns %}
-                                            Buy Price: <b style="color:lightsalmon;">${ { '{:0.2f}'.format(result.last_port_returns[ticker].buy_price|default(0)) }}</b><br>
-                                            Sell Price: <b style="color:lightsalmon;">${ { '{:0.2f}'.format(result.last_port_returns[ticker].sell_price|default(0)) } }</b><br>
-                                            Return: <span class="{% if result.last_port_returns[ticker].return |int|default(0) > 0 %}good{% else %}bad{% endif %}">
-                                                {{ result.last_port_returns[ticker].return|int|default(0) }}%
+                                            Buy Price: <b style="color:lightsalmon;">${ { '{:0.2f}'.format(result.last_port_returns[ticker].buy_price|default(0, true)|float) }}</b><br>
+                                            Sell Price: <b style="color:lightsalmon;">${ { '{:0.2f}'.format(result.last_port_returns[ticker].sell_price|default(0, true)|float) } }</b><br>
+                                            Return: <span class="{% if result.last_port_returns[ticker].return|default(0, true)|float > 0 %}good{% else %}bad{% endif %}">
+                                                {{ result.last_port_returns[ticker].return|default(0, true)|float }}%
                                             </span><br>
                                             SP500: 
                                             <span>
-                                                {{ '{:0.2f}'.format(result.sp500_return_prev|default(0)) }}%
+                                                {{ '{:0.2f}'.format(result.sp500_return_prev|default(0, true)|float) }}%
                                             </span><br>
                                             Return - SP500
-                                            <span class="{% if result.last_port_returns[ticker].return |int|default(0) > result.sp500_return_prev|default(0) %}good{% else %}bad{% endif %}">
-                                                {{ '{:0.2f}'.format(result.last_port_returns[ticker].return|int|default(0) - result.sp500_return_prev|int|default(0)) }}%
+                                            <span class="{% if result.last_port_returns[ticker].return|default(0, true)|float > result.sp500_return_prev|default(0, true)|float %}good{% else %}bad{% endif %}">
+                                                {{ '{:0.2f}'.format(result.last_port_returns[ticker].return|default(0, true)|float - result.sp500_return_prev|default(0, true)|float) }}%
                                             </span><br>
                                         {% else %}
                                             Return: N/A (new stock or no data)<br>
                                         {% endif %}
                                         {% if result.last_port_info and ticker in result.last_port_info %}
-                                            Sales: {{ '{:0.2f}'.format(result.last_port_info[ticker].sales|default(0)) if result.last_port_info[ticker].sales != 'N/A' else 'N/A' }}<br>
-                                            FCF: {{ '{:0.2f}'.format(result.last_port_info[ticker].fcf|default(0)) if result.last_port_info[ticker].fcf != 'N/A' else 'N/A' }}<br>
-                                            Price: ${{ '{:0.2f}'.format(result.last_port_info[ticker].price|default(0)) if result.last_port_info[ticker].price != 'N/A' else 'N/A' }}<br>
+                                            Sales: {{ '{:0.2f}'.format(result.last_port_info[ticker].sales|default(0, true)|float) if result.last_port_info[ticker].sales not in [none, 'N/A'] else 'N/A' }}<br>
+                                            FCF: {{ '{:0.2f}'.format(result.last_port_info[ticker].fcf|default(0, true)|float) if result.last_port_info[ticker].fcf not in [none, 'N/A'] else 'N/A' }}<br>
+                                            Price: ${{ '{:0.2f}'.format(result.last_port_info[ticker].price|default(0, true)|float) if result.last_port_info[ticker].price not in [none, 'N/A'] else 'N/A' }}<br>
                                         {% else %}
                                             Financial Data: N/A<br>
                                         {% endif %}
@@ -515,9 +517,9 @@
                                         Ticker: {{ ticker }}<br>
                                         Year: {{ result.year }} Data<br>
                                         {% if result.current_port_info and ticker in result.current_port_info %}
-                                            Sales: {{ '{:0.2f}'.format(result.current_port_info[ticker].sales) if result.current_port_info[ticker].sales != 'N/A' else 'N/A' }}<br>
-                                            FCF: {{ '{:0.2f}'.format(result.current_port_info[ticker].fcf) if result.current_port_info[ticker].fcf != 'N/A' else 'N/A' }}<br>
-                                            Price: ${{ '{:0.2f}'.format(result.current_port_info[ticker].price) if result.current_port_info[ticker].price != 'N/A' else 'N/A' }}<br>
+                                            Sales: {{ '{:0.2f}'.format(result.current_port_info[ticker].sales|default(0, true)|float) if result.current_port_info[ticker].sales not in [none, 'N/A'] else 'N/A' }}<br>
+                                            FCF: {{ '{:0.2f}'.format(result.current_port_info[ticker].fcf|default(0, true)|float) if result.current_port_info[ticker].fcf not in [none, 'N/A'] else 'N/A' }}<br>
+                                            Price: ${{ '{:0.2f}'.format(result.current_port_info[ticker].price|default(0, true)|float) if result.current_port_info[ticker].price not in [none, 'N/A'] else 'N/A' }}<br>
                                         {% else %}
                                             Financial Data: N/A<br>
                                         {% endif %}
@@ -530,13 +532,13 @@
 
                 <!-- Performance Metrics -->
                 <div style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap;">
-                    <div class="colorR st">Strategy Return: {{'{:0.4f}'.format(result.strategy_return|int|default(0)) }} %</div>
-                    <div class="colorR sp">S&P 500 Return: {{'{:0.4f}'.format(result.sp500_return|int|default(0)) }} %</div>
-                    <div class="colorR {% if result.outperformance|int|default(0) > 0 %}good{%else%}bad{%endif%}">Outperformance: {{'{:0.4f}'.format(result.outperformance|int|default(0)) }} %</div>
-                    <div class="colorR return">My 1 USD IS : {{'{:0.4f}'.format(result.investment|int|default(0)) }} USD</div>
-                    <div class="colorR return">Compound Return : {{'{:0.4f}'.format(result.car|int|default(0)) }} %</div>
-                    <div class="colorR sp">SP500 : {{'{:0.4f}'.format(result.investmentsp|int|default(0)) }} USD</div>
-                    <div class="colorR sp">SP500 CAR : {{'{:0.4f}'.format(result.carsp|int|default(0)) }} %</div>
+                    <div class="colorR st">Strategy Return: {{'{:0.4f}'.format(result.strategy_return|default(0, true)|float) }} %</div>
+                    <div class="colorR sp">S&P 500 Return: {{'{:0.4f}'.format(result.sp500_return|default(0, true)|float) }} %</div>
+                    <div class="colorR {% if result.outperformance|default(0, true)|float > 0 %}good{%else%}bad{%endif%}">Outperformance: {{'{:0.4f}'.format(result.outperformance|default(0, true)|float) }} %</div>
+                    <div class="colorR return">My 1 USD IS : {{'{:0.4f}'.format(result.investment|default(0, true)|float) }} USD</div>
+                    <div class="colorR return">Compound Return : {{'{:0.4f}'.format(result.car|default(0, true)|float) }} %</div>
+                    <div class="colorR sp">SP500 : {{'{:0.4f}'.format(result.investmentsp|default(0, true)|float) }} USD</div>
+                    <div class="colorR sp">SP500 CAR : {{'{:0.4f}'.format(result.carsp|default(0, true)|float) }} %</div>
                 </div>
 
                 <!-- Debug Section -->
