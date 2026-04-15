@@ -6,10 +6,11 @@ import os
 from flask import Flask, jsonify, redirect, render_template, request, session
 
 from api_client import delete_json, get_json, get_with_status, post_form, post_json
+import config
 
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'darrock-research-frontend-dev-key')
+app.secret_key = config.SECRET_KEY
 
 MOCK_DIR = os.path.join(os.path.dirname(__file__), 'mock_data')
 
