@@ -7,6 +7,18 @@ from flask import session
 import config
 
 
+def _backend_root() -> str:
+    backend_url = config.BACKEND_URL.rstrip('/')
+    return backend_url[:-len('/api/v2')] if backend_url.endswith('/api/v2') else backend_url
+
+
+def build_url(path: str) -> str:
+    safe_path = path if path.startswith('/') else f'/{path}'
+    if safe_path.startswith('/api/'):
+        return f'{_backend_root()}{safe_path}'
+    return f'{config.BACKEND_URL.rstrip("/")}{safe_path}'
+
+
 def _auth_headers():
     """Build auth headers from the current user's session credentials.
     Falls back to proxy Basic Auth in dev, or no auth in production."""
@@ -24,27 +36,27 @@ def _auth_headers():
 
 
 def get_json(path: str, **kwargs):
-    response = requests.get(f'{config.BACKEND_URL}{path}', headers=_auth_headers(), timeout=config.TIMEOUT, **kwargs)
+    response = requests.get(build_url(path), headers=_auth_headers(), timeout=config.TIMEOUT, **kwargs)
     response.raise_for_status()
     return response.json()
 
 
 def post_form(path: str, data=None):
-    response = requests.post(f'{config.BACKEND_URL}{path}', headers=_auth_headers(), data=data, timeout=config.TIMEOUT)
+    response = requests.post(build_url(path), headers=_auth_headers(), data=data, timeout=config.TIMEOUT)
     return response.status_code, response.json()
 
 
 def post_json(path: str, data=None):
     h = {**_auth_headers(), 'Content-Type': 'application/json'}
-    response = requests.post(f'{config.BACKEND_URL}{path}', headers=h, data=data, timeout=config.TIMEOUT)
+    response = requests.post(build_url(path), headers=h, data=data, timeout=config.TIMEOUT)
     return response.status_code, response.json()
 
 
 def delete_json(path: str):
-    response = requests.delete(f'{config.BACKEND_URL}{path}', headers=_auth_headers(), timeout=config.TIMEOUT)
+    response = requests.delete(build_url(path), headers=_auth_headers(), timeout=config.TIMEOUT)
     return response.status_code, response.json()
 
 
 def get_with_status(path: str):
-    response = requests.get(f'{config.BACKEND_URL}{path}', headers=_auth_headers(), timeout=config.TIMEOUT)
+    response = requests.get(build_url(path), headers=_auth_headers(), timeout=config.TIMEOUT)
     return response.status_code, response.json()

@@ -130,7 +130,15 @@ h3 { font-size: var(--fs-base); }
   transition: width 0.25s ease;
 }
 
+#filter-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .panel-left.collapsed { width: var(--panel-min); }
+.panel-left.collapsed #filter-form { display: none; }
 .panel-left.collapsed .panel-content { display: none; }
 .panel-left.collapsed .panel-collapse-label { display: flex; }
 .panel-left.collapsed .panel-toggle span:first-child { display: none; }
@@ -165,10 +173,20 @@ h3 { font-size: var(--fs-base); }
 
 .panel-content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.75rem;
+  scrollbar-gutter: stable;
 }
+
+.panel-content::-webkit-scrollbar { width: 8px; }
+.panel-content::-webkit-scrollbar-track { background: transparent; }
+.panel-content::-webkit-scrollbar-thumb {
+  background: var(--divider);
+  border-radius: 999px;
+}
+.panel-content::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
 /* Run button pinned at bottom of left panel */
 .panel-footer {
@@ -399,9 +417,22 @@ h3 { font-size: var(--fs-base); }
   border-radius: var(--radius);
   padding: 1rem;
   margin: 0.25rem 0 0.75rem;
+  max-height: min(680px, calc(100dvh - 180px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .year-detail.open { display: block; }
+
+.year-detail::-webkit-scrollbar { width: 8px; }
+.year-detail::-webkit-scrollbar-track { background: transparent; }
+.year-detail::-webkit-scrollbar-thumb {
+  background: var(--divider);
+  border-radius: 999px;
+}
+.year-detail::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
 /* Flow visualization */
 .flow {
@@ -686,6 +717,7 @@ body.public-page { overflow: auto; }
     width: 100% !important;
     transform: translateY(100%);
   }
+  .panel-left.collapsed #filter-form { display: flex; }
   .panel-left.collapsed .panel-content { display: block; }
   .panel-left.collapsed .panel-collapse-label { display: none; }
   .panel-left.collapsed .panel-footer { display: block; }
