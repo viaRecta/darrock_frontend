@@ -12,14 +12,14 @@
    TOP BAR
    ============================================================ #}
 <header class="topbar">
-  <a href="/v3/research" class="topbar-brand">darrock</a>
+  <a href="/v3/research" class="topbar-brand">Darrock</a>
   <div class="topbar-actions">
-    <a href="/v3/research" class="active">research</a>
-    <a href="/v3/p/20" target="_blank">preview share</a>
+    <a href="/v3/research" class="active">Research</a>
+    <a href="/v3/p/20" target="_blank">Preview Share</a>
     {% if user %}
-    {% if user.role == 'admin' %}<a href="/v3/admin">admin</a>{% endif %}
+    {% if user.role == 'admin' %}<a href="/v3/admin">Admin</a>{% endif %}
     <span class="ui" style="color:var(--muted);font-size:var(--fs-xs);padding:0 0.5rem;">{{ user.display_name }}</span>
-    <button id="logout-btn" class="btn btn-sm btn-ghost" style="font-size:var(--fs-xs);">logout</button>
+    <button id="logout-btn" class="btn btn-sm btn-ghost" style="font-size:var(--fs-xs);">Logout</button>
     {% endif %}
   </div>
 </header>
@@ -35,7 +35,7 @@
       <span>Filters</span>
       <span class="panel-toggle-icon">&#9664;</span>
     </div>
-    <div class="panel-collapse-label">filters</div>
+    <div class="panel-collapse-label">Filters</div>
 
     <form id="filter-form" method="post" action="/v3/research">
     <div class="panel-content">
@@ -61,11 +61,11 @@
 
             {# Per-metric filter rows: method | threshold | posrate | omit #}
             <p class="label mt-1 mb-1" style="font-size:0.55rem; display:flex; gap:0.5rem;">
-              <span style="flex:1;">metric</span>
-              <span style="width:80px;">method</span>
-              <span style="width:70px;">threshold</span>
+              <span style="flex:1;">Metric</span>
+              <span style="width:80px;">Method</span>
+              <span style="width:70px;">Threshold</span>
               <span style="width:50px;">pos %</span>
-              <span style="width:30px;">skip</span>
+              <span style="width:30px;">Skip</span>
             </p>
 
             {# --- Macro for a metric row --- #}
@@ -114,17 +114,17 @@
               <div class="f-group">
                 <label>Sales CAGR 2Y</label>
                 <input type="number" name="sales_cagr_2y" value="{{ rule2_params.sales_cagr_2y }}" step="0.01">
-                <div class="f-omit"><input type="checkbox" name="sales_cagr_2y_omit" {{ 'checked' if rule2_params.sales_cagr_2y_omit }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="sales_cagr_2y_omit" {{ 'checked' if rule2_params.sales_cagr_2y_omit }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>FCF CAGR 2Y</label>
                 <input type="number" name="fcf_cagr_2y" value="{{ rule2_params.fcf_cagr_2y }}" step="0.01">
-                <div class="f-omit"><input type="checkbox" name="fcf_cagr_2y_omit" {{ 'checked' if rule2_params.fcf_cagr_2y_omit }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="fcf_cagr_2y_omit" {{ 'checked' if rule2_params.fcf_cagr_2y_omit }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Price CAGR 2Y</label>
                 <input type="number" name="price_cagr_2y" value="{{ rule2_params.price_cagr_2y }}" step="0.01">
-                <div class="f-omit"><input type="checkbox" name="price_cagr_2y_omit" {{ 'checked' if rule2_params.price_cagr_2y_omit }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="price_cagr_2y_omit" {{ 'checked' if rule2_params.price_cagr_2y_omit }}><span>Omit</span></div>
               </div>
             </div>
 
@@ -133,57 +133,57 @@
               <div class="f-group">
                 <label>Gross Profit CAGR</label>
                 <input type="number" name="gp_cagr_2y" value="{{ rule2_params.get('gp_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="gp_cagr_2y_omit" {{ 'checked' if rule2_params.get('gp_cagr_2y_omit') }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="gp_cagr_2y_omit" {{ 'checked' if rule2_params.get('gp_cagr_2y_omit') }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Op. Cash Flow CAGR</label>
                 <input type="number" name="op_cf_cagr_2y" value="{{ rule2_params.get('op_cf_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="op_cf_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_cf_cagr_2y_omit') }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="op_cf_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_cf_cagr_2y_omit') }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Op. Income CAGR</label>
                 <input type="number" name="op_income_cagr_2y" value="{{ rule2_params.get('op_income_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="op_income_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_income_cagr_2y_omit') }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="op_income_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_income_cagr_2y_omit') }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>CapEx CAGR</label>
                 <input type="number" name="capex_cagr_2y" value="{{ rule2_params.get('capex_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="capex_cagr_2y_omit" {{ 'checked' if rule2_params.get('capex_cagr_2y_omit') }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="capex_cagr_2y_omit" {{ 'checked' if rule2_params.get('capex_cagr_2y_omit') }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Cash and Cash Equivalents CAGR</label>
                 <input type="number" name="cash_and_cash_equivalents_cagr_2y" value="{{ rule2_params.get('cash_and_cash_equivalents_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="cash_and_cash_equivalents_cagr_2y_omit" {{ 'checked' if rule2_params.get('cash_and_cash_equivalents_cagr_2y_omit', true) }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="cash_and_cash_equivalents_cagr_2y_omit" {{ 'checked' if rule2_params.get('cash_and_cash_equivalents_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Short Term Investments CAGR</label>
                 <input type="number" name="short_term_investments_cagr_2y" value="{{ rule2_params.get('short_term_investments_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="short_term_investments_cagr_2y_omit" {{ 'checked' if rule2_params.get('short_term_investments_cagr_2y_omit', true) }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="short_term_investments_cagr_2y_omit" {{ 'checked' if rule2_params.get('short_term_investments_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Net Receivables CAGR</label>
                 <input type="number" name="net_receivables_cagr_2y" value="{{ rule2_params.get('net_receivables_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="net_receivables_cagr_2y_omit" {{ 'checked' if rule2_params.get('net_receivables_cagr_2y_omit', true) }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="net_receivables_cagr_2y_omit" {{ 'checked' if rule2_params.get('net_receivables_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Total Debt CAGR</label>
                 <input type="number" name="total_debt_cagr_2y" value="{{ rule2_params.get('total_debt_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="total_debt_cagr_2y_omit" {{ 'checked' if rule2_params.get('total_debt_cagr_2y_omit', true) }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="total_debt_cagr_2y_omit" {{ 'checked' if rule2_params.get('total_debt_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Accounts Payable CAGR</label>
                 <input type="number" name="accounts_payable_cagr_2y" value="{{ rule2_params.get('accounts_payable_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="accounts_payable_cagr_2y_omit" {{ 'checked' if rule2_params.get('accounts_payable_cagr_2y_omit', true) }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="accounts_payable_cagr_2y_omit" {{ 'checked' if rule2_params.get('accounts_payable_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Total Current Liabilities CAGR</label>
                 <input type="number" name="total_current_liabilities_cagr_2y" value="{{ rule2_params.get('total_current_liabilities_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="total_current_liabilities_cagr_2y_omit" {{ 'checked' if rule2_params.get('total_current_liabilities_cagr_2y_omit', true) }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="total_current_liabilities_cagr_2y_omit" {{ 'checked' if rule2_params.get('total_current_liabilities_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Total Stockholders Equity CAGR</label>
                 <input type="number" name="total_stockholders_equity_cagr_2y" value="{{ rule2_params.get('total_stockholders_equity_cagr_2y', '') }}" step="0.01" placeholder="—">
-                <div class="f-omit"><input type="checkbox" name="total_stockholders_equity_cagr_2y_omit" {{ 'checked' if rule2_params.get('total_stockholders_equity_cagr_2y_omit', true) }}><span>omit</span></div>
+                <div class="f-omit"><input type="checkbox" name="total_stockholders_equity_cagr_2y_omit" {{ 'checked' if rule2_params.get('total_stockholders_equity_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
             </div>
           </div>
@@ -305,7 +305,7 @@
 
     {# Run button pinned at bottom #}
     <div class="panel-footer">
-      <button type="submit" class="btn btn-primary btn-full">run analysis</button>
+      <button type="submit" class="btn btn-primary btn-full">Run Analysis</button>
     </div>
     <div class="panel-footer">
       {# --- ACCORDION 4: Saved Portfolios --- #}
@@ -325,11 +325,11 @@
                 {% if is_system %}&middot; preset{% endif %}
               </span>
               {% if is_own and p.is_shared %}
-                <a href="/v3/p/{{ p.id }}" target="_blank" class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;">shared</a>
+                <a href="/v3/p/{{ p.id }}" target="_blank" class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;">Shared</a>
               {% endif %}
             </div>
             <div class="flex gap-1" style="flex-shrink:0;">
-              <button class="btn btn-sm btn-ghost" data-load-portfolio="{{ p.id }}">load</button>
+              <button class="btn btn-sm btn-ghost" data-load-portfolio="{{ p.id }}">Load</button>
               {% if is_own %}
               <button class="btn btn-sm btn-ghost" data-share-portfolio="{{ p.id }}" data-shared="{{ p.is_shared }}" title="{{ 'Unshare' if p.is_shared else 'Share publicly' }}">
                 {{ '🔗' if p.is_shared else '🔒' }}
@@ -353,7 +353,7 @@
             {% for t in next_year_portfolio %}
             <input type="hidden" name="portfolio_tickers[]" value="{{ t }}">
             {% endfor %}
-            <button type="button" class="btn btn-sm btn-full" id="save-portfolio-btn" style="margin-top:0.4rem;">save portfolio</button>
+            <button type="button" class="btn btn-sm btn-full" id="save-portfolio-btn" style="margin-top:0.4rem;">Save Portfolio</button>
           </div>
           {% endif %}
 
@@ -564,7 +564,7 @@
 
     {% else %}
     <div class="text-center p-2" style="margin-top:20vh;">
-      <h2 style="color:var(--muted);">darrock</h2>
+      <h2 style="color:var(--muted);">Darrock</h2>
       <p class="ui text-muted mt-1" style="font-size:var(--fs-sm);">Set your parameters and run an analysis.</p>
     </div>
     {% endif %}
@@ -575,7 +575,7 @@
 {# ============================================================
    MOBILE: Floating filter button + backdrop for bottom sheet
    ============================================================ #}
-<button class="fab-filters" id="fab-filters" aria-label="Open filters">&#9776;</button>
+<button class="fab-filters" id="fab-filters" aria-label="Open Filters">&#9776;</button>
 <div class="sheet-backdrop" id="sheet-backdrop"></div>
 
 {# ============================================================
@@ -583,7 +583,7 @@
    ============================================================ #}
 <div id="slide-over-backdrop" class="slide-over-backdrop"></div>
 <div id="slide-over" class="slide-over">
-  <button class="slide-close">&times; close</button>
+  <button class="slide-close">&times; Close</button>
   <div id="slide-over-content"></div>
 </div>
 

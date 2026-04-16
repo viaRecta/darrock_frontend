@@ -101,7 +101,7 @@ h3 { font-size: var(--fs-base); }
 
 .topbar-actions a, .topbar-actions button {
   font-family: var(--font-ui); font-size: var(--fs-xs);
-  text-transform: lowercase; letter-spacing: 0.08em;
+  letter-spacing: 0.08em;
   padding: 0.35rem 0.75rem; border-radius: var(--radius);
   border: none; background: none; color: var(--text); cursor: pointer;
   text-decoration: none; transition: background 0.12s;
@@ -529,7 +529,7 @@ h3 { font-size: var(--fs-base); }
 /* Buttons */
 .btn {
   font-family: var(--font-ui); font-size: var(--fs-sm);
-  text-transform: lowercase; letter-spacing: 0.1em;
+  letter-spacing: 0.1em;
   padding: 0.5rem 1.25rem; border: 1px solid var(--text);
   border-radius: var(--radius); background: transparent;
   color: var(--text); cursor: pointer;
