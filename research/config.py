@@ -12,7 +12,7 @@ ENV = os.environ.get("DARROCK_ENV", "development")
 
 # ── Backend connection ────────────────────────────────────────────────
 if ENV == "production":
-    BACKEND_URL = "http://127.0.0.1:6100/api/v2"
+    BACKEND_URL = "http://127.0.0.1:6100/api/v3"
     BACKEND_AUTH = None                       # localhost, no auth needed
 else:
     BACKEND_URL = "https://darrock-backend.viasyazilim.com/api/v2"
