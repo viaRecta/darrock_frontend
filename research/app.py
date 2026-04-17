@@ -274,20 +274,21 @@ def stock_detail(ticker: str):
 
 @app.get('/get_portfolio/<int:portfolio_id>')
 def get_portfolio_route(portfolio_id: int):
-    status_code, data = get_with_status(f'/api/research/portfolio/{portfolio_id}')
+    # No v3 equivalent yet — research configs are listed via dashboard payload
+    status_code, data = get_with_status(f'/api/v2/research/portfolio/{portfolio_id}')
     return jsonify(data), status_code
 
 
 @app.post('/save_portfolio')
 def save_portfolio_route():
     payload = request.form.to_dict(flat=False)
-    status_code, data = post_form('/api/research/portfolio', data=payload)
+    status_code, data = post_form('/api/v3/research/save', data=payload)
     return jsonify(data), status_code
 
 
 @app.post('/delete_portfolio/<int:portfolio_id>')
 def delete_portfolio_route(portfolio_id: int):
-    status_code, data = delete_json(f'/api/research/portfolio/{portfolio_id}')
+    status_code, data = delete_json(f'/api/v3/research/{portfolio_id}')
     return jsonify(data), status_code
 
 
