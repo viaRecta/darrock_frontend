@@ -274,8 +274,7 @@ def stock_detail(ticker: str):
 
 @app.get('/get_portfolio/<int:portfolio_id>')
 def get_portfolio_route(portfolio_id: int):
-    # No v3 equivalent yet — research configs are listed via dashboard payload
-    status_code, data = get_with_status(f'/api/v2/research/portfolio/{portfolio_id}')
+    status_code, data = get_with_status(f'/api/v3/research/{portfolio_id}')
     return jsonify(data), status_code
 
 

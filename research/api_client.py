@@ -8,8 +8,12 @@ import config
 
 
 def _backend_root() -> str:
+    """Strip any /api/vN suffix from BACKEND_URL to get the bare server root."""
     backend_url = config.BACKEND_URL.rstrip('/')
-    return backend_url[:-len('/api/v2')] if backend_url.endswith('/api/v2') else backend_url
+    for suffix in ('/api/v3', '/api/v2', '/api/v1'):
+        if backend_url.endswith(suffix):
+            return backend_url[:-len(suffix)]
+    return backend_url
 
 
 def build_url(path: str) -> str:
