@@ -487,45 +487,64 @@
             </div>
 
             {# Portfolio tickers #}
+            {# Portfolio chosen for this year (picked at end of Y-1, held during Y) #}
             <div class="flex flex-wrap gap-1 mb-2">
+              <span class="label" style="margin-right:0.4rem;">Chosen for {{ r.year }}:</span>
               {% for t in r.portfolio |sort %}
               <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
               {% endfor %}
             </div>
 
-            {# Returns table #}
+            {# Previous year portfolio (the one whose returns are measured during Y) #}
             {% if r.last_port_returns %}
-            <div class="tbl-wrap">
-              <table class="tbl">
-                <thead>
-                  <tr>
-                    <th>Ticker</th><th>Sector</th>
-                    <th class="r">Buy</th><th class="r">Sell</th><th class="r">Return</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for ticker, ret in r.last_port_returns.items() %}
-                  <tr>
-                    <td><a href="#" data-stock="{{ ticker }}" class="badge badge-ticker">{{ ticker }}</a></td>
-                    <td class="text-muted" style="font-size:var(--fs-xs);">{{ r.last_port_info[ticker].sector if r.last_port_info and r.last_port_info[ticker] else '' }}</td>
-                    <td class="r">${{ ret.buy_price|f2 }}</td>
-                    <td class="r">${{ ret.sell_price|f2 }}</td>
-                    <td class="r {{ 'text-pos' if ret.return and ret.return > 0 else 'text-neg' }}">{{ ret.return|f1 }}%</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+            <div class="flex flex-wrap gap-1 mb-2">
+              <span class="label" style="margin-right:0.4rem;">Held during {{ r.year }} (chosen for {{ r.year - 1 }}):</span>
+              {% for t in r.last_port_returns.keys() |sort %}
+              <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
+              {% endfor %}
             </div>
             {% endif %}
 
-            {# Filtered candidates #}
+            {# Collapsible: Returns table #}
+            {% if r.last_port_returns %}
+            <details class="mt-2" style="font-family:var(--font-ui);font-size:var(--fs-xs);">
+              <summary style="cursor:pointer;color:var(--muted);">
+                Returns &mdash; how the {{ r.year - 1 }} portfolio performed during {{ r.year }}
+              </summary>
+              <div class="tbl-wrap mt-1">
+                <table class="tbl">
+                  <thead>
+                    <tr>
+                      <th>Ticker</th><th>Sector</th>
+                      <th class="r">Buy</th><th class="r">Sell</th><th class="r">Return</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for ticker, ret in r.last_port_returns.items() %}
+                    <tr>
+                      <td><a href="#" data-stock="{{ ticker }}" class="badge badge-ticker">{{ ticker }}</a></td>
+                      <td class="text-muted" style="font-size:var(--fs-xs);">{{ r.last_port_info[ticker].sector if r.last_port_info and r.last_port_info[ticker] else '' }}</td>
+                      <td class="r">${{ ret.buy_price|f2 }}</td>
+                      <td class="r">${{ ret.sell_price|f2 }}</td>
+                      <td class="r {{ 'text-pos' if ret.return and ret.return > 0 else 'text-neg' }}">{{ ret.return|f1 }}%</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+            {% endif %}
+
+            {# Collapsible: Candidate details (why these were chosen for year Y) #}
             {% if r.filtered_candidates_details %}
             <details class="mt-2" style="font-family:var(--font-ui);font-size:var(--fs-xs);">
-              <summary style="cursor:pointer;color:var(--muted);">Filtered candidates ({{ r.filtered_candidates_details|length }})</summary>
+              <summary style="cursor:pointer;color:var(--muted);">
+                Details &mdash; why these stocks were chosen for {{ r.year }} ({{ r.filtered_candidates_details|length }} candidates ranked)
+              </summary>
               <div class="tbl-wrap mt-1">
                 <table class="tbl">
                   <thead><tr>
-                    <th>Ticker</th><th>Sector</th><th class="r">Score</th>
+                    <th>Rank</th><th>Ticker</th><th>Sector</th><th class="r">Score</th>
                     <th class="r">Sales 5Y</th><th class="r">FCF 5Y</th>
                     <th class="r">Sales $M</th><th class="r">GP $M</th><th class="r">EBIT $M</th>
                     <th class="r">FCF $M</th><th class="r">OpCF $M</th><th class="r">CapEx</th>
@@ -533,7 +552,9 @@
                   </tr></thead>
                   <tbody>
                     {% for c in r.filtered_candidates_details %}
-                    <tr>
+                    {% set in_port = c.ticker in r.portfolio %}
+                    <tr class="{{ 'candidate-selected' if in_port }}">
+                      <td>{{ loop.index }}{% if in_port %} &check;{% endif %}</td>
                       <td><a href="#" data-stock="{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
                       <td class="text-muted">{{ c.sector or '' }}</td>
                       <td class="r">{{ c.score|f2 }}</td>

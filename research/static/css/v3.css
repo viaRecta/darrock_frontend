@@ -575,6 +575,15 @@ table.tbl tbody td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--div
 table.tbl tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
 table.tbl tbody tr:hover { background: rgba(0,0,0,0.02); }
 
+/* Highlight rows that made it into the final portfolio */
+table.tbl tbody tr.candidate-selected {
+  background: rgba(46, 125, 64, 0.08);
+  font-weight: 500;
+}
+table.tbl tbody tr.candidate-selected:hover {
+  background: rgba(46, 125, 64, 0.14);
+}
+
 /* ============================================================
    LOGIN PAGE
    ============================================================ */
