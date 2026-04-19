@@ -125,6 +125,21 @@ def v3_research():
     return render_template('v3/research.html', **data)
 
 
+@app.route('/v3/custom', methods=['GET', 'POST'])
+def v3_custom():
+    """Custom portfolio backtest — user provides a fixed ticker list."""
+    if not USE_MOCKDATA and not session.get('user'):
+        return redirect('/v3/')
+    data = {}
+    if request.method == 'POST':
+        _, data = post_form('/research/custom-backtest', data=request.form)
+        if not isinstance(data, dict):
+            data = {}
+    if not data.get('user') and session.get('user'):
+        data['user'] = session['user']
+    return render_template('v3/custom.html', **data)
+
+
 def get_dashboard_payload():
     if request.args.get('mock') == '1':
         return _load_mock('dashboard_response.json'), 'Mock data'
