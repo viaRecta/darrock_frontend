@@ -34,6 +34,14 @@
 
   {# --- Key Metrics --- #}
   {% if performance_metrics %}
+  {% if performance_metrics.active_years and performance_metrics.active_years < performance_metrics.years_analyzed %}
+  <div class="text-muted ui mb-1" style="font-size:var(--fs-xs);">
+    <strong>{{ performance_metrics.active_years }}/{{ performance_metrics.years_analyzed }}</strong> years held a portfolio
+    {% if performance_metrics.inactive_years %}
+    &mdash; inactive: {{ performance_metrics.inactive_years|join(', ') }}
+    {% endif %}
+  </div>
+  {% endif %}
   <div class="grid-4 mb-2">
     <div class="metric-card card">
       <span class="label">$1 Invested</span>

@@ -367,6 +367,19 @@
   <main class="panel-right">
     {% if results %}
 
+    {# --- Active-period notice (only when some years had no portfolio) --- #}
+    {% if performance_metrics.active_years and performance_metrics.active_years < performance_metrics.years_analyzed %}
+    <div class="text-muted ui" style="font-size:var(--fs-xs); margin-bottom:0.5em;">
+      Performance computed over
+      <strong>{{ performance_metrics.active_years }} of {{ performance_metrics.years_analyzed }}</strong>
+      years that had a held portfolio. Inactive years (no selection or no price data) don't compound on
+      either side.
+      {% if performance_metrics.inactive_years %}
+      <br>Inactive: {{ performance_metrics.inactive_years|join(', ') }}.
+      {% endif %}
+    </div>
+    {% endif %}
+
     {# --- Primary Summary --- #}
     <div class="summary-strip" style="border-left: 3px solid var(--text);">
       <div class="summary-item">
