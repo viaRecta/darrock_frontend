@@ -60,19 +60,26 @@
               <input type="number" name="sales_min_scale" value="{{ rule1_params.sales_min_scale }}" step="100">
             </div>
 
-            {# Per-metric filter rows: method | threshold | posrate | omit #}
+            {# Per-metric filter rows: dir | method | threshold | posrate | +slope | skip #}
             <p class="label mt-1 mb-1" style="font-size:0.55rem; display:flex; gap:0.5rem;">
               <span style="flex:1;">Metric</span>
+              <span style="width:55px;" title="Direction: Up = require value > threshold (growth); Down = require value < threshold (decline). For 'price dropped at least 5%', set Down + threshold -0.05.">Dir &#9432;</span>
               <span style="width:80px;" title="CAGR: compound annual growth rate from year-N to current year (uses N+1 data points).&#10;Slope: linear regression of values across the last 6 years, normalized by mean absolute value.&#10;Consist.: median year-over-year growth + minimum positive-rate filter (set in pos %).">Method &#9432;</span>
-              <span style="width:70px;" title="Minimum required value. For CAGR/Slope it's a fraction (0.05 = 5%). For Consistency it's the median YoY growth threshold.">Threshold &#9432;</span>
+              <span style="width:70px;" title="Comparison value. For Up: keep if value > threshold. For Down: keep if value < threshold. 0.05 = 5%, -0.05 = -5%.">Threshold &#9432;</span>
               <span style="width:50px;" title="Consistency only: fraction of years (0-1) that must show positive YoY growth. Default 0.6 = 60%.">pos % &#9432;</span>
+              <span style="width:50px;" title="Also require positive 5Y slope (linear trend) on top of the main filter. Use to combine 'CAGR ≥ X' AND 'positive trend'.">+slope &#9432;</span>
               <span style="width:30px;">Skip</span>
             </p>
 
             {# --- Macro for a metric row --- #}
-            {% macro metric_row(key, label, threshold_val, omit_val, method_val, posrate_val) %}
+            {% macro metric_row(key, label, threshold_val, omit_val, method_val, posrate_val, direction_val, require_pos_slope_val=false) %}
             <div class="metric-filter-row" data-metric="{{ key }}">
               <span class="metric-filter-label">{{ label }}</span>
+              <select name="{{ key }}_direction" class="metric-filter-direction"
+                      title="Up = keep stocks with value > threshold (growth). Down = keep stocks with value < threshold (decline).">
+                <option value="growth" {{ 'selected' if direction_val == 'growth' }}>&#9650; Up</option>
+                <option value="decline" {{ 'selected' if direction_val == 'decline' }}>&#9660; Down</option>
+              </select>
               <select name="{{ key }}_method" class="metric-filter-method"
                       title="CAGR = compound annual growth (start vs end). Slope = linear regression across 6 years. Consist. = median YoY growth + positive-rate floor.">
                 <option value="cagr" {{ 'selected' if method_val == 'cagr' }}>CAGR</option>
@@ -81,27 +88,34 @@
               </select>
               <input type="number" name="{{ key }}_cagr" value="{{ threshold_val }}" step="0.01" class="metric-filter-threshold" placeholder="—">
               <input type="number" name="{{ key }}_min_posrate" value="{{ posrate_val }}" step="0.1" min="0" max="1" class="metric-filter-posrate {{ 'hidden' if method_val != 'consistency' }}" placeholder="—">
+              <div class="metric-filter-omit"
+                   title="When checked, also require positive 5Y slope on top of the main filter. Use case: 'CAGR ≥ 5% AND positive trend'. Has no effect if Method is already Slope.">
+                <input type="checkbox" name="{{ key }}_require_pos_slope" {{ 'checked' if require_pos_slope_val }}>
+                <span style="font-size:0.5rem;color:var(--muted);">+slope</span>
+              </div>
               <div class="metric-filter-omit">
                 <input type="checkbox" name="{{ key }}_cagr_omit" {{ 'checked' if omit_val }}>
               </div>
             </div>
             {% endmacro %}
 
-            {{ metric_row('sales', 'Sales', rule1_params.sales_cagr, rule1_params.sales_cagr_omit, rule1_params.get('sales_method', 'cagr'), rule1_params.get('sales_min_posrate', 0.6)) }}
-            {{ metric_row('fcf', 'FCF', rule1_params.fcf_cagr, rule1_params.fcf_cagr_omit, rule1_params.get('fcf_method', 'cagr'), rule1_params.get('fcf_min_posrate', 0.6)) }}
-            {{ metric_row('price', 'Price', rule1_params.price_cagr, rule1_params.price_cagr_omit, rule1_params.get('price_method', 'cagr'), rule1_params.get('price_min_posrate', 0.6)) }}
-            {{ metric_row('gp', 'Gross Profit', rule1_params.get('gp_cagr', 0), rule1_params.get('gp_cagr_omit', true), rule1_params.get('gp_method', 'cagr'), rule1_params.get('gp_min_posrate', 0.6)) }}
-            {{ metric_row('op_cf', 'Op. Cash Flow', rule1_params.get('op_cf_cagr', 0), rule1_params.get('op_cf_cagr_omit', true), rule1_params.get('op_cf_method', 'cagr'), rule1_params.get('op_cf_min_posrate', 0.6)) }}
-            {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', 0), rule1_params.get('op_income_cagr_omit', true), rule1_params.get('op_income_method', 'cagr'), rule1_params.get('op_income_min_posrate', 0.6)) }}
-            {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', 0), rule1_params.get('capex_cagr_omit', true), rule1_params.get('capex_method', 'cagr'), rule1_params.get('capex_min_posrate', 0.6)) }}
-            {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', 0), rule1_params.get('cogs_cagr_omit', true), rule1_params.get('cogs_method', 'cagr'), rule1_params.get('cogs_min_posrate', 0.6)) }}
-            {{ metric_row('cash_and_cash_equivalents', 'Cash and Cash Equivalents', rule1_params.get('cash_and_cash_equivalents_cagr', 0), rule1_params.get('cash_and_cash_equivalents_cagr_omit', true), rule1_params.get('cash_and_cash_equivalents_method', 'cagr'), rule1_params.get('cash_and_cash_equivalents_min_posrate', 0.6)) }}
-            {{ metric_row('short_term_investments', 'Short Term Investments', rule1_params.get('short_term_investments_cagr', 0), rule1_params.get('short_term_investments_cagr_omit', true), rule1_params.get('short_term_investments_method', 'cagr'), rule1_params.get('short_term_investments_min_posrate', 0.6)) }}
-            {{ metric_row('net_receivables', 'Net Receivables', rule1_params.get('net_receivables_cagr', 0), rule1_params.get('net_receivables_cagr_omit', true), rule1_params.get('net_receivables_method', 'cagr'), rule1_params.get('net_receivables_min_posrate', 0.6)) }}
-            {{ metric_row('total_debt', 'Total Debt', rule1_params.get('total_debt_cagr', 0), rule1_params.get('total_debt_cagr_omit', true), rule1_params.get('total_debt_method', 'cagr'), rule1_params.get('total_debt_min_posrate', 0.6)) }}
-            {{ metric_row('accounts_payable', 'Accounts Payable', rule1_params.get('accounts_payable_cagr', 0), rule1_params.get('accounts_payable_cagr_omit', true), rule1_params.get('accounts_payable_method', 'cagr'), rule1_params.get('accounts_payable_min_posrate', 0.6)) }}
-            {{ metric_row('total_current_liabilities', 'Total Current Liabilities', rule1_params.get('total_current_liabilities_cagr', 0), rule1_params.get('total_current_liabilities_cagr_omit', true), rule1_params.get('total_current_liabilities_method', 'cagr'), rule1_params.get('total_current_liabilities_min_posrate', 0.6)) }}
-            {{ metric_row('total_stockholders_equity', 'Total Stockholders Equity', rule1_params.get('total_stockholders_equity_cagr', 0), rule1_params.get('total_stockholders_equity_cagr_omit', true), rule1_params.get('total_stockholders_equity_method', 'cagr'), rule1_params.get('total_stockholders_equity_min_posrate', 0.6)) }}
+            {{ metric_row('sales', 'Sales', rule1_params.sales_cagr, rule1_params.sales_cagr_omit, rule1_params.get('sales_method', 'cagr'), rule1_params.get('sales_min_posrate', 0.6), rule1_params.get('sales_direction', 'growth')) }}
+            {{ metric_row('fcf', 'FCF', rule1_params.fcf_cagr, rule1_params.fcf_cagr_omit, rule1_params.get('fcf_method', 'cagr'), rule1_params.get('fcf_min_posrate', 0.6), rule1_params.get('fcf_direction', 'growth')) }}
+            {{ metric_row('price', 'Price', rule1_params.price_cagr, rule1_params.price_cagr_omit, rule1_params.get('price_method', 'cagr'), rule1_params.get('price_min_posrate', 0.6), rule1_params.get('price_direction', 'growth')) }}
+            {{ metric_row('gp', 'Gross Profit', rule1_params.get('gp_cagr', 0), rule1_params.get('gp_cagr_omit', true), rule1_params.get('gp_method', 'cagr'), rule1_params.get('gp_min_posrate', 0.6), rule1_params.get('gp_direction', 'growth')) }}
+            {{ metric_row('op_cf', 'Op. Cash Flow', rule1_params.get('op_cf_cagr', 0), rule1_params.get('op_cf_cagr_omit', true), rule1_params.get('op_cf_method', 'cagr'), rule1_params.get('op_cf_min_posrate', 0.6), rule1_params.get('op_cf_direction', 'growth')) }}
+            {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', 0), rule1_params.get('op_income_cagr_omit', true), rule1_params.get('op_income_method', 'cagr'), rule1_params.get('op_income_min_posrate', 0.6), rule1_params.get('op_income_direction', 'growth')) }}
+            {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', 0), rule1_params.get('capex_cagr_omit', true), rule1_params.get('capex_method', 'cagr'), rule1_params.get('capex_min_posrate', 0.6), rule1_params.get('capex_direction', 'growth')) }}
+            {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', 0), rule1_params.get('cogs_cagr_omit', true), rule1_params.get('cogs_method', 'cagr'), rule1_params.get('cogs_min_posrate', 0.6), rule1_params.get('cogs_direction', 'growth')) }}
+            {{ metric_row('gp_margin', 'GP Margin', rule1_params.get('gp_margin_cagr', 0), rule1_params.get('gp_margin_cagr_omit', true), rule1_params.get('gp_margin_method', 'cagr'), rule1_params.get('gp_margin_min_posrate', 0.6), rule1_params.get('gp_margin_direction', 'growth')) }}
+            {{ metric_row('op_cf_margin', 'OpCF Margin', rule1_params.get('op_cf_margin_cagr', 0), rule1_params.get('op_cf_margin_cagr_omit', true), rule1_params.get('op_cf_margin_method', 'cagr'), rule1_params.get('op_cf_margin_min_posrate', 0.6), rule1_params.get('op_cf_margin_direction', 'growth')) }}
+            {{ metric_row('cash_and_cash_equivalents', 'Cash and Cash Equivalents', rule1_params.get('cash_and_cash_equivalents_cagr', 0), rule1_params.get('cash_and_cash_equivalents_cagr_omit', true), rule1_params.get('cash_and_cash_equivalents_method', 'cagr'), rule1_params.get('cash_and_cash_equivalents_min_posrate', 0.6), rule1_params.get('cash_and_cash_equivalents_direction', 'growth')) }}
+            {{ metric_row('short_term_investments', 'Short Term Investments', rule1_params.get('short_term_investments_cagr', 0), rule1_params.get('short_term_investments_cagr_omit', true), rule1_params.get('short_term_investments_method', 'cagr'), rule1_params.get('short_term_investments_min_posrate', 0.6), rule1_params.get('short_term_investments_direction', 'growth')) }}
+            {{ metric_row('net_receivables', 'Net Receivables', rule1_params.get('net_receivables_cagr', 0), rule1_params.get('net_receivables_cagr_omit', true), rule1_params.get('net_receivables_method', 'cagr'), rule1_params.get('net_receivables_min_posrate', 0.6), rule1_params.get('net_receivables_direction', 'growth')) }}
+            {{ metric_row('total_debt', 'Total Debt', rule1_params.get('total_debt_cagr', 0), rule1_params.get('total_debt_cagr_omit', true), rule1_params.get('total_debt_method', 'cagr'), rule1_params.get('total_debt_min_posrate', 0.6), rule1_params.get('total_debt_direction', 'growth')) }}
+            {{ metric_row('accounts_payable', 'Accounts Payable', rule1_params.get('accounts_payable_cagr', 0), rule1_params.get('accounts_payable_cagr_omit', true), rule1_params.get('accounts_payable_method', 'cagr'), rule1_params.get('accounts_payable_min_posrate', 0.6), rule1_params.get('accounts_payable_direction', 'growth')) }}
+            {{ metric_row('total_current_liabilities', 'Total Current Liabilities', rule1_params.get('total_current_liabilities_cagr', 0), rule1_params.get('total_current_liabilities_cagr_omit', true), rule1_params.get('total_current_liabilities_method', 'cagr'), rule1_params.get('total_current_liabilities_min_posrate', 0.6), rule1_params.get('total_current_liabilities_direction', 'growth')) }}
+            {{ metric_row('total_stockholders_equity', 'Total Stockholders Equity', rule1_params.get('total_stockholders_equity_cagr', 0), rule1_params.get('total_stockholders_equity_cagr_omit', true), rule1_params.get('total_stockholders_equity_method', 'cagr'), rule1_params.get('total_stockholders_equity_min_posrate', 0.6), rule1_params.get('total_stockholders_equity_direction', 'growth')) }}
 
             <div class="f-omit mt-1"><input type="checkbox" name="omit_negative_fcf" {{ 'checked' if rule1_params.omit_negative_fcf }}><span>Omit negative FCF</span></div>
 
@@ -169,6 +183,16 @@
                 <label>CapEx CAGR</label>
                 <input type="number" name="capex_cagr_2y" value="{{ rule2_params.get('capex_cagr_2y', '') }}" step="0.01" placeholder="—">
                 <div class="f-omit"><input type="checkbox" name="capex_cagr_2y_omit" {{ 'checked' if rule2_params.get('capex_cagr_2y_omit') }}><span>Omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>GP Margin CAGR</label>
+                <input type="number" name="gp_margin_cagr_2y" value="{{ rule2_params.get('gp_margin_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="gp_margin_cagr_2y_omit" {{ 'checked' if rule2_params.get('gp_margin_cagr_2y_omit', true) }}><span>Omit</span></div>
+              </div>
+              <div class="f-group">
+                <label>OpCF Margin CAGR</label>
+                <input type="number" name="op_cf_margin_cagr_2y" value="{{ rule2_params.get('op_cf_margin_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="op_cf_margin_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_cf_margin_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
                 <label>Cash and Cash Equivalents CAGR</label>
@@ -262,6 +286,14 @@
               <label>COGS</label>
               <input type="number" name="weight_cogs" value="{{ sw.get('cogs', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
             </div>
+            <div class="f-group">
+              <label>GP Margin</label>
+              <input type="number" name="weight_gp_margin" value="{{ sw.get('gp_margin', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+            </div>
+            <div class="f-group">
+              <label>OpCF Margin</label>
+              <input type="number" name="weight_op_cf_margin" value="{{ sw.get('op_cf_margin', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+            </div>
           </div>
         </div>
       </div>
@@ -309,22 +341,38 @@
             </div>
           </div>
 
-          <p class="label mt-1 mb-1" style="font-size:0.6rem;">Recent Price Filter</p>
+          <p class="label mt-1 mb-1" style="font-size:0.6rem;" title="Filter candidates by recent price action. 'Lookback' compares now vs N months ago. 'ATH' = distance from rolling N-year high.">Recent Price Filter &#9432;</p>
           <div class="f-grid">
             <div class="f-group">
-              <label>Lookback</label>
+              <label>Mode</label>
               <select name="recent_price_filter">
-                <option value="omit" {{ 'selected' if filter_params.recent_price_filter == 'omit' }}>Off</option>
-                <option value="3m"   {{ 'selected' if filter_params.recent_price_filter == '3m' }}>3 months</option>
-                <option value="6m"   {{ 'selected' if filter_params.recent_price_filter == '6m' }}>6 months</option>
-                <option value="12m"  {{ 'selected' if filter_params.recent_price_filter == '12m' }}>12 months</option>
+                <option value="omit"   {{ 'selected' if filter_params.recent_price_filter == 'omit' }}>Off</option>
+                <option value="3m"     {{ 'selected' if filter_params.recent_price_filter == '3m' }}>Lookback 3 months</option>
+                <option value="6m"     {{ 'selected' if filter_params.recent_price_filter == '6m' }}>Lookback 6 months</option>
+                <option value="12m"    {{ 'selected' if filter_params.recent_price_filter == '12m' }}>Lookback 12 months</option>
+                <option value="ath1y"  {{ 'selected' if filter_params.recent_price_filter == 'ath1y' }}>From 1Y high</option>
+                <option value="ath3y"  {{ 'selected' if filter_params.recent_price_filter == 'ath3y' }}>From 3Y high</option>
+                <option value="ath5y"  {{ 'selected' if filter_params.recent_price_filter == 'ath5y' }}>From 5Y high</option>
               </select>
             </div>
             <div class="f-group">
               <label>Threshold</label>
-              <input type="number" name="recent_price_threshold" value="{{ filter_params.recent_price_threshold }}" step="0.01">
+              <input type="number" name="recent_price_threshold" value="{{ filter_params.recent_price_threshold }}" step="0.01"
+                     title="Lookback: 0.05 = 5% gain, -0.05 = 5% drop. ATH: -0.20 = at least 20% below the rolling N-year high.">
+            </div>
+            <div class="f-group">
+              <label>Direction</label>
+              {% set rpd = filter_params.recent_price_direction|default('drop') %}
+              <select name="recent_price_direction"
+                      title="Lookback only. Drop = keep stocks where return ≤ threshold (mean reversion). Gain = keep stocks where return ≥ threshold (momentum). Ignored for ATH modes.">
+                <option value="drop" {{ 'selected' if rpd == 'drop' }}>&#9660; Drop (≤ threshold)</option>
+                <option value="gain" {{ 'selected' if rpd == 'gain' }}>&#9650; Gain (≥ threshold)</option>
+              </select>
             </div>
           </div>
+          <p class="text-muted" style="font-size:0.5rem;font-family:var(--font-ui);line-height:1.3;margin:0.4rem 0 0 0;">
+            Lookback compares price now vs N months ago. ATH compares price now vs the highest monthly close in the last N years (always negative or zero). Threshold is the cutoff.
+          </p>
         </div>
       </div>
 
@@ -586,8 +634,12 @@
                 <table class="tbl">
                   <thead><tr>
                     <th>Rank</th><th>Ticker</th><th>Sector</th><th class="r">Score</th>
-                    <th class="r">Sales 5Y</th><th class="r">Sales 2Y</th>
-                    <th class="r">FCF 5Y</th><th class="r">FCF 2Y</th>
+                    <th class="r" title="Sales CAGR over the past N years (start-to-end)">S 5Y</th>
+                    <th class="r">S 4Y</th><th class="r">S 3Y</th><th class="r">S 2Y</th><th class="r">S 1Y</th>
+                    <th class="r" title="FCF CAGR over the past N years">F 5Y</th>
+                    <th class="r">F 4Y</th><th class="r">F 3Y</th><th class="r">F 2Y</th><th class="r">F 1Y</th>
+                    <th class="r" title="Gross Profit / Sales">GP M%</th>
+                    <th class="r" title="Operating Cash Flow / Sales">OpCF M%</th>
                     <th class="r">Sales $M</th><th class="r">GP $M</th><th class="r">EBIT $M</th>
                     <th class="r">FCF $M</th><th class="r">OpCF $M</th><th class="r">CapEx</th>
                     <th class="r">Cash</th><th class="r">Debt</th><th class="r">Equity</th>
@@ -601,9 +653,17 @@
                       <td class="text-muted">{{ c.sector or '' }}</td>
                       <td class="r">{{ c.score|f2 }}</td>
                       <td class="r">{{ c.sales_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_4Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_3Y|pct0 }}</td>
                       <td class="r">{{ c.sales_CAGR_2Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_1Y|pct0 }}</td>
                       <td class="r">{{ c.free_cash_flow_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_4Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_3Y|pct0 }}</td>
                       <td class="r">{{ c.free_cash_flow_CAGR_2Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_1Y|pct0 }}</td>
+                      <td class="r">{{ c.gp_margin|pct0 }}</td>
+                      <td class="r">{{ c.op_cf_margin|pct0 }}</td>
                       <td class="r">{{ c.sales|f0 }}</td>
                       <td class="r">{{ c.gross_profit|f0 }}</td>
                       <td class="r">{{ c.operating_income|f0 }}</td>
