@@ -559,7 +559,8 @@
                 <table class="tbl">
                   <thead><tr>
                     <th>Rank</th><th>Ticker</th><th>Sector</th><th class="r">Score</th>
-                    <th class="r">Sales 5Y</th><th class="r">FCF 5Y</th>
+                    <th class="r">Sales 5Y</th><th class="r">Sales 2Y</th>
+                    <th class="r">FCF 5Y</th><th class="r">FCF 2Y</th>
                     <th class="r">Sales $M</th><th class="r">GP $M</th><th class="r">EBIT $M</th>
                     <th class="r">FCF $M</th><th class="r">OpCF $M</th><th class="r">CapEx</th>
                     <th class="r">Cash</th><th class="r">Debt</th><th class="r">Equity</th>
@@ -573,7 +574,9 @@
                       <td class="text-muted">{{ c.sector or '' }}</td>
                       <td class="r">{{ c.score|f2 }}</td>
                       <td class="r">{{ c.sales_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_2Y|pct0 }}</td>
                       <td class="r">{{ c.free_cash_flow_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_2Y|pct0 }}</td>
                       <td class="r">{{ c.sales|f0 }}</td>
                       <td class="r">{{ c.gross_profit|f0 }}</td>
                       <td class="r">{{ c.operating_income|f0 }}</td>
