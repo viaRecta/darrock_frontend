@@ -60,38 +60,29 @@
               <input type="number" name="sales_min_scale" value="{{ rule1_params.sales_min_scale }}" step="100">
             </div>
 
-            {# Per-metric filter rows: dir | method | threshold | posrate | +slope | skip #}
+            {# Per-metric filter rows: label | method | threshold | negative | skip #}
             <p class="label mt-1 mb-1" style="font-size:0.55rem; display:flex; gap:0.5rem;">
-              <span style="flex:1;">Metric</span>
-              <span style="width:55px;" title="Direction: Up = require value > threshold (growth); Down = require value < threshold (decline). For 'price dropped at least 5%', set Down + threshold -0.05.">Dir &#9432;</span>
-              <span style="width:80px;" title="CAGR: compound annual growth rate from year-N to current year (uses N+1 data points).&#10;Slope: linear regression of values across the last 6 years, normalized by mean absolute value.&#10;Consist.: median year-over-year growth + minimum positive-rate filter (set in pos %).">Method &#9432;</span>
-              <span style="width:70px;" title="Comparison value. For Up: keep if value > threshold. For Down: keep if value < threshold. 0.05 = 5%, -0.05 = -5%.">Threshold &#9432;</span>
-              <span style="width:50px;" title="Consistency only: fraction of years (0-1) that must show positive YoY growth. Default 0.6 = 60%.">pos % &#9432;</span>
-              <span style="width:50px;" title="Also require positive 5Y slope (linear trend) on top of the main filter. Use to combine 'CAGR ≥ X' AND 'positive trend'.">+slope &#9432;</span>
+              <span style="flex:1; min-width:60px;">Metric</span>
+              <span style="width:110px;" title="CAGR = compound annual growth rate (start vs end). Slope = linear regression across 6 years. CAGR + Slope = both must pass.">Method &#9432;</span>
+              <span style="width:70px;" title="Comparison value. By default: keep if value > threshold (growth). With 'Negative' checked: keep if value < threshold (decline). 0.05 = 5%, -0.05 = -5%.">Threshold &#9432;</span>
+              <span style="width:35px;" title="Negative direction. When checked, the comparator flips: keep stocks where value is BELOW the threshold (decline). Useful for 'find stocks whose price dropped'.">Neg &#9432;</span>
               <span style="width:30px;">Skip</span>
             </p>
 
             {# --- Macro for a metric row --- #}
-            {% macro metric_row(key, label, threshold_val, omit_val, method_val, posrate_val, direction_val, require_pos_slope_val=false) %}
+            {% macro metric_row(key, label, threshold_val, omit_val, method_val, direction_val) %}
             <div class="metric-filter-row" data-metric="{{ key }}">
               <span class="metric-filter-label">{{ label }}</span>
-              <select name="{{ key }}_direction" class="metric-filter-direction"
-                      title="Up = keep stocks with value > threshold (growth). Down = keep stocks with value < threshold (decline).">
-                <option value="growth" {{ 'selected' if direction_val == 'growth' }}>&#9650; Up</option>
-                <option value="decline" {{ 'selected' if direction_val == 'decline' }}>&#9660; Down</option>
-              </select>
               <select name="{{ key }}_method" class="metric-filter-method"
-                      title="CAGR = compound annual growth (start vs end). Slope = linear regression across 6 years. Consist. = median YoY growth + positive-rate floor.">
-                <option value="cagr" {{ 'selected' if method_val == 'cagr' }}>CAGR</option>
-                <option value="slope" {{ 'selected' if method_val == 'slope' }}>Slope</option>
-                <option value="consistency" {{ 'selected' if method_val == 'consistency' }}>Consist.</option>
+                      title="CAGR = compound annual growth (start vs end). Slope = linear regression across 6 years. CAGR + Slope = require both.">
+                <option value="cagr"       {{ 'selected' if method_val == 'cagr' or method_val == 'consistency' }}>CAGR</option>
+                <option value="slope"      {{ 'selected' if method_val == 'slope' }}>Slope</option>
+                <option value="cagr_slope" {{ 'selected' if method_val == 'cagr_slope' }}>CAGR + Slope</option>
               </select>
               <input type="number" name="{{ key }}_cagr" value="{{ threshold_val }}" step="0.01" class="metric-filter-threshold" placeholder="—">
-              <input type="number" name="{{ key }}_min_posrate" value="{{ posrate_val }}" step="0.1" min="0" max="1" class="metric-filter-posrate {{ 'hidden' if method_val != 'consistency' }}" placeholder="—">
               <div class="metric-filter-omit"
-                   title="When checked, also require positive 5Y slope on top of the main filter. Use case: 'CAGR ≥ 5% AND positive trend'. Has no effect if Method is already Slope.">
-                <input type="checkbox" name="{{ key }}_require_pos_slope" {{ 'checked' if require_pos_slope_val }}>
-                <span style="font-size:0.5rem;color:var(--muted);">+slope</span>
+                   title="Negative: when checked, keep stocks where value is BELOW threshold (decline). Default unchecked = keep where value is ABOVE threshold (growth).">
+                <input type="checkbox" name="{{ key }}_decline" {{ 'checked' if direction_val == 'decline' }}>
               </div>
               <div class="metric-filter-omit">
                 <input type="checkbox" name="{{ key }}_cagr_omit" {{ 'checked' if omit_val }}>
@@ -99,23 +90,23 @@
             </div>
             {% endmacro %}
 
-            {{ metric_row('sales', 'Sales', rule1_params.sales_cagr, rule1_params.sales_cagr_omit, rule1_params.get('sales_method', 'cagr'), rule1_params.get('sales_min_posrate', 0.6), rule1_params.get('sales_direction', 'growth')) }}
-            {{ metric_row('fcf', 'FCF', rule1_params.fcf_cagr, rule1_params.fcf_cagr_omit, rule1_params.get('fcf_method', 'cagr'), rule1_params.get('fcf_min_posrate', 0.6), rule1_params.get('fcf_direction', 'growth')) }}
-            {{ metric_row('price', 'Price', rule1_params.price_cagr, rule1_params.price_cagr_omit, rule1_params.get('price_method', 'cagr'), rule1_params.get('price_min_posrate', 0.6), rule1_params.get('price_direction', 'growth')) }}
-            {{ metric_row('gp', 'Gross Profit', rule1_params.get('gp_cagr', 0), rule1_params.get('gp_cagr_omit', true), rule1_params.get('gp_method', 'cagr'), rule1_params.get('gp_min_posrate', 0.6), rule1_params.get('gp_direction', 'growth')) }}
-            {{ metric_row('op_cf', 'Op. Cash Flow', rule1_params.get('op_cf_cagr', 0), rule1_params.get('op_cf_cagr_omit', true), rule1_params.get('op_cf_method', 'cagr'), rule1_params.get('op_cf_min_posrate', 0.6), rule1_params.get('op_cf_direction', 'growth')) }}
-            {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', 0), rule1_params.get('op_income_cagr_omit', true), rule1_params.get('op_income_method', 'cagr'), rule1_params.get('op_income_min_posrate', 0.6), rule1_params.get('op_income_direction', 'growth')) }}
-            {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', 0), rule1_params.get('capex_cagr_omit', true), rule1_params.get('capex_method', 'cagr'), rule1_params.get('capex_min_posrate', 0.6), rule1_params.get('capex_direction', 'growth')) }}
-            {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', 0), rule1_params.get('cogs_cagr_omit', true), rule1_params.get('cogs_method', 'cagr'), rule1_params.get('cogs_min_posrate', 0.6), rule1_params.get('cogs_direction', 'growth')) }}
-            {{ metric_row('gp_margin', 'GP Margin', rule1_params.get('gp_margin_cagr', 0), rule1_params.get('gp_margin_cagr_omit', true), rule1_params.get('gp_margin_method', 'cagr'), rule1_params.get('gp_margin_min_posrate', 0.6), rule1_params.get('gp_margin_direction', 'growth')) }}
-            {{ metric_row('op_cf_margin', 'OpCF Margin', rule1_params.get('op_cf_margin_cagr', 0), rule1_params.get('op_cf_margin_cagr_omit', true), rule1_params.get('op_cf_margin_method', 'cagr'), rule1_params.get('op_cf_margin_min_posrate', 0.6), rule1_params.get('op_cf_margin_direction', 'growth')) }}
-            {{ metric_row('cash_and_cash_equivalents', 'Cash and Cash Equivalents', rule1_params.get('cash_and_cash_equivalents_cagr', 0), rule1_params.get('cash_and_cash_equivalents_cagr_omit', true), rule1_params.get('cash_and_cash_equivalents_method', 'cagr'), rule1_params.get('cash_and_cash_equivalents_min_posrate', 0.6), rule1_params.get('cash_and_cash_equivalents_direction', 'growth')) }}
-            {{ metric_row('short_term_investments', 'Short Term Investments', rule1_params.get('short_term_investments_cagr', 0), rule1_params.get('short_term_investments_cagr_omit', true), rule1_params.get('short_term_investments_method', 'cagr'), rule1_params.get('short_term_investments_min_posrate', 0.6), rule1_params.get('short_term_investments_direction', 'growth')) }}
-            {{ metric_row('net_receivables', 'Net Receivables', rule1_params.get('net_receivables_cagr', 0), rule1_params.get('net_receivables_cagr_omit', true), rule1_params.get('net_receivables_method', 'cagr'), rule1_params.get('net_receivables_min_posrate', 0.6), rule1_params.get('net_receivables_direction', 'growth')) }}
-            {{ metric_row('total_debt', 'Total Debt', rule1_params.get('total_debt_cagr', 0), rule1_params.get('total_debt_cagr_omit', true), rule1_params.get('total_debt_method', 'cagr'), rule1_params.get('total_debt_min_posrate', 0.6), rule1_params.get('total_debt_direction', 'growth')) }}
-            {{ metric_row('accounts_payable', 'Accounts Payable', rule1_params.get('accounts_payable_cagr', 0), rule1_params.get('accounts_payable_cagr_omit', true), rule1_params.get('accounts_payable_method', 'cagr'), rule1_params.get('accounts_payable_min_posrate', 0.6), rule1_params.get('accounts_payable_direction', 'growth')) }}
-            {{ metric_row('total_current_liabilities', 'Total Current Liabilities', rule1_params.get('total_current_liabilities_cagr', 0), rule1_params.get('total_current_liabilities_cagr_omit', true), rule1_params.get('total_current_liabilities_method', 'cagr'), rule1_params.get('total_current_liabilities_min_posrate', 0.6), rule1_params.get('total_current_liabilities_direction', 'growth')) }}
-            {{ metric_row('total_stockholders_equity', 'Total Stockholders Equity', rule1_params.get('total_stockholders_equity_cagr', 0), rule1_params.get('total_stockholders_equity_cagr_omit', true), rule1_params.get('total_stockholders_equity_method', 'cagr'), rule1_params.get('total_stockholders_equity_min_posrate', 0.6), rule1_params.get('total_stockholders_equity_direction', 'growth')) }}
+            {{ metric_row('sales', 'Sales', rule1_params.sales_cagr, rule1_params.sales_cagr_omit, rule1_params.get('sales_method', 'cagr'), rule1_params.get('sales_direction', 'growth')) }}
+            {{ metric_row('fcf', 'FCF', rule1_params.fcf_cagr, rule1_params.fcf_cagr_omit, rule1_params.get('fcf_method', 'cagr'), rule1_params.get('fcf_direction', 'growth')) }}
+            {{ metric_row('price', 'Price', rule1_params.price_cagr, rule1_params.price_cagr_omit, rule1_params.get('price_method', 'cagr'), rule1_params.get('price_direction', 'growth')) }}
+            {{ metric_row('gp', 'Gross Profit', rule1_params.get('gp_cagr', 0), rule1_params.get('gp_cagr_omit', true), rule1_params.get('gp_method', 'cagr'), rule1_params.get('gp_direction', 'growth')) }}
+            {{ metric_row('op_cf', 'Op. Cash Flow', rule1_params.get('op_cf_cagr', 0), rule1_params.get('op_cf_cagr_omit', true), rule1_params.get('op_cf_method', 'cagr'), rule1_params.get('op_cf_direction', 'growth')) }}
+            {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', 0), rule1_params.get('op_income_cagr_omit', true), rule1_params.get('op_income_method', 'cagr'), rule1_params.get('op_income_direction', 'growth')) }}
+            {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', 0), rule1_params.get('capex_cagr_omit', true), rule1_params.get('capex_method', 'cagr'), rule1_params.get('capex_direction', 'growth')) }}
+            {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', 0), rule1_params.get('cogs_cagr_omit', true), rule1_params.get('cogs_method', 'cagr'), rule1_params.get('cogs_direction', 'growth')) }}
+            {{ metric_row('gp_margin', 'GP Margin', rule1_params.get('gp_margin_cagr', 0), rule1_params.get('gp_margin_cagr_omit', true), rule1_params.get('gp_margin_method', 'cagr'), rule1_params.get('gp_margin_direction', 'growth')) }}
+            {{ metric_row('op_cf_margin', 'OpCF Margin', rule1_params.get('op_cf_margin_cagr', 0), rule1_params.get('op_cf_margin_cagr_omit', true), rule1_params.get('op_cf_margin_method', 'cagr'), rule1_params.get('op_cf_margin_direction', 'growth')) }}
+            {{ metric_row('cash_and_cash_equivalents', 'Cash and Cash Equivalents', rule1_params.get('cash_and_cash_equivalents_cagr', 0), rule1_params.get('cash_and_cash_equivalents_cagr_omit', true), rule1_params.get('cash_and_cash_equivalents_method', 'cagr'), rule1_params.get('cash_and_cash_equivalents_direction', 'growth')) }}
+            {{ metric_row('short_term_investments', 'Short Term Investments', rule1_params.get('short_term_investments_cagr', 0), rule1_params.get('short_term_investments_cagr_omit', true), rule1_params.get('short_term_investments_method', 'cagr'), rule1_params.get('short_term_investments_direction', 'growth')) }}
+            {{ metric_row('net_receivables', 'Net Receivables', rule1_params.get('net_receivables_cagr', 0), rule1_params.get('net_receivables_cagr_omit', true), rule1_params.get('net_receivables_method', 'cagr'), rule1_params.get('net_receivables_direction', 'growth')) }}
+            {{ metric_row('total_debt', 'Total Debt', rule1_params.get('total_debt_cagr', 0), rule1_params.get('total_debt_cagr_omit', true), rule1_params.get('total_debt_method', 'cagr'), rule1_params.get('total_debt_direction', 'growth')) }}
+            {{ metric_row('accounts_payable', 'Accounts Payable', rule1_params.get('accounts_payable_cagr', 0), rule1_params.get('accounts_payable_cagr_omit', true), rule1_params.get('accounts_payable_method', 'cagr'), rule1_params.get('accounts_payable_direction', 'growth')) }}
+            {{ metric_row('total_current_liabilities', 'Total Current Liabilities', rule1_params.get('total_current_liabilities_cagr', 0), rule1_params.get('total_current_liabilities_cagr_omit', true), rule1_params.get('total_current_liabilities_method', 'cagr'), rule1_params.get('total_current_liabilities_direction', 'growth')) }}
+            {{ metric_row('total_stockholders_equity', 'Total Stockholders Equity', rule1_params.get('total_stockholders_equity_cagr', 0), rule1_params.get('total_stockholders_equity_cagr_omit', true), rule1_params.get('total_stockholders_equity_method', 'cagr'), rule1_params.get('total_stockholders_equity_direction', 'growth')) }}
 
             <div class="f-omit mt-1"><input type="checkbox" name="omit_negative_fcf" {{ 'checked' if rule1_params.omit_negative_fcf }}><span>Omit negative FCF</span></div>
 
@@ -131,13 +122,12 @@
                   least-squares linear regression across all 6 years (2020-2025), normalized by the mean absolute value.
                   Captures direction even when start &amp; end happen to be similar.
                 </p>
-                <p style="margin:0 0 0.4rem 0;"><strong>Consistency</strong> &mdash;
-                  computes year-over-year (YoY) growth rates for each pair of adjacent years, then takes the
-                  <strong>median</strong> of those YoY rates as the "growth" value.
-                  Plus the <strong>pos %</strong> filter: at least X% of years must have shown positive YoY growth.
+                <p style="margin:0 0 0.4rem 0;"><strong>+slope checkbox</strong> &mdash;
+                  combine the main filter with a positive-slope requirement. Example: "CAGR &ge; 5% <em>and</em>
+                  trend is positive". Has no effect if the chosen method is already Slope.
                 </p>
-                <p style="margin:0;"><strong>Threshold</strong> applies to the growth rate output of the chosen method (0.05 = 5%).
-                  <strong>pos %</strong> is only used by Consistency.</p>
+                <p style="margin:0;"><strong>Threshold</strong> is the comparison value (0.05 = 5%).
+                  Combined with <strong>Direction</strong> (Up/Down): Up keeps rows above threshold; Down keeps rows below.</p>
               </div>
             </details>
           </div>
