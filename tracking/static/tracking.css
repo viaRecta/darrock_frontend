@@ -1591,6 +1591,17 @@ tbody tr:last-child td {
     font-weight: 600;
 }
 
+.empty-state-alert {
+    max-width: 720px;
+    margin: 0 auto 20px;
+    padding: 12px 14px;
+    border: 1px solid rgba(192, 58, 50, 0.24);
+    border-radius: 10px;
+    background: rgba(192, 58, 50, 0.08);
+    color: #8a2a25;
+    font-weight: 600;
+}
+
 .empty-state ol {
     text-align: left;
     max-width: 560px;

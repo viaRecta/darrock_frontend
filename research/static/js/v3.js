@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAccordions();
   initSubtabs();
   initMetricRows();
+  initRecentPricePresets();
   initYearRows();
   initSlideOver();
   initPortfolioActions();
@@ -152,6 +153,23 @@ function initMetricRows() {
     // Set initial state
     updatePosrate();
     updateOmitted();
+  });
+}
+
+/* --- Recent price presets (mean reversion helpers) --- */
+function initRecentPricePresets() {
+  const modeField = document.querySelector('[name="recent_price_filter"]');
+  const thresholdField = document.querySelector('[name="recent_price_threshold"]');
+  const directionField = document.querySelector('[name="recent_price_direction"]');
+
+  if (!modeField || !thresholdField || !directionField) return;
+
+  document.querySelectorAll('.recent-price-preset').forEach(button => {
+    button.addEventListener('click', () => {
+      if (button.dataset.mode) modeField.value = button.dataset.mode;
+      if (button.dataset.threshold) thresholdField.value = button.dataset.threshold;
+      if (button.dataset.direction) directionField.value = button.dataset.direction;
+    });
   });
 }
 

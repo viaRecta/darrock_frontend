@@ -71,8 +71,14 @@
 
             {# --- Macro for a metric row --- #}
             {% macro metric_row(key, label, threshold_val, omit_val, method_val, direction_val) %}
+            {% set metric_title = '' %}
+            {% if key == 'gp_margin' %}
+              {% set metric_title = 'Gross Profit divided by Revenue. Shows how much gross profit the company keeps from each dollar of sales.' %}
+            {% elif key == 'op_cf_margin' %}
+              {% set metric_title = 'Operating Cash Flow divided by Revenue. Shows how much cash the business generates from each dollar of sales.' %}
+            {% endif %}
             <div class="metric-filter-row" data-metric="{{ key }}">
-              <span class="metric-filter-label">{{ label }}</span>
+              <span class="metric-filter-label" {% if metric_title %}title="{{ metric_title }}"{% endif %}>{{ label }}</span>
               <select name="{{ key }}_method" class="metric-filter-method"
                       title="CAGR = compound annual growth (start vs end). Slope = linear regression across 6 years. CAGR + Slope = require both.">
                 <option value="cagr"       {{ 'selected' if method_val == 'cagr' or method_val == 'consistency' }}>CAGR</option>
@@ -98,8 +104,8 @@
             {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', 0), rule1_params.get('op_income_cagr_omit', true), rule1_params.get('op_income_method', 'cagr'), rule1_params.get('op_income_direction', 'growth')) }}
             {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', 0), rule1_params.get('capex_cagr_omit', true), rule1_params.get('capex_method', 'cagr'), rule1_params.get('capex_direction', 'growth')) }}
             {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', 0), rule1_params.get('cogs_cagr_omit', true), rule1_params.get('cogs_method', 'cagr'), rule1_params.get('cogs_direction', 'growth')) }}
-            {{ metric_row('gp_margin', 'GP Margin', rule1_params.get('gp_margin_cagr', 0), rule1_params.get('gp_margin_cagr_omit', true), rule1_params.get('gp_margin_method', 'cagr'), rule1_params.get('gp_margin_direction', 'growth')) }}
-            {{ metric_row('op_cf_margin', 'OpCF Margin', rule1_params.get('op_cf_margin_cagr', 0), rule1_params.get('op_cf_margin_cagr_omit', true), rule1_params.get('op_cf_margin_method', 'cagr'), rule1_params.get('op_cf_margin_direction', 'growth')) }}
+            {{ metric_row('gp_margin', 'Gross Profit / Revenue', rule1_params.get('gp_margin_cagr', 0), rule1_params.get('gp_margin_cagr_omit', true), rule1_params.get('gp_margin_method', 'cagr'), rule1_params.get('gp_margin_direction', 'growth')) }}
+            {{ metric_row('op_cf_margin', 'Operating Cash Flow / Revenue', rule1_params.get('op_cf_margin_cagr', 0), rule1_params.get('op_cf_margin_cagr_omit', true), rule1_params.get('op_cf_margin_method', 'cagr'), rule1_params.get('op_cf_margin_direction', 'growth')) }}
             {{ metric_row('cash_and_cash_equivalents', 'Cash and Cash Equivalents', rule1_params.get('cash_and_cash_equivalents_cagr', 0), rule1_params.get('cash_and_cash_equivalents_cagr_omit', true), rule1_params.get('cash_and_cash_equivalents_method', 'cagr'), rule1_params.get('cash_and_cash_equivalents_direction', 'growth')) }}
             {{ metric_row('short_term_investments', 'Short Term Investments', rule1_params.get('short_term_investments_cagr', 0), rule1_params.get('short_term_investments_cagr_omit', true), rule1_params.get('short_term_investments_method', 'cagr'), rule1_params.get('short_term_investments_direction', 'growth')) }}
             {{ metric_row('net_receivables', 'Net Receivables', rule1_params.get('net_receivables_cagr', 0), rule1_params.get('net_receivables_cagr_omit', true), rule1_params.get('net_receivables_method', 'cagr'), rule1_params.get('net_receivables_direction', 'growth')) }}
@@ -175,12 +181,12 @@
                 <div class="f-omit"><input type="checkbox" name="capex_cagr_2y_omit" {{ 'checked' if rule2_params.get('capex_cagr_2y_omit') }}><span>Omit</span></div>
               </div>
               <div class="f-group">
-                <label>GP Margin CAGR</label>
+                <label title="Gross Profit divided by Revenue. This 2Y filter looks for improvement or deterioration in gross margin over two years.">Gross Profit / Revenue CAGR</label>
                 <input type="number" name="gp_margin_cagr_2y" value="{{ rule2_params.get('gp_margin_cagr_2y', '') }}" step="0.01" placeholder="—">
                 <div class="f-omit"><input type="checkbox" name="gp_margin_cagr_2y_omit" {{ 'checked' if rule2_params.get('gp_margin_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
               <div class="f-group">
-                <label>OpCF Margin CAGR</label>
+                <label title="Operating Cash Flow divided by Revenue. This 2Y filter looks for improvement or deterioration in cash generation margin over two years.">Operating Cash Flow / Revenue CAGR</label>
                 <input type="number" name="op_cf_margin_cagr_2y" value="{{ rule2_params.get('op_cf_margin_cagr_2y', '') }}" step="0.01" placeholder="—">
                 <div class="f-omit"><input type="checkbox" name="op_cf_margin_cagr_2y_omit" {{ 'checked' if rule2_params.get('op_cf_margin_cagr_2y_omit', true) }}><span>Omit</span></div>
               </div>
@@ -277,11 +283,11 @@
               <input type="number" name="weight_cogs" value="{{ sw.get('cogs', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
-              <label>GP Margin</label>
+              <label title="Gross Profit divided by Revenue. Higher values mean stronger gross margin.">Gross Profit / Revenue</label>
               <input type="number" name="weight_gp_margin" value="{{ sw.get('gp_margin', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
-              <label>OpCF Margin</label>
+              <label title="Operating Cash Flow divided by Revenue. Higher values mean stronger cash conversion from sales.">Operating Cash Flow / Revenue</label>
               <input type="number" name="weight_op_cf_margin" value="{{ sw.get('op_cf_margin', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
             </div>
           </div>
@@ -332,14 +338,24 @@
           </div>
 
           <p class="label mt-1 mb-1" style="font-size:0.6rem;" title="Filter candidates by recent price action. 'Lookback' compares now vs N months ago. 'ATH' = distance from rolling N-year high.">Recent Price Filter &#9432;</p>
+          <div class="flex gap-1 mb-1" style="flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm recent-price-preset"
+                    data-mode="3m" data-threshold="-0.10" data-direction="drop">
+              Mean Reversion: Last Quarter Drop
+            </button>
+            <button type="button" class="btn btn-sm recent-price-preset"
+                    data-mode="12m" data-threshold="-0.20" data-direction="drop">
+              Mean Reversion: Last Year Drop
+            </button>
+          </div>
           <div class="f-grid">
             <div class="f-group">
               <label>Mode</label>
               <select name="recent_price_filter">
                 <option value="omit"   {{ 'selected' if filter_params.recent_price_filter == 'omit' }}>Off</option>
-                <option value="3m"     {{ 'selected' if filter_params.recent_price_filter == '3m' }}>Lookback 3 months</option>
+                <option value="3m"     {{ 'selected' if filter_params.recent_price_filter == '3m' }}>Last Quarter (3M lookback)</option>
                 <option value="6m"     {{ 'selected' if filter_params.recent_price_filter == '6m' }}>Lookback 6 months</option>
-                <option value="12m"    {{ 'selected' if filter_params.recent_price_filter == '12m' }}>Lookback 12 months</option>
+                <option value="12m"    {{ 'selected' if filter_params.recent_price_filter == '12m' }}>Last Year (12M lookback)</option>
                 <option value="ath1y"  {{ 'selected' if filter_params.recent_price_filter == 'ath1y' }}>From 1Y high</option>
                 <option value="ath3y"  {{ 'selected' if filter_params.recent_price_filter == 'ath3y' }}>From 3Y high</option>
                 <option value="ath5y"  {{ 'selected' if filter_params.recent_price_filter == 'ath5y' }}>From 5Y high</option>
@@ -361,7 +377,7 @@
             </div>
           </div>
           <p class="text-muted" style="font-size:0.5rem;font-family:var(--font-ui);line-height:1.3;margin:0.4rem 0 0 0;">
-            Lookback compares price now vs N months ago. ATH compares price now vs the highest monthly close in the last N years (always negative or zero). Threshold is the cutoff.
+            Lookback compares price now vs N months ago. For mean reversion, use a negative threshold with <strong>Drop</strong>, for example <code>-0.10</code> on last quarter or <code>-0.20</code> on last year. ATH compares price now vs the highest monthly close in the last N years (always negative or zero).
           </p>
         </div>
       </div>
@@ -628,8 +644,8 @@
                     <th class="r">S 4Y</th><th class="r">S 3Y</th><th class="r">S 2Y</th><th class="r">S 1Y</th>
                     <th class="r" title="FCF CAGR over the past N years">F 5Y</th>
                     <th class="r">F 4Y</th><th class="r">F 3Y</th><th class="r">F 2Y</th><th class="r">F 1Y</th>
-                    <th class="r" title="Gross Profit / Sales">GP M%</th>
-                    <th class="r" title="Operating Cash Flow / Sales">OpCF M%</th>
+                    <th class="r" title="Gross Profit divided by Revenue. Higher means the company keeps more gross profit from sales.">GP / Rev</th>
+                    <th class="r" title="Operating Cash Flow divided by Revenue. Higher means the company turns more sales into operating cash.">OpCF / Rev</th>
                     <th class="r">Sales $M</th><th class="r">GP $M</th><th class="r">EBIT $M</th>
                     <th class="r">FCF $M</th><th class="r">OpCF $M</th><th class="r">CapEx</th>
                     <th class="r">Cash</th><th class="r">Debt</th><th class="r">Equity</th>

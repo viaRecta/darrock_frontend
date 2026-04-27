@@ -1,11 +1,7 @@
 <div class="empty-state">
-    <h3>No Stored Portfolio Data</h3>
-    <p>Store a portfolio from the research workflow to unlock benchmark comparison and daily tracking views.</p>
-    <ol>
-        <li>Run the analysis in the Dashboard to generate a portfolio for 2026</li>
-        <li>Click "Store 2026 Portfolio" button above</li>
-        <li>The system will download daily prices from Yahoo Finance</li>
-        <li>View detailed performance metrics and interactive charts</li>
-    </ol>
-    <a href="/dashboard" class="btn">Go to Dashboard</a>
+    {% if backend_error %}
+    <div class="empty-state-alert">
+       Tracking data is temporarily unavailable. The backend returned an error, so the page is showing a safe fallback instead of crashing.
+    </div>
+    {% endif %}
 </div>
