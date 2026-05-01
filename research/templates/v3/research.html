@@ -61,12 +61,18 @@
             </div>
 
             {# Per-metric filter rows: label | method | threshold | negative | skip #}
-            <p class="label mt-1 mb-1" style="font-size:0.55rem; display:flex; gap:0.5rem;">
+            <p class="label mt-1 mb-1" style="font-size:0.55rem; display:flex; gap:0.5rem; align-items:center;">
               <span style="flex:1; min-width:60px;">Metric</span>
               <span style="width:110px;" title="CAGR = compound annual growth rate (start vs end). Slope = linear regression across 6 years. CAGR + Slope = both must pass.">Method &#9432;</span>
               <span style="width:70px;" title="Comparison value. By default: keep if value > threshold (growth). With 'Negative' checked: keep if value < threshold (decline). 0.05 = 5%, -0.05 = -5%.">Threshold &#9432;</span>
               <span style="width:35px;" title="Negative direction. When checked, the comparator flips: keep stocks where value is BELOW the threshold (decline). Useful for 'find stocks whose price dropped'.">Neg &#9432;</span>
-              <span style="width:30px;">Skip</span>
+              <span style="width:30px; display:flex; flex-direction:column; gap:1px; align-items:center;">
+                <span>Skip</span>
+                <span style="display:flex; gap:2px;">
+                  <button type="button" class="skip-toggle-btn" data-skip-scope="rule1" data-skip-mode="all" title="Skip all 5-year metric filters">all</button>
+                  <button type="button" class="skip-toggle-btn" data-skip-scope="rule1" data-skip-mode="none" title="Include all 5-year metric filters">none</button>
+                </span>
+              </span>
             </p>
 
             {# --- Macro for a metric row --- #}
@@ -140,6 +146,11 @@
 
           {# --- 2-Year Rule Tab --- #}
           <div id="tab-2yr" class="subtab-panel">
+            <p class="label mt-1 mb-1" style="font-size:0.55rem; display:flex; gap:0.4rem; align-items:center; justify-content:flex-end;">
+              <span>Skip:</span>
+              <button type="button" class="skip-toggle-btn" data-skip-scope="rule2" data-skip-mode="all" title="Skip all 2-year metric filters">all</button>
+              <button type="button" class="skip-toggle-btn" data-skip-scope="rule2" data-skip-mode="none" title="Include all 2-year metric filters">none</button>
+            </p>
             <div class="f-grid mb-1">
               <div class="f-group">
                 <label>Sales CAGR 2Y</label>

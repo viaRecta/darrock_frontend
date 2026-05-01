@@ -13,8 +13,28 @@ document.addEventListener('DOMContentLoaded', () => {
   initSlideOver();
   initPortfolioActions();
   initFilterForm();
+  initSkipToggles();
   initLogout();
 });
+
+/* --- Skip-all / Include-all toggles for omit checkboxes ---
+   Buttons mark themselves with data-skip-scope ("rule1" | "rule2") and
+   data-skip-mode ("all" | "none"). They flip every matching omit checkbox
+   client-side without submitting the form. */
+function initSkipToggles() {
+  document.querySelectorAll('.skip-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const scope = btn.dataset.skipScope;
+      const mode = btn.dataset.skipMode;
+      const selector = scope === 'rule2'
+        ? '#tab-2yr input[type="checkbox"][name$="_cagr_2y_omit"]'
+        : '#tab-5yr input[type="checkbox"][name$="_cagr_omit"]';
+      document.querySelectorAll(selector).forEach(cb => {
+        cb.checked = (mode === 'all');
+      });
+    });
+  });
+}
 
 /* --- Logout --- */
 function initLogout() {
