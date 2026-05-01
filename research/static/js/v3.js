@@ -252,20 +252,25 @@ function closeSlideOver() {
 
 /* --- Portfolio CRUD --- */
 function initPortfolioActions() {
-  // Save
+  // Save — must include the WHOLE filter form so saved configs round-trip,
+  // not just the inputs inside #save-portfolio-form (which only holds the
+  // name/year/tickers). Without this the backend reconstructs DefaultParams
+  // for every missing field and the saved record bears no resemblance to
+  // what the user actually had on screen.
   const saveBtn = document.getElementById('save-portfolio-btn');
   const saveContainer = document.getElementById('save-portfolio-form');
-  if (saveBtn && saveContainer) {
+  const filterForm = document.getElementById('filter-form');
+  if (saveBtn && saveContainer && filterForm) {
     saveBtn.addEventListener('click', async () => {
       const nameInput = saveContainer.querySelector('[name="portfolio_name"]');
       if (!nameInput || !nameInput.value.trim()) {
         toast('Enter a portfolio name', 'err');
         return;
       }
-      const formData = new FormData();
-      saveContainer.querySelectorAll('input[name]').forEach(el => {
-        formData.append(el.name, el.value);
-      });
+      // FormData(form) handles inputs/selects/checkboxes correctly:
+      // unchecked checkboxes are omitted (matching standard form-submit semantics
+      // that the backend's _parse_form already expects).
+      const formData = new FormData(filterForm);
       try {
         const res = await fetch('/save_portfolio', { method: 'POST', body: formData });
         const data = await res.json();
@@ -346,11 +351,30 @@ function initPortfolioActions() {
 }
 
 function applyParams(params) {
-  const flat = { ...params, ...params.rule1_params, ...params.rule2_params, ...params.filter_params };
+  const r1 = params.rule1_params || {};
+  const r2 = params.rule2_params || {};
+  const fp = params.filter_params || {};
+  const flat = { ...params, ...r1, ...r2, ...fp };
+
+  // Score weights live as a nested object {sales:0.5,fcf:0.5,...} but the
+  // form has individual weight_<key> inputs — flatten them out.
+  const weights = fp.score_weights || flat.score_weights;
+  if (weights && typeof weights === 'object') {
+    Object.entries(weights).forEach(([k, v]) => { flat[`weight_${k}`] = v; });
+  }
+  delete flat.score_weights;
+
+  // Reset all _cagr_omit / _cagr_2y_omit checkboxes first so a saved with
+  // omit=false properly unchecks any that are currently checked.
+  document.querySelectorAll('#filter-form input[type="checkbox"][name$="_omit"]').forEach(el => {
+    el.checked = false;
+  });
+
   Object.entries(flat).forEach(([k, v]) => {
-    const el = document.querySelector(`[name="${k}"]`);
+    const el = document.querySelector(`#filter-form [name="${k}"]`);
     if (!el) return;
     if (el.type === 'checkbox') el.checked = !!v;
+    else if (el.tagName === 'SELECT') el.value = v;
     else el.value = v;
   });
 }
