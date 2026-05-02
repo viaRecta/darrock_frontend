@@ -306,6 +306,18 @@ def delete_portfolio_route(portfolio_id: int):
     return jsonify(data), status_code
 
 
+@app.post('/set_default_portfolio/<int:portfolio_id>')
+def set_default_portfolio_route(portfolio_id: int):
+    status_code, data = post_json(f'/api/v3/research/{portfolio_id}/default', data=b'')
+    return jsonify(data), status_code
+
+
+@app.post('/clear_default_portfolio')
+def clear_default_portfolio_route():
+    status_code, data = post_json('/api/v3/research/default/clear', data=b'')
+    return jsonify(data), status_code
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=6200, debug=True)

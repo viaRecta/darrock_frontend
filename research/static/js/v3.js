@@ -327,6 +327,29 @@ function initPortfolioActions() {
     });
   });
 
+  // Default toggle (★/☆) — set or clear the user's default saved research.
+  // The backend enforces uniqueness (partial unique index on user_id where is_default=1)
+  // so we don't have to optimistically clear other rows in the DOM.
+  document.querySelectorAll('[data-default-portfolio]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.defaultPortfolio;
+      const isDefault = btn.dataset.isDefault === '1';
+      try {
+        const url = isDefault
+          ? '/clear_default_portfolio'
+          : `/set_default_portfolio/${id}`;
+        const res = await fetch(url, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          toast(isDefault ? 'Default cleared' : 'Default set', 'ok');
+          setTimeout(() => location.reload(), 400);
+        } else {
+          toast(data.message || 'Failed', 'err');
+        }
+      } catch { toast('Default toggle failed', 'err'); }
+    });
+  });
+
   // Share toggle
   document.querySelectorAll('[data-share-portfolio]').forEach(btn => {
     btn.addEventListener('click', async () => {

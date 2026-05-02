@@ -102,16 +102,21 @@
             </div>
             {% endmacro %}
 
-            {{ metric_row('sales', 'Sales', rule1_params.sales_cagr, rule1_params.sales_cagr_omit, rule1_params.get('sales_method', 'cagr'), rule1_params.get('sales_direction', 'growth')) }}
-            {{ metric_row('fcf', 'FCF', rule1_params.fcf_cagr, rule1_params.fcf_cagr_omit, rule1_params.get('fcf_method', 'cagr'), rule1_params.get('fcf_direction', 'growth')) }}
-            {{ metric_row('price', 'Price', rule1_params.price_cagr, rule1_params.price_cagr_omit, rule1_params.get('price_method', 'cagr'), rule1_params.get('price_direction', 'growth')) }}
-            {{ metric_row('gp', 'Gross Profit', rule1_params.get('gp_cagr', 0), rule1_params.get('gp_cagr_omit', true), rule1_params.get('gp_method', 'cagr'), rule1_params.get('gp_direction', 'growth')) }}
-            {{ metric_row('op_cf', 'Op. Cash Flow', rule1_params.get('op_cf_cagr', 0), rule1_params.get('op_cf_cagr_omit', true), rule1_params.get('op_cf_method', 'cagr'), rule1_params.get('op_cf_direction', 'growth')) }}
-            {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', 0), rule1_params.get('op_income_cagr_omit', true), rule1_params.get('op_income_method', 'cagr'), rule1_params.get('op_income_direction', 'growth')) }}
-            {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', 0), rule1_params.get('capex_cagr_omit', true), rule1_params.get('capex_method', 'cagr'), rule1_params.get('capex_direction', 'growth')) }}
-            {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', 0), rule1_params.get('cogs_cagr_omit', true), rule1_params.get('cogs_method', 'cagr'), rule1_params.get('cogs_direction', 'growth')) }}
-            {{ metric_row('gp_margin', 'Gross Profit / Revenue', rule1_params.get('gp_margin_cagr', 0), rule1_params.get('gp_margin_cagr_omit', true), rule1_params.get('gp_margin_method', 'cagr'), rule1_params.get('gp_margin_direction', 'growth')) }}
-            {{ metric_row('op_cf_margin', 'Operating Cash Flow / Revenue', rule1_params.get('op_cf_margin_cagr', 0), rule1_params.get('op_cf_margin_cagr_omit', true), rule1_params.get('op_cf_margin_method', 'cagr'), rule1_params.get('op_cf_margin_direction', 'growth')) }}
+            {# Helper macro: read rule1_params[key] if present, else defaults[key].
+               Backend always seeds defaults for every known key, so 'absent' here
+               only happens for non-registered metrics — those still fall back to
+               sensible literals at the call site. #}
+            {% set d = defaults or {} %}
+            {{ metric_row('sales', 'Sales', rule1_params.get('sales_cagr', d.get('sales_cagr')), rule1_params.get('sales_cagr_omit', d.get('sales_cagr_omit')), rule1_params.get('sales_method', d.get('sales_method', 'cagr')), rule1_params.get('sales_direction', d.get('sales_direction', 'growth'))) }}
+            {{ metric_row('fcf', 'FCF', rule1_params.get('fcf_cagr', d.get('fcf_cagr')), rule1_params.get('fcf_cagr_omit', d.get('fcf_cagr_omit')), rule1_params.get('fcf_method', d.get('fcf_method', 'cagr')), rule1_params.get('fcf_direction', d.get('fcf_direction', 'growth'))) }}
+            {{ metric_row('price', 'Price', rule1_params.get('price_cagr', d.get('price_cagr')), rule1_params.get('price_cagr_omit', d.get('price_cagr_omit')), rule1_params.get('price_method', d.get('price_method', 'cagr')), rule1_params.get('price_direction', d.get('price_direction', 'growth'))) }}
+            {{ metric_row('gp', 'Gross Profit', rule1_params.get('gp_cagr', d.get('gp_cagr', 0)), rule1_params.get('gp_cagr_omit', d.get('gp_cagr_omit', true)), rule1_params.get('gp_method', d.get('gp_method', 'cagr')), rule1_params.get('gp_direction', d.get('gp_direction', 'growth'))) }}
+            {{ metric_row('op_cf', 'Op. Cash Flow', rule1_params.get('op_cf_cagr', d.get('op_cf_cagr', 0)), rule1_params.get('op_cf_cagr_omit', d.get('op_cf_cagr_omit', true)), rule1_params.get('op_cf_method', d.get('op_cf_method', 'cagr')), rule1_params.get('op_cf_direction', d.get('op_cf_direction', 'growth'))) }}
+            {{ metric_row('op_income', 'Op. Income', rule1_params.get('op_income_cagr', d.get('op_income_cagr', 0)), rule1_params.get('op_income_cagr_omit', d.get('op_income_cagr_omit', true)), rule1_params.get('op_income_method', d.get('op_income_method', 'cagr')), rule1_params.get('op_income_direction', d.get('op_income_direction', 'growth'))) }}
+            {{ metric_row('capex', 'CapEx', rule1_params.get('capex_cagr', d.get('capex_cagr', 0)), rule1_params.get('capex_cagr_omit', d.get('capex_cagr_omit', true)), rule1_params.get('capex_method', d.get('capex_method', 'cagr')), rule1_params.get('capex_direction', d.get('capex_direction', 'growth'))) }}
+            {{ metric_row('cogs', 'COGS', rule1_params.get('cogs_cagr', d.get('cogs_cagr', 0)), rule1_params.get('cogs_cagr_omit', d.get('cogs_cagr_omit', true)), rule1_params.get('cogs_method', d.get('cogs_method', 'cagr')), rule1_params.get('cogs_direction', d.get('cogs_direction', 'growth'))) }}
+            {{ metric_row('gp_margin', 'Gross Profit / Revenue', rule1_params.get('gp_margin_cagr', d.get('gp_margin_cagr', 0)), rule1_params.get('gp_margin_cagr_omit', d.get('gp_margin_cagr_omit', true)), rule1_params.get('gp_margin_method', d.get('gp_margin_method', 'cagr')), rule1_params.get('gp_margin_direction', d.get('gp_margin_direction', 'growth'))) }}
+            {{ metric_row('op_cf_margin', 'Operating Cash Flow / Revenue', rule1_params.get('op_cf_margin_cagr', d.get('op_cf_margin_cagr', 0)), rule1_params.get('op_cf_margin_cagr_omit', d.get('op_cf_margin_cagr_omit', true)), rule1_params.get('op_cf_margin_method', d.get('op_cf_margin_method', 'cagr')), rule1_params.get('op_cf_margin_direction', d.get('op_cf_margin_direction', 'growth'))) }}
             {{ metric_row('cash_and_cash_equivalents', 'Cash and Cash Equivalents', rule1_params.get('cash_and_cash_equivalents_cagr', 0), rule1_params.get('cash_and_cash_equivalents_cagr_omit', true), rule1_params.get('cash_and_cash_equivalents_method', 'cagr'), rule1_params.get('cash_and_cash_equivalents_direction', 'growth')) }}
             {{ metric_row('short_term_investments', 'Short Term Investments', rule1_params.get('short_term_investments_cagr', 0), rule1_params.get('short_term_investments_cagr_omit', true), rule1_params.get('short_term_investments_method', 'cagr'), rule1_params.get('short_term_investments_direction', 'growth')) }}
             {{ metric_row('net_receivables', 'Net Receivables', rule1_params.get('net_receivables_cagr', 0), rule1_params.get('net_receivables_cagr_omit', true), rule1_params.get('net_receivables_method', 'cagr'), rule1_params.get('net_receivables_direction', 'growth')) }}
@@ -260,46 +265,48 @@
 
           <p class="label mt-1 mb-1" style="font-size:0.6rem;">Score Weights</p>
           {% set sw = filter_params.get('score_weights', {}) if filter_params.get is defined else {} %}
+          {% set dsw = (defaults or {}).get('score_weights', {}) %}
+          {% macro w(key) %}{{ sw.get(key, dsw.get(key, 0)) if sw.get is defined else dsw.get(key, 0) }}{% endmacro %}
           <div class="f-grid-3 f-grid">
             <div class="f-group">
               <label>Sales</label>
-              <input type="number" name="weight_sales" value="{{ sw.get('sales', 0.5) if sw.get is defined else 0.5 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_sales" value="{{ w('sales') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label>FCF</label>
-              <input type="number" name="weight_fcf" value="{{ sw.get('fcf', 0.5) if sw.get is defined else 0.5 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_fcf" value="{{ w('fcf') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label>Price</label>
-              <input type="number" name="weight_price" value="{{ sw.get('price', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_price" value="{{ w('price') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label>Gross Profit</label>
-              <input type="number" name="weight_gp" value="{{ sw.get('gp', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_gp" value="{{ w('gp') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label>Op. CF</label>
-              <input type="number" name="weight_op_cf" value="{{ sw.get('op_cf', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_op_cf" value="{{ w('op_cf') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label>Op. Income</label>
-              <input type="number" name="weight_op_income" value="{{ sw.get('op_income', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_op_income" value="{{ w('op_income') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label>CapEx</label>
-              <input type="number" name="weight_capex" value="{{ sw.get('capex', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_capex" value="{{ w('capex') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label>COGS</label>
-              <input type="number" name="weight_cogs" value="{{ sw.get('cogs', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_cogs" value="{{ w('cogs') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label title="Gross Profit divided by Revenue. Higher values mean stronger gross margin.">Gross Profit / Revenue</label>
-              <input type="number" name="weight_gp_margin" value="{{ sw.get('gp_margin', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_gp_margin" value="{{ w('gp_margin') }}" step="0.01" min="0" max="1">
             </div>
             <div class="f-group">
               <label title="Operating Cash Flow divided by Revenue. Higher values mean stronger cash conversion from sales.">Operating Cash Flow / Revenue</label>
-              <input type="number" name="weight_op_cf_margin" value="{{ sw.get('op_cf_margin', 0) if sw.get is defined else 0 }}" step="0.01" min="0" max="1">
+              <input type="number" name="weight_op_cf_margin" value="{{ w('op_cf_margin') }}" step="0.01" min="0" max="1">
             </div>
           </div>
         </div>
@@ -311,15 +318,16 @@
         <div class="acc-body">
 
           <p class="label mb-1" style="font-size:0.6rem;">Backtest Range &amp; Buying Period</p>
-          {% set bq = filter_params.get('buying_quarter', 'q4') if filter_params.get is defined else 'q4' %}
+          {% set d = defaults or {} %}
+          {% set bq = filter_params.get('buying_quarter', d.get('buying_quarter', 'q4')) if filter_params.get is defined else d.get('buying_quarter', 'q4') %}
           <div class="f-grid mb-1">
             <div class="f-group">
               <label>Start Year</label>
-              <input type="number" name="start_year" value="{{ filter_params.get('start_year', 2012) if filter_params.get is defined else 2012 }}" min="1960" max="2026" step="1">
+              <input type="number" name="start_year" value="{{ filter_params.get('start_year', d.get('start_year')) if filter_params.get is defined else d.get('start_year') }}" min="1960" max="2026" step="1">
             </div>
             <div class="f-group">
               <label>End Year</label>
-              <input type="number" name="end_year" value="{{ filter_params.get('end_year', 0) if filter_params.get is defined else 0 }}" min="0" max="2030" step="1" placeholder="0 = current">
+              <input type="number" name="end_year" value="{{ filter_params.get('end_year', d.get('end_year')) if filter_params.get is defined else d.get('end_year') }}" min="0" max="2030" step="1" placeholder="0 = current">
             </div>
             <div class="f-group">
               <label>Buying Quarter</label>
@@ -379,7 +387,7 @@
             </div>
             <div class="f-group">
               <label>Direction</label>
-              {% set rpd = filter_params.recent_price_direction|default('drop') %}
+              {% set rpd = filter_params.recent_price_direction|default((defaults or {}).get('recent_price_direction', 'drop')) %}
               <select name="recent_price_direction"
                       title="Lookback only. Drop = keep stocks where return ≤ threshold (mean reversion). Gain = keep stocks where return ≥ threshold (momentum). Ignored for ATH modes.">
                 <option value="drop" {{ 'selected' if rpd == 'drop' }}>&#9660; Drop (≤ threshold)</option>
@@ -408,27 +416,28 @@
 
           {# --- Portfolio List --- #}
           {% for p in saved_portfolios or [] %}
-          {% set is_own = user and p.user_id == user.id %}
-          {% set is_system = p.id <= 10 %}
           <div class="portfolio-row flex items-center justify-between" style="padding:0.4rem 0;border-bottom:1px solid var(--divider);font-family:var(--font-ui);font-size:var(--fs-sm);">
             <div style="flex:1;min-width:0;">
               <strong>{{ p.name }}</strong>
               <span class="text-muted" style="font-size:var(--fs-xs);">
-                {{ p.year }} &middot; {{ p.tickers|length }}
-                {% if is_system %}&middot; preset{% endif %}
+                {{ p.year }}{% if p.tickers is defined %} &middot; {{ p.tickers|length }}{% endif %}
               </span>
-              {% if is_own and p.is_shared %}
-                <a href="/v3/p/{{ p.id }}" target="_blank" class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;">Shared</a>
+              {% if p.is_default %}
+                <span class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;" title="Default — loaded on cold visit">default</span>
+              {% endif %}
+              {% if p.is_shared %}
+                <a href="/v3/p/{{ p.id }}" target="_blank" class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;">shared</a>
               {% endif %}
             </div>
             <div class="flex gap-1" style="flex-shrink:0;">
               <button class="btn btn-sm btn-ghost" data-load-portfolio="{{ p.id }}">Load</button>
-              {% if is_own %}
+              <button class="btn btn-sm btn-ghost" data-default-portfolio="{{ p.id }}" data-is-default="{{ 1 if p.is_default else 0 }}" title="{{ 'Clear default' if p.is_default else 'Set as default' }}">
+                {{ '★' if p.is_default else '☆' }}
+              </button>
               <button class="btn btn-sm btn-ghost" data-share-portfolio="{{ p.id }}" data-shared="{{ p.is_shared }}" title="{{ 'Unshare' if p.is_shared else 'Share publicly' }}">
                 {{ '🔗' if p.is_shared else '🔒' }}
               </button>
-              <button class="btn btn-sm btn-ghost btn-danger" data-delete-portfolio="{{ p.id }}">&times;</button>
-              {% endif %}
+              <button class="btn btn-sm btn-ghost btn-danger" data-delete-portfolio="{{ p.id }}" title="Delete">&times;</button>
             </div>
           </div>
           {% endfor %}
@@ -441,6 +450,10 @@
               <div class="flex gap-1">
                 <input type="text" name="portfolio_name" placeholder="Name" style="flex:1;">
               </div>
+            </div>
+            <div class="f-omit" style="margin-top:0.4rem;" title="Cold loads of the research page will use this saved config until you change the default.">
+              <input type="checkbox" name="is_default" id="save-portfolio-default">
+              <span>Make this my default</span>
             </div>
             <input type="hidden" name="portfolio_year" value="{{ endDate }}">
             {% for t in next_year_portfolio %}
