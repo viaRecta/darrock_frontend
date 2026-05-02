@@ -251,8 +251,15 @@ async function openSlideOver(ticker) {
   panel.classList.add('open');
   if (backdrop) backdrop.classList.add('open');
 
+  // Anchor stock-detail to the dashboard's currently selected buying_quarter
+  // so the summary's CAGRs, sums, balance sheet, and price match the analysis
+  // the user is looking at. (Other filters don't affect a single-ticker view.)
+  const bqEl = document.querySelector('#filter-form [name="buying_quarter"]');
+  const bq = bqEl ? bqEl.value : 'q4';
+  const url = `/v3/stock/${ticker}?partial=1&buying_quarter=${encodeURIComponent(bq)}`;
+
   try {
-    const res = await fetch(`/v3/stock/${ticker}?partial=1`);
+    const res = await fetch(url);
     if (res.ok) {
       content.innerHTML = await res.text();
     } else {

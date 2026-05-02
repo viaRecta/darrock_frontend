@@ -14,8 +14,15 @@
 </div>
 
 {% if sp500_years %}
-<p class="text-muted ui" style="font-size:var(--fs-xs);margin-bottom:1rem;">
+<p class="text-muted ui" style="font-size:var(--fs-xs);margin-bottom:0.4rem;">
   S&amp;P 500 member since {{ sp500_years|first }} ({{ sp500_years|length }} yrs)
+</p>
+{% endif %}
+
+{% if buying_quarter %}
+{% set bq_label = {'q1': 'Q1 (Mar)', 'q2': 'Q2 (Jun)', 'q3': 'Q3 (Sep)', 'q4': 'Q4 (Dec)'}.get(buying_quarter, buying_quarter) %}
+<p class="text-muted ui" style="font-size:var(--fs-xs);margin-bottom:1rem;" title="Aggregates and prices on this page anchor to the dashboard's buying quarter. Switch quarters in the filter panel and re-open the stock to see the other window.">
+  Anchored to <strong>{{ bq_label }}</strong> &middot; price month = {{ price_month }}
 </p>
 {% endif %}
 

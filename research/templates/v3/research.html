@@ -549,7 +549,7 @@
     {# --- Current Portfolio --- #}
     {% if next_year_portfolio %}
     <div class="flex items-center gap-2 mb-2">
-      <span class="label">{{ endDate }} Portfolio</span>
+      <span class="label">Chosen in {{ endDate }} for {{ endDate + 1 }}</span>
       <div class="port-strip">
         {% for t in next_year_portfolio|sort %}
         <a href="#" data-stock="{{ t }}" class="tag">
@@ -606,18 +606,18 @@
             </div>
 
             {# Portfolio tickers #}
-            {# Portfolio chosen for this year (picked at end of Y-1, held during Y) #}
+            {# Picks made in r.year, intended for the next year's holding period. #}
             <div class="flex flex-wrap gap-1 mb-2">
-              <span class="label" style="margin-right:0.4rem;">Chosen for {{ r.year }}:</span>
+              <span class="label" style="margin-right:0.4rem;">Chosen in {{ r.year }} for {{ r.year + 1 }}:</span>
               {% for t in r.portfolio |sort %}
               <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
               {% endfor %}
             </div>
 
-            {# Previous year portfolio (the one whose returns are measured during Y) #}
+            {# Previous iteration's picks — held during r.year, returns measured this year. #}
             {% if r.last_port_returns %}
             <div class="flex flex-wrap gap-1 mb-2">
-              <span class="label" style="margin-right:0.4rem;">Held during {{ r.year }} (chosen for {{ r.year - 1 }}):</span>
+              <span class="label" style="margin-right:0.4rem;">Held during {{ r.year }} (chosen in {{ r.year - 1 }}):</span>
               {% for t in r.last_port_returns.keys() |sort %}
               <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
               {% endfor %}
@@ -628,7 +628,7 @@
             {% if r.last_port_returns %}
             <details class="mt-2" style="font-family:var(--font-ui);font-size:var(--fs-xs);">
               <summary style="cursor:pointer;color:var(--muted);">
-                Returns &mdash; how the {{ r.year - 1 }} portfolio performed during {{ r.year }}
+                Returns &mdash; how the portfolio chosen in {{ r.year - 1 }} performed during {{ r.year }}
               </summary>
               <div class="tbl-wrap mt-1">
                 <table class="tbl">
@@ -658,7 +658,7 @@
             {% if r.filtered_candidates_details %}
             <details class="mt-2" style="font-family:var(--font-ui);font-size:var(--fs-xs);">
               <summary style="cursor:pointer;color:var(--muted);">
-                Details &mdash; why these stocks were chosen for {{ r.year }} ({{ r.filtered_candidates_details|length }} candidates ranked)
+                Details &mdash; why these stocks were chosen in {{ r.year }} for {{ r.year + 1 }} ({{ r.filtered_candidates_details|length }} candidates ranked)
               </summary>
               <div class="tbl-wrap mt-1">
                 <table class="tbl">

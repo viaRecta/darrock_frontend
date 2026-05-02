@@ -195,7 +195,10 @@ def v3_stock(ticker: str):
             data['ticker'] = ticker
             data['company_name'] = ticker
     else:
-        data = get_json(f'/research/stock/{ticker}')
+        bq = request.args.get('buying_quarter', 'q4')
+        if bq not in ('q1', 'q2', 'q3', 'q4'):
+            bq = 'q4'
+        data = get_json(f'/research/stock/{ticker}?buying_quarter={bq}')
 
     # If ?partial=1 → return just the fragment (for slide-over AJAX)
     if request.args.get('partial') == '1':
