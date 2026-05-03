@@ -12,12 +12,12 @@
    TOP BAR
    ============================================================ #}
 <header class="topbar">
-  <a href="/v3/research" class="topbar-brand">Darrock</a>
+  <a href="/research" class="topbar-brand">Darrock</a>
   <div class="topbar-actions">
-    <a href="/v3/research">Research</a>
-    <a href="/v3/custom" class="active">Custom</a>
+    <a href="/research">Research</a>
+    <a href="/custom" class="active">Custom</a>
     {% if user %}
-    {% if user.role == 'admin' %}<a href="/v3/admin">Admin</a>{% endif %}
+    {% if user.role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
     <span class="ui" style="color:var(--muted);font-size:var(--fs-xs);padding:0 0.5rem;">{{ user.display_name }}</span>
     <button id="logout-btn" class="btn btn-sm btn-ghost" style="font-size:var(--fs-xs);">Logout</button>
     {% endif %}
@@ -33,7 +33,7 @@
   </p>
 
   {# --- Form --- #}
-  <form method="post" action="/v3/custom" class="card" style="padding:1rem; margin-bottom:1.5rem;">
+  <form method="post" action="/custom" class="card" style="padding:1rem; margin-bottom:1.5rem;">
 
     <div class="f-group mb-1">
       <label>Tickers (comma or newline separated)</label>
@@ -185,8 +185,8 @@
 </div> 
 <script>
 document.getElementById('logout-btn')?.addEventListener('click', async () => {
-  await fetch('/v3/logout', { method: 'POST' });
-  window.location.href = '/v3/';
+  await fetch('/logout', { method: 'POST' });
+  window.location.href = '/';
 });
 </script>
 </body>

@@ -9,10 +9,10 @@
 </head>
 <body>
   <header class="topbar">
-    <a href="/v3/research" class="topbar-brand">darrock</a>
+    <a href="/research" class="topbar-brand">darrock</a>
     <div class="topbar-actions">
-      <a href="/v3/research">research</a>
-      <a href="/v3/admin" class="active">admin</a>
+      <a href="/research">research</a>
+      <a href="/admin" class="active">admin</a>
       <span class="ui" style="color:var(--muted);font-size:var(--fs-xs);padding:0 0.5rem;">{{ user.display_name }}</span>
       <button id="logout-btn" class="btn btn-sm btn-ghost">logout</button>
     </div>
@@ -116,7 +116,7 @@
       const role = document.getElementById('new-role').value;
       if (!username || !password) { toast('Username and password required', 'err'); return; }
       try {
-        const res = await fetch('/v3/admin/add_user', {
+        const res = await fetch('/admin/add_user', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password, display_name, role }),
@@ -131,7 +131,7 @@
       const pw = prompt(`New password for ${username}:`);
       if (!pw) return;
       try {
-        const res = await fetch(`/v3/admin/reset_password/${id}`, {
+        const res = await fetch(`/admin/reset_password/${id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: pw }),
@@ -144,7 +144,7 @@
     async function deleteUser(id, username) {
       if (!confirm(`Delete user "${username}"?`)) return;
       try {
-        const res = await fetch(`/v3/admin/delete_user/${id}`, { method: 'POST' });
+        const res = await fetch(`/admin/delete_user/${id}`, { method: 'POST' });
         const data = await res.json();
         toast(data.message, data.success ? 'ok' : 'err');
         if (data.success) document.getElementById(`user-row-${id}`)?.remove();
@@ -152,8 +152,8 @@
     }
 
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
-      await fetch('/v3/logout', { method: 'POST' });
-      window.location.href = '/v3/';
+      await fetch('/logout', { method: 'POST' });
+      window.location.href = '/';
     });
   </script>
 </body>

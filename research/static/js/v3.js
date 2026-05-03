@@ -41,8 +41,8 @@ function initLogout() {
   const btn = document.getElementById('logout-btn');
   if (!btn) return;
   btn.addEventListener('click', async () => {
-    await fetch('/v3/logout', { method: 'POST' });
-    window.location.href = '/v3/';
+    await fetch('/logout', { method: 'POST' });
+    window.location.href = '/';
   });
 }
 
@@ -256,7 +256,7 @@ async function openSlideOver(ticker) {
   // the user is looking at. (Other filters don't affect a single-ticker view.)
   const bqEl = document.querySelector('#filter-form [name="buying_quarter"]');
   const bq = bqEl ? bqEl.value : 'q4';
-  const url = `/v3/stock/${ticker}?partial=1&buying_quarter=${encodeURIComponent(bq)}`;
+  const url = `/stock/${ticker}?partial=1&buying_quarter=${encodeURIComponent(bq)}`;
 
   try {
     const res = await fetch(url);
@@ -382,7 +382,7 @@ function initPortfolioActions() {
             const nameEl = row?.querySelector('strong');
             if (nameEl) {
               const a = document.createElement('a');
-              a.href = `/v3/p/${id}`;
+              a.href = `/p/${id}`;
               a.target = '_blank';
               a.className = 'badge badge-pos';
               a.style.cssText = 'font-size:0.5rem;margin-left:0.3rem;';

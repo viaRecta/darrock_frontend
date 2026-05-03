@@ -29,19 +29,16 @@ def _fmt(value, spec):
 
 @app.template_filter('f2')
 def f2(value):
-    """Format as 2 decimal places, e.g. 192.53"""
     return _fmt(value, '.2f')
 
 
 @app.template_filter('f1')
 def f1(value):
-    """Format as 1 decimal place, e.g. 14.8"""
     return _fmt(value, '.1f')
 
 
 @app.template_filter('f0')
 def f0(value):
-    """Format as integer with commas, e.g. 385,706"""
     if value is None:
         return '—'
     try:
@@ -52,7 +49,6 @@ def f0(value):
 
 @app.template_filter('pct1')
 def pct1(value):
-    """Format as percentage with 1 decimal, e.g. 14.8%. Assumes value is a ratio (0.148 → 14.8%)."""
     if value is None:
         return '—'
     try:
@@ -63,7 +59,6 @@ def pct1(value):
 
 @app.template_filter('pct0')
 def pct0(value):
-    """Format as integer percentage. Assumes value is a ratio."""
     if value is None:
         return '—'
     try:
@@ -73,7 +68,6 @@ def pct0(value):
 
 
 def _load_mock(filename: str) -> dict:
-    """Load a JSON mock data file. Returns empty dict if missing."""
     path = os.path.join(MOCK_DIR, filename)
     if os.path.exists(path):
         with open(path, encoding='utf-8') as f:
@@ -81,15 +75,14 @@ def _load_mock(filename: str) -> dict:
     return {}
 
 
-# Whether v2 routes serve mock data (True) or call the real backend (False).
-# Flip to False once the backend is deployed with the new fields.
+# Whether routes serve mock data (True) or call the real backend (False).
 USE_MOCKDATA = False
 
-@app.route('/v3/')
-@app.route('/v3/login', methods=['GET', 'POST'])
-def v3_login():
+
+@app.route('/')
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     if request.method == 'POST':
-        # AJAX login — proxy to backend, store result in frontend session
         req_data = request.get_json() or {}
         _, data = post_json('/auth/login', data=request.get_data())
         if data.get('success') and data.get('user'):
@@ -97,39 +90,37 @@ def v3_login():
             session['password'] = req_data.get('password', '')
         status = 200 if data.get('success') else 401
         return jsonify(data), status
-    # Already logged in? Go to research
     if session.get('user'):
-        return redirect('/v3/research')
-    return render_template('v3/login.html')
+        return redirect('/research')
+    return render_template('login.html')
 
 
-@app.post('/v3/logout')
-def v3_logout():
+@app.post('/logout')
+def logout():
     session.clear()
     return jsonify({"success": True})
 
 
-@app.route('/v3/research', methods=['GET', 'POST'])
-def v3_research():
+@app.route('/research', methods=['GET', 'POST'])
+def research():
     if not USE_MOCKDATA and not session.get('user'):
-        return redirect('/v3/')
+        return redirect('/')
     if USE_MOCKDATA:
         data = _load_mock('dashboard_response.json')
     elif request.method == 'POST':
         _, data = post_form('/research/dashboard', data=request.form)
     else:
         data = get_json('/research/dashboard')
-    # Inject user from frontend session into template data
     if not data.get('user') and session.get('user'):
         data['user'] = session['user']
-    return render_template('v3/research.html', **data)
+    return render_template('research.html', **data)
 
 
-@app.route('/v3/custom', methods=['GET', 'POST'])
-def v3_custom():
+@app.route('/custom', methods=['GET', 'POST'])
+def custom():
     """Custom portfolio backtest — user provides a fixed ticker list."""
     if not USE_MOCKDATA and not session.get('user'):
-        return redirect('/v3/')
+        return redirect('/')
     data = {}
     if request.method == 'POST':
         _, data = post_form('/research/custom-backtest', data=request.form)
@@ -137,57 +128,40 @@ def v3_custom():
             data = {}
     if not data.get('user') and session.get('user'):
         data['user'] = session['user']
-    return render_template('v3/custom.html', **data)
+    return render_template('custom.html', **data)
 
 
-def get_dashboard_payload():
-    if request.args.get('mock') == '1':
-        return _load_mock('dashboard_response.json'), 'Mock data'
-
-    try:
-        if request.method == 'POST':
-            status_code, data = post_form('/api/research/dashboard', data=request.form)
-            if status_code >= 400:
-                raise RuntimeError(f'Dashboard POST failed with status {status_code}: {data}')
-        else:
-            data = get_json('/api/research/dashboard')
-        return data, 'Live dashboard'
-    except Exception as exc:
-        app.logger.warning('Dashboard data fallback: %s', exc)
-        return _load_mock('dashboard_response.json'), 'Mock fallback'
-
-
-@app.route('/v3/admin')
-def v3_admin():
+@app.route('/admin')
+def admin():
     if USE_MOCKDATA:
         return 'Admin requires live backend', 503
     data = get_json('/admin/users')
     if not data.get('success'):
         return 'Admin access required', 403
     me = get_json('/auth/me')
-    return render_template('v3/admin.html', users=data['users'], user=me.get('user', {}))
+    return render_template('admin.html', users=data['users'], user=me.get('user', {}))
 
 
-@app.post('/v3/admin/add_user')
-def v3_admin_add_user():
+@app.post('/admin/add_user')
+def admin_add_user():
     _, data = post_json('/admin/users', data=request.get_data())
     return jsonify(data)
 
 
-@app.post('/v3/admin/reset_password/<int:user_id>')
-def v3_admin_reset_pw(user_id: int):
+@app.post('/admin/reset_password/<int:user_id>')
+def admin_reset_pw(user_id: int):
     _, data = post_json(f'/admin/users/{user_id}/password', data=request.get_data())
     return jsonify(data)
 
 
-@app.post('/v3/admin/delete_user/<int:user_id>')
-def v3_admin_delete(user_id: int):
+@app.post('/admin/delete_user/<int:user_id>')
+def admin_delete(user_id: int):
     _, data = delete_json(f'/admin/users/{user_id}')
     return jsonify(data)
 
 
-@app.route('/v3/stock/<ticker>')
-def v3_stock(ticker: str):
+@app.route('/stock/<ticker>')
+def stock(ticker: str):
     if USE_MOCKDATA:
         data = _load_mock(f'stock_response_{ticker}.json')
         if not data:
@@ -202,12 +176,12 @@ def v3_stock(ticker: str):
 
     # If ?partial=1 → return just the fragment (for slide-over AJAX)
     if request.args.get('partial') == '1':
-        return render_template('v3/stock_partial.html', **data)
-    return render_template('v3/stock_page.html', **data)
+        return render_template('stock_partial.html', **data)
+    return render_template('stock_page.html', **data)
 
 
-@app.route('/v3/p/<int:portfolio_id>')
-def v3_public(portfolio_id: int):
+@app.route('/p/<int:portfolio_id>')
+def public(portfolio_id: int):
     if USE_MOCKDATA:
         mock = _load_mock('dashboard_response.json')
         portfolio = None
@@ -232,10 +206,9 @@ def v3_public(portfolio_id: int):
             'performance_metrics': dashboard_data.get('performance_metrics', {}),
             'results': dashboard_data.get('results', []),
         }
-    return render_template('v3/public.html', **data)
+    return render_template('public.html', **data)
 
 
-# v3 portfolio share toggle (proxies to backend)
 @app.post('/share_portfolio/<int:portfolio_id>')
 def share_portfolio_route(portfolio_id: int):
     status_code, data = post_form(
@@ -245,51 +218,7 @@ def share_portfolio_route(portfolio_id: int):
     return jsonify(data), status_code
 
 
-##
-## Legacy routes below - can be removed once v3 is fully live
-##
-
-
-
-@app.route('/', methods=['GET', 'POST'])
-def investor_view():
-    data = get_json('/api/research/investor')
-    return render_template('investor4.html', **data)
-
-
-@app.route('/dashboard', methods=['GET', 'POST'])
-def dashboard_view():
-    data, data_source = get_dashboard_payload()
-    return render_template(
-        'financial_dashboard_tailwind.html',
-        dashboard_data=data,
-        prototype_data_source=data_source,
-    )
-
-
-@app.route('/dashboard-legacy', methods=['GET', 'POST'])
-def dashboard_legacy_view():
-    if request.method == 'POST':
-        status_code, data = post_form('/api/research/dashboard', data=request.form)
-        if status_code >= 400:
-            return jsonify(data), status_code
-    else:
-        data = get_json('/api/research/dashboard')
-    return render_template('dashboard3.html', **data)
-
-
-@app.route('/performance')
-def performance_view():
-    data = get_json('/api/research/performance')
-    return render_template('performance.html', **data)
-
-
-@app.route('/stock/<ticker>')
-def stock_detail(ticker: str):
-    data = get_json(f'/api/research/stock/{ticker}')
-    return render_template('stock_detail.html', **data)
-
-
+# Portfolio CRUD proxies — backend API still lives under /api/v3/research/.
 @app.get('/get_portfolio/<int:portfolio_id>')
 def get_portfolio_route(portfolio_id: int):
     status_code, data = get_with_status(f'/api/v3/research/{portfolio_id}')
@@ -319,7 +248,6 @@ def set_default_portfolio_route(portfolio_id: int):
 def clear_default_portfolio_route():
     status_code, data = post_json('/api/v3/research/default/clear', data=b'')
     return jsonify(data), status_code
-
 
 
 if __name__ == '__main__':

@@ -38,14 +38,14 @@
       btn.textContent = 'signing in...';
 
       try {
-        const res = await fetch('/v3/login', {
+        const res = await fetch('/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: userEl.value, password: passEl.value }),
         });
         const data = await res.json();
         if (data.success) {
-          window.location.href = '/v3/research';
+          window.location.href = '/research';
         } else {
           errEl.textContent = data.message || 'Invalid credentials';
           errEl.classList.remove('hidden');

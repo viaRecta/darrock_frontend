@@ -12,13 +12,13 @@
    TOP BAR
    ============================================================ #}
 <header class="topbar">
-  <a href="/v3/research" class="topbar-brand">Darrock</a>
+  <a href="/research" class="topbar-brand">Darrock</a>
   <div class="topbar-actions">
-    <a href="/v3/research" class="active">Research</a>
-    <a href="/v3/custom">Custom</a>
-    <a href="/v3/p/20" target="_blank">Preview Share</a>
+    <a href="/research" class="active">Research</a>
+    <a href="/custom">Custom</a>
+    <a href="/p/20" target="_blank">Preview Share</a>
     {% if user %}
-    {% if user.role == 'admin' %}<a href="/v3/admin">Admin</a>{% endif %}
+    {% if user.role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
     <span class="ui" style="color:var(--muted);font-size:var(--fs-xs);padding:0 0.5rem;">{{ user.display_name }}</span>
     <button id="logout-btn" class="btn btn-sm btn-ghost" style="font-size:var(--fs-xs);">Logout</button>
     {% endif %}
@@ -38,7 +38,7 @@
     </div>
     <div class="panel-collapse-label">Filters</div>
 
-    <form id="filter-form" method="post" action="/v3/research">
+    <form id="filter-form" method="post" action="/research">
     <div class="panel-content">
 
       {# --- ACCORDION 1: Screening Rules --- #}
@@ -426,7 +426,7 @@
                 <span class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;" title="Default — loaded on cold visit">default</span>
               {% endif %}
               {% if p.is_shared %}
-                <a href="/v3/p/{{ p.id }}" target="_blank" class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;">shared</a>
+                <a href="/p/{{ p.id }}" target="_blank" class="badge badge-pos" style="font-size:0.5rem;margin-left:0.3rem;">shared</a>
               {% endif %}
             </div>
             <div class="flex gap-1" style="flex-shrink:0;">
