@@ -450,6 +450,34 @@ h3 { font-size: var(--fs-base); }
 .flow-step .value { font-size: var(--fs-base); font-weight: 600; }
 .flow-arrow { color: var(--muted); font-size: 0.6rem; }
 
+/* Flow pills are buttons; reset default button styling to match the original divs */
+button.flow-pill {
+  font: inherit; color: inherit; cursor: pointer;
+}
+button.flow-pill:hover { border-color: var(--text); }
+
+/* Flow-pill modal */
+.flow-modal {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--text);
+  padding: 0; min-width: min(480px, 90vw); max-width: 90vw;
+  font-family: var(--font-ui); font-size: var(--fs-sm);
+}
+.flow-modal::backdrop { background: rgba(0,0,0,0.4); }
+.flow-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--divider);
+}
+.flow-modal-close {
+  background: none; border: none; font-size: 1.2rem; cursor: pointer;
+  color: var(--muted); line-height: 1;
+}
+.flow-modal-close:hover { color: var(--text); }
+.flow-modal-body {
+  padding: 0.75rem; max-height: 60vh; overflow-y: auto;
+  display: flex; flex-wrap: wrap; gap: 0.25rem;
+}
+
 /* ============================================================
    SLIDE-OVER PANEL (Stock Detail)
    ============================================================ */

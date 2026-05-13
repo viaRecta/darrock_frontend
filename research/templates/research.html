@@ -593,19 +593,19 @@
         <tr><td colspan="6" style="padding:0;">
           <div class="year-detail" id="detail-{{ r.year }}">
 
-            {# Flow #}
+            {# Flow — each pill is a button that opens a modal with the ticker list at that stage. #}
             <div class="flow">
-              <div class="flow-step"><span class="label">5yr</span><span class="value">{{ r.rule1|length }}</span></div>
+              <button type="button" class="flow-step flow-pill" data-stage="5yr" data-year="{{ r.year }}" data-cids='{{ r.rule1|tojson }}'><span class="label">5yr</span><span class="value">{{ r.rule1|length }}</span></button>
               <span class="flow-arrow">&rarr;</span>
-              <div class="flow-step"><span class="label">2yr</span><span class="value">{{ r.rule2|length }}</span></div>
+              <button type="button" class="flow-step flow-pill" data-stage="2yr" data-year="{{ r.year }}" data-cids='{{ r.rule2|tojson }}'><span class="label">2yr</span><span class="value">{{ r.rule2|length }}</span></button>
               <span class="flow-arrow">&rarr;</span>
-              <div class="flow-step"><span class="label">Filter</span><span class="value">{{ r.filtered|length }}</span></div>
+              <button type="button" class="flow-step flow-pill" data-stage="Filter" data-year="{{ r.year }}" data-cids='{{ r.filtered|tojson }}'><span class="label">Filter</span><span class="value">{{ r.filtered|length }}</span></button>
               <span class="flow-arrow">&rarr;</span>
-              <div class="flow-step"><span class="label">Kept</span><span class="value">{{ r.retain_count }}</span></div>
+              <button type="button" class="flow-step flow-pill" data-stage="Kept" data-year="{{ r.year }}" data-cids='{{ r.retained|tojson }}'><span class="label">Kept</span><span class="value">{{ r.retain_count }}</span></button>
               <span class="flow-arrow">+</span>
-              <div class="flow-step"><span class="label">New</span><span class="value">{{ r.new_candidates|length }}</span></div>
+              <button type="button" class="flow-step flow-pill" data-stage="New" data-year="{{ r.year }}" data-cids='{{ r.new_candidates|tojson }}'><span class="label">New</span><span class="value">{{ r.new_candidates|length }}</span></button>
               <span class="flow-arrow">=</span>
-              <div class="flow-step" style="border-color:var(--text);"><span class="label">Port.</span><span class="value">{{ r.portfolio|length }}</span></div>
+              <button type="button" class="flow-step flow-pill" data-stage="Port." data-year="{{ r.year }}" data-cids='{{ r.portfolio|tojson }}' style="border-color:var(--text);"><span class="label">Port.</span><span class="value">{{ r.portfolio|length }}</span></button>
             </div>
 
             {# Portfolio tickers #}
@@ -670,7 +670,8 @@
                   <thead><tr>
                     <th>Rank</th><th>Ticker</th><th>Sector</th><th class="r">Score</th>
                     <th class="r" title="Sales CAGR over the past N years (start-to-end)">S 5Y</th>
-                    <th class="r">S 4Y</th><th class="r">S 3Y</th><th class="r">S 2Y</th><th class="r">S 1Y</th>
+                    <th class="r">S 4Y</th><th class="r">S 3Y</th><th class="r">S 2Y</th>
+                    <th class="r">S 1Y CAGR</th>
                     <th class="r" title="FCF CAGR over the past N years">F 5Y</th>
                     <th class="r">F 4Y</th><th class="r">F 3Y</th><th class="r">F 2Y</th><th class="r">F 1Y</th>
                     <th class="r" title="Gross Profit divided by Revenue. Higher means the company keeps more gross profit from sales.">GP / Rev</th>
@@ -747,6 +748,25 @@
   <div id="slide-over-content"></div>
 </div>
 
+{# ============================================================
+   FLOW-PILL MODAL: ticker list at a given funnel stage
+   ============================================================ #}
+<dialog id="flow-modal" class="flow-modal">
+  <header class="flow-modal-header">
+    <strong id="flow-modal-title">Tickers</strong>
+    <button type="button" class="flow-modal-close" aria-label="Close">&times;</button>
+  </header>
+  <div id="flow-modal-body" class="flow-modal-body"></div>
+</dialog>
+
+<script>
+  {# cid → ticker map for client-side resolution of flow-pill ticker lists. #}
+  window._cidToTicker = {
+  {%- for cid, detail in company_details.items() -%}
+    "{{ cid }}": "{{ detail.ticker }}"{% if not loop.last %},{% endif %}
+  {%- endfor -%}
+  };
+</script>
 <script src="/static/js/v3.js"></script>
 </body>
 </html>

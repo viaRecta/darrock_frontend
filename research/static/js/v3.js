@@ -14,8 +14,47 @@ document.addEventListener('DOMContentLoaded', () => {
   initPortfolioActions();
   initFilterForm();
   initSkipToggles();
+  initFlowPills();
   initLogout();
 });
+
+/* --- Flow-pill ticker-list modal ---
+   Pills carry data-cids (JSON cid list), data-stage (label), data-year.
+   Clicking maps cids → tickers via window._cidToTicker and opens the dialog. */
+function initFlowPills() {
+  const dlg = document.getElementById('flow-modal');
+  if (!dlg) return;
+  const title = document.getElementById('flow-modal-title');
+  const body = document.getElementById('flow-modal-body');
+  const closeBtn = dlg.querySelector('.flow-modal-close');
+
+  function open(stage, year, cids) {
+    const map = window._cidToTicker || {};
+    const tickers = cids.map(c => map[String(c)] || String(c)).sort();
+    title.textContent = `${stage} — ${year} (${tickers.length})`;
+    body.innerHTML = tickers.length
+      ? tickers.map(t => `<span class="tag">${t}</span>`).join(' ')
+      : '<span class="text-muted">No tickers at this stage.</span>';
+    if (typeof dlg.showModal === 'function') dlg.showModal();
+    else dlg.setAttribute('open', '');
+  }
+
+  document.querySelectorAll('.flow-pill').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      let cids = [];
+      try { cids = JSON.parse(btn.dataset.cids || '[]'); }
+      catch (_) { cids = []; }
+      open(btn.dataset.stage || '', btn.dataset.year || '', cids);
+    });
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', () => dlg.close());
+  // Click on backdrop (outside the dialog box) closes it.
+  dlg.addEventListener('click', (e) => {
+    if (e.target === dlg) dlg.close();
+  });
+}
 
 /* --- Skip-all / Include-all toggles for omit checkboxes ---
    Buttons mark themselves with data-skip-scope ("rule1" | "rule2") and
