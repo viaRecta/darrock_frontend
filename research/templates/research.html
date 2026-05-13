@@ -197,6 +197,11 @@
                 <div class="f-omit"><input type="checkbox" name="capex_cagr_2y_omit" {{ 'checked' if rule2_params.get('capex_cagr_2y_omit') }}><span>Omit</span></div>
               </div>
               <div class="f-group">
+                <label>COGS CAGR</label>
+                <input type="number" name="cogs_cagr_2y" value="{{ rule2_params.get('cogs_cagr_2y', '') }}" step="0.01" placeholder="—">
+                <div class="f-omit"><input type="checkbox" name="cogs_cagr_2y_omit" {{ 'checked' if rule2_params.get('cogs_cagr_2y_omit') }}><span>Omit</span></div>
+              </div>
+              <div class="f-group">
                 <label title="Gross Profit divided by Revenue. This 2Y filter looks for improvement or deterioration in gross margin over two years.">Gross Profit / Revenue CAGR</label>
                 <input type="number" name="gp_margin_cagr_2y" value="{{ rule2_params.get('gp_margin_cagr_2y', '') }}" step="0.01" placeholder="—">
                 <div class="f-omit"><input type="checkbox" name="gp_margin_cagr_2y_omit" {{ 'checked' if rule2_params.get('gp_margin_cagr_2y_omit', true) }}><span>Omit</span></div>
