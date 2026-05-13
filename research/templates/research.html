@@ -456,9 +456,6 @@
               <span>Make this my default</span>
             </div>
             <input type="hidden" name="portfolio_year" value="{{ endDate }}">
-            {% for t in next_year_portfolio %}
-            <input type="hidden" name="portfolio_tickers[]" value="{{ t }}">
-            {% endfor %}
             <button type="button" class="btn btn-sm btn-full" id="save-portfolio-btn" style="margin-top:0.4rem;">Save Portfolio</button>
           </div>
           {% endif %}
@@ -551,11 +548,12 @@
     <div class="flex items-center gap-2 mb-2">
       <span class="label">Chosen in {{ endDate }} for {{ endDate + 1 }}</span>
       <div class="port-strip">
-        {% for t in next_year_portfolio|sort %}
-        <a href="#" data-stock="{{ t }}" class="tag">
-          {{ t }}
-          {% if company_details and company_details[t] %}
-            <span class="text-muted" style="font-size:0.6rem;">{{ company_details[t].sector }}</span>
+        {% for cid in next_year_portfolio|sort %}
+        {% set d = company_details.get(cid|string) if company_details else None %}
+        <a href="#" data-cid="{{ cid }}" data-ticker="{{ d.ticker if d else cid }}" class="tag">
+          {{ d.ticker if d else cid }}
+          {% if d %}
+            <span class="text-muted" style="font-size:0.6rem;">{{ d.sector }}</span>
           {% endif %}
         </a>
         {% endfor %}
@@ -609,8 +607,9 @@
             {# Picks made in r.year, intended for the next year's holding period. #}
             <div class="flex flex-wrap gap-1 mb-2">
               <span class="label" style="margin-right:0.4rem;">Chosen in {{ r.year }} for {{ r.year + 1 }}:</span>
-              {% for t in r.portfolio |sort %}
-              <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
+              {% for cid in r.portfolio |sort %}
+              {% set d = company_details.get(cid|string) if company_details else None %}
+              <a href="#" data-cid="{{ cid }}" data-ticker="{{ d.ticker if d else cid }}" class="tag">{{ d.ticker if d else cid }}</a>
               {% endfor %}
             </div>
 
@@ -618,8 +617,9 @@
             {% if r.last_port_returns %}
             <div class="flex flex-wrap gap-1 mb-2">
               <span class="label" style="margin-right:0.4rem;">Held during {{ r.year }} (chosen in {{ r.year - 1 }}):</span>
-              {% for t in r.last_port_returns.keys() |sort %}
-              <a href="#" data-stock="{{ t }}" class="tag">{{ t }}</a>
+              {% for cid in r.last_port_returns.keys() |sort %}
+              {% set ret = r.last_port_returns[cid] %}
+              <a href="#" data-cid="{{ cid }}" data-ticker="{{ ret.ticker }}" class="tag">{{ ret.ticker }}</a>
               {% endfor %}
             </div>
             {% endif %}
@@ -639,10 +639,10 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {% for ticker, ret in r.last_port_returns.items() %}
+                    {% for cid, ret in r.last_port_returns.items() %}
                     <tr>
-                      <td><a href="#" data-stock="{{ ticker }}" class="badge badge-ticker">{{ ticker }}</a></td>
-                      <td class="text-muted" style="font-size:var(--fs-xs);">{{ r.last_port_info[ticker].sector if r.last_port_info and r.last_port_info[ticker] else '' }}</td>
+                      <td><a href="#" data-cid="{{ cid }}" data-ticker="{{ ret.ticker }}" class="badge badge-ticker">{{ ret.ticker }}</a></td>
+                      <td class="text-muted" style="font-size:var(--fs-xs);">{{ r.last_port_info[cid].sector if r.last_port_info and r.last_port_info[cid] else '' }}</td>
                       <td class="r">${{ ret.buy_price|f2 }}</td>
                       <td class="r">${{ ret.sell_price|f2 }}</td>
                       <td class="r {{ 'text-pos' if ret.return and ret.return > 0 else 'text-neg' }}">{{ ret.return|f1 }}%</td>
@@ -676,10 +676,10 @@
                   </tr></thead>
                   <tbody>
                     {% for c in r.filtered_candidates_details %}
-                    {% set in_port = c.ticker in r.portfolio %}
+                    {% set in_port = c.company_id in r.portfolio %}
                     <tr class="{{ 'candidate-selected' if in_port }}">
                       <td>{{ loop.index }}{% if in_port %} &check;{% endif %}</td>
-                      <td><a href="#" data-stock="{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
+                      <td><a href="#" data-cid="{{ c.company_id }}" data-ticker="{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
                       <td class="text-muted">{{ c.sector or '' }}</td>
                       <td class="r">{{ c.score|f2 }}</td>
                       <td class="r">{{ c.sales_CAGR_5Y|pct0 }}</td>

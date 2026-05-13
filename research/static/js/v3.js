@@ -217,12 +217,13 @@ function initYearRows() {
 
 /* --- Slide-Over Panel (Stock Detail) --- */
 function initSlideOver() {
-  // Clicking a stock link opens the slide-over
+  // Clicking a stock link opens the slide-over. data-cid is the company_id (identity);
+  // data-ticker is the display label (decorative in the URL).
   document.addEventListener('click', (e) => {
-    const link = e.target.closest('[data-stock]');
+    const link = e.target.closest('[data-cid]');
     if (!link) return;
     e.preventDefault();
-    openSlideOver(link.dataset.stock);
+    openSlideOver(link.dataset.ticker, link.dataset.cid);
   });
 
   // Close button
@@ -241,7 +242,7 @@ function initSlideOver() {
   });
 }
 
-async function openSlideOver(ticker) {
+async function openSlideOver(ticker, cid) {
   const panel = document.getElementById('slide-over');
   const backdrop = document.getElementById('slide-over-backdrop');
   const content = document.getElementById('slide-over-content');
@@ -256,7 +257,7 @@ async function openSlideOver(ticker) {
   // the user is looking at. (Other filters don't affect a single-ticker view.)
   const bqEl = document.querySelector('#filter-form [name="buying_quarter"]');
   const bq = bqEl ? bqEl.value : 'q4';
-  const url = `/stock/${ticker}?partial=1&buying_quarter=${encodeURIComponent(bq)}`;
+  const url = `/stock/${encodeURIComponent(ticker || cid)}/${encodeURIComponent(cid)}?partial=1&buying_quarter=${encodeURIComponent(bq)}`;
 
   try {
     const res = await fetch(url);

@@ -160,19 +160,21 @@ def admin_delete(user_id: int):
     return jsonify(data)
 
 
-@app.route('/stock/<ticker>')
-def stock(ticker: str):
+@app.route('/stock/<ticker>/<int:company_id>')
+def stock(ticker: str, company_id: int):
+    # ticker is decorative for the URL (human-readable); company_id drives the lookup.
     if USE_MOCKDATA:
         data = _load_mock(f'stock_response_{ticker}.json')
         if not data:
             data = _load_mock('stock_response_NVDA.json')
             data['ticker'] = ticker
             data['company_name'] = ticker
+            data['company_id'] = company_id
     else:
         bq = request.args.get('buying_quarter', 'q4')
         if bq not in ('q1', 'q2', 'q3', 'q4'):
             bq = 'q4'
-        data = get_json(f'/research/stock/{ticker}?buying_quarter={bq}')
+        data = get_json(f'/research/stock/{company_id}?buying_quarter={bq}')
 
     # If ?partial=1 → return just the fragment (for slide-over AJAX)
     if request.args.get('partial') == '1':
