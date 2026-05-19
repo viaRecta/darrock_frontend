@@ -635,7 +635,7 @@
               <summary style="cursor:pointer;color:var(--muted);">
                 Returns &mdash; how the portfolio chosen in {{ r.year - 1 }} performed during {{ r.year }}
               </summary>
-              <div class="tbl-wrap mt-1">
+              <div class="tbl-wrap tbl-scroll mt-1">
                 <table class="tbl">
                   <thead>
                     <tr>
@@ -665,7 +665,7 @@
               <summary style="cursor:pointer;color:var(--muted);">
                 Details &mdash; why these stocks were chosen in {{ r.year }} for {{ r.year + 1 }} ({{ r.filtered_candidates_details|length }} candidates ranked)
               </summary>
-              <div class="tbl-wrap mt-1">
+              <div class="tbl-wrap tbl-scroll mt-1">
                 <table class="tbl">
                   <thead><tr>
                     <th>Rank</th><th>Ticker</th><th>Sector</th><th class="r">Score</th>
