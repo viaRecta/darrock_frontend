@@ -1,7 +1,6 @@
-"""Tracking v3 frontend. Reads /api/v3/tracking/* — company_id native,
-multi-portfolio, SP500 overlay, honors per-portfolio start_date.
-
-Runs alongside the legacy tracking/ app on a separate port (default 6301).
+"""Tracking frontend (port 6300). Reads /api/tracking/* — company_id native,
+scorecard layout with 5 lazy-loaded tabs. Honors per-portfolio start_date
+and initial_cash.
 """
 from __future__ import annotations
 

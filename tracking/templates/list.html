@@ -2,24 +2,39 @@
 {% block title %}Tracked Portfolios{% endblock %}
 {% block content %}
 <h1>Tracked Portfolios</h1>
+<p class="meta-row">
+  {{ portfolios|length }} active portfolio{{ '' if portfolios|length == 1 else 's' }}
+</p>
+
 {% if not portfolios %}
   <p>No active portfolios.</p>
 {% else %}
-<div class="card">
+<div class="card" style="padding:0;">
 <table>
   <thead>
-    <tr><th>Name</th><th>Index</th><th>Year</th>
-        <th>Start</th><th>End</th><th>Holdings</th></tr>
+    <tr>
+      <th>Name</th><th>Index</th><th>Year</th>
+      <th>Start</th><th>End</th>
+      <th>Holdings</th><th>Initial $</th>
+    </tr>
   </thead>
   <tbody>
     {% for p in portfolios %}
     <tr>
-      <td><a class="row-link" href="/portfolio/{{ p.id }}">{{ p.name }}</a></td>
+      <td><a class="row-link" href="/portfolio/{{ p.id }}"><b>{{ p.name }}</b></a></td>
       <td>{{ p.index_name }}</td>
       <td>{{ p.year }}</td>
-      <td>{{ p.start_date }}</td>
-      <td>{{ p.end_date }}</td>
-      <td>{{ p.company_count }}</td>
+      <td class="tabular">{{ p.start_date }}</td>
+      <td class="tabular">{{ p.end_date }}</td>
+      <td class="tabular">{{ p.company_count }}</td>
+      <td class="tabular">
+        {% if p.initial_cash %}
+          {%- if p.initial_cash >= 1e6 -%}${{ '%.1f'|format(p.initial_cash / 1e6) }}M
+          {%- elif p.initial_cash >= 1e3 -%}${{ '%.0f'|format(p.initial_cash / 1e3) }}k
+          {%- else -%}${{ '{:,.0f}'.format(p.initial_cash) }}
+          {%- endif %}
+        {% else %}—{% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
