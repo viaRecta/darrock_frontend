@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Tracked Portfolios — Darrock Research</title>
+  <link rel="stylesheet" href="/static/css/v3.css">
+  <style>
+    body { overflow: auto; }
+    .grid { display: grid; gap: 0.75rem; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    textarea#tickers { width: 100%; min-height: 90px; font-family: monospace; font-size: var(--fs-sm); }
+    .badge-archived { opacity: 0.55; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/research" class="topbar-brand">darrock</a>
+    <div class="topbar-actions">
+      <a href="/research">research</a>
+      <a href="/admin">admin</a>
+      <a href="/admin/tracking" class="active">tracking</a>
+      <span class="ui" style="color:var(--muted);font-size:var(--fs-xs);padding:0 0.5rem;">{{ user.display_name }}</span>
+      <button id="logout-btn" class="btn btn-sm btn-ghost">logout</button>
+    </div>
+  </header>
+
+  <div style="max-width:1100px;margin:0 auto;padding:calc(44px + 1.5rem) 1rem 2rem;">
+    <h2 class="ui" style="font-size:var(--fs-lg);margin-bottom:1.5rem;">Tracked Portfolios</h2>
+
+    {# --- Create / Edit form --- #}
+    <div class="section" style="margin-bottom:1.5rem;">
+      <div class="section-head">
+        <span id="form-mode-label">New Portfolio</span>
+        <button id="reset-form-btn" class="btn btn-sm btn-ghost" style="float:right;display:none;">cancel edit</button>
+      </div>
+      <div class="section-body">
+        <input type="hidden" id="edit-id" value="">
+        <div class="grid grid-3" style="margin-bottom:0.75rem;">
+          <div class="f-group">
+            <label>Name</label>
+            <input type="text" id="f-name" placeholder="e.g. Q1 2026 picks">
+          </div>
+          <div class="f-group">
+            <label>Year</label>
+            <input type="number" id="f-year" value="2026">
+          </div>
+          <div class="f-group">
+            <label>Index</label>
+            <select id="f-index">
+              <option value="sp500">sp500</option>
+              <option value="stoxx50">stoxx50</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-2" style="margin-bottom:0.75rem;">
+          <div class="f-group">
+            <label>Start date</label>
+            <input type="date" id="f-start">
+          </div>
+          <div class="f-group">
+            <label>End date</label>
+            <input type="date" id="f-end">
+          </div>
+        </div>
+        <div class="f-group" style="margin-bottom:0.5rem;">
+          <label>Tickers (comma, space, or newline separated)</label>
+          <textarea id="tickers" placeholder="AAPL, MSFT, NVDA&#10;GOOGL, META"></textarea>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <button class="btn btn-sm btn-ghost" id="resolve-btn">resolve tickers</button>
+          <button class="btn btn-sm btn-primary" id="save-btn">save portfolio</button>
+          <span id="resolve-status" class="text-muted" style="font-size:var(--fs-xs);"></span>
+        </div>
+      </div>
+    </div>
+
+    {# --- Portfolio list --- #}
+    <div class="section">
+      <div class="section-head">Portfolios ({{ portfolios|length }})</div>
+      <div class="section-body">
+        <div class="tbl-wrap">
+          <table class="tbl" id="ports-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Name</th><th>Year</th><th>Index</th>
+                <th>Start</th><th>End</th><th>Holdings</th><th>Status</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in portfolios %}
+              <tr id="port-row-{{ p.id }}"
+                  data-id="{{ p.id }}"
+                  data-name="{{ p.name }}"
+                  data-year="{{ p.year }}"
+                  data-index="{{ p.index_name }}"
+                  data-start="{{ p.start_date }}"
+                  data-end="{{ p.end_date }}"
+                  class="{{ 'badge-archived' if p.status != 'active' else '' }}">
+                <td>{{ p.id }}</td>
+                <td><strong>{{ p.name }}</strong></td>
+                <td>{{ p.year }}</td>
+                <td>{{ p.index_name }}</td>
+                <td>{{ p.start_date }}</td>
+                <td>{{ p.end_date }}</td>
+                <td>{{ p.company_count }}</td>
+                <td><span class="badge">{{ p.status }}</span></td>
+                <td>
+                  <div class="flex gap-1">
+                    <button class="btn btn-sm btn-ghost edit-btn" data-id="{{ p.id }}">edit</button>
+                    {% if p.status == 'active' %}
+                    <button class="btn btn-sm btn-ghost archive-btn" data-id="{{ p.id }}">archive</button>
+                    {% endif %}
+                    <button class="btn btn-sm btn-ghost btn-danger delete-btn" data-id="{{ p.id }}">&times;</button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toast(msg, type) {
+      document.querySelectorAll('.toast').forEach(t => t.remove());
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = msg;
+      el.style.cssText = 'position:fixed;top:0.75rem;right:0.75rem;z-index:9999;font-family:var(--font-ui);font-size:var(--fs-sm);padding:0.55rem 1rem;border-radius:4px;color:white;box-shadow:0 8px 24px rgba(0,0,0,0.12);';
+      el.style.background = type === 'ok' ? 'var(--positive)' : 'var(--negative)';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    function resetForm() {
+      document.getElementById('edit-id').value = '';
+      document.getElementById('form-mode-label').textContent = 'New Portfolio';
+      document.getElementById('reset-form-btn').style.display = 'none';
+      document.getElementById('f-name').value = '';
+      document.getElementById('f-year').value = new Date().getFullYear();
+      document.getElementById('f-index').value = 'sp500';
+      document.getElementById('f-start').value = '';
+      document.getElementById('f-end').value = '';
+      document.getElementById('tickers').value = '';
+      document.getElementById('resolve-status').textContent = '';
+    }
+
+    document.getElementById('reset-form-btn').addEventListener('click', resetForm);
+
+    function readForm() {
+      return {
+        name: document.getElementById('f-name').value.trim(),
+        year: parseInt(document.getElementById('f-year').value, 10),
+        index_name: document.getElementById('f-index').value,
+        start_date: document.getElementById('f-start').value,
+        end_date: document.getElementById('f-end').value,
+        tickers: document.getElementById('tickers').value,
+      };
+    }
+
+    document.getElementById('resolve-btn').addEventListener('click', async () => {
+      const tickers = document.getElementById('tickers').value;
+      const index_name = document.getElementById('f-index').value;
+      const res = await fetch('/admin/tracking/resolve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tickers, index_name }),
+      });
+      const data = await res.json();
+      const ok = (data.resolved || []).length;
+      const bad = (data.unresolved || []);
+      const msg = `Resolved ${ok}` + (bad.length ? ` · unresolved: ${bad.join(', ')}` : '');
+      document.getElementById('resolve-status').textContent = msg;
+    });
+
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const editId = document.getElementById('edit-id').value;
+      const form = readForm();
+      if (!form.name || !form.year || !form.start_date || !form.end_date) {
+        toast('name / year / start / end required', 'err'); return;
+      }
+      try {
+        let res, data;
+        if (editId) {
+          res = await fetch(`/admin/tracking/update/${editId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(form),
+          });
+        } else {
+          if (!form.tickers.trim()) { toast('tickers required for new portfolio', 'err'); return; }
+          res = await fetch('/admin/tracking/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(form),
+          });
+        }
+        data = await res.json();
+        if (!data.success) { toast(data.message || 'Failed', 'err'); return; }
+        const note = (data.unresolved && data.unresolved.length)
+          ? `Saved · unresolved skipped: ${data.unresolved.join(', ')}` : 'Saved';
+        toast(note, 'ok');
+        setTimeout(() => location.reload(), 700);
+      } catch { toast('Failed', 'err'); }
+    });
+
+    document.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', e => {
+      const id = e.target.dataset.id;
+      const row = document.getElementById(`port-row-${id}`);
+      document.getElementById('edit-id').value = id;
+      document.getElementById('form-mode-label').textContent = `Edit Portfolio #${id}`;
+      document.getElementById('reset-form-btn').style.display = '';
+      document.getElementById('f-name').value = row.dataset.name;
+      document.getElementById('f-year').value = row.dataset.year;
+      document.getElementById('f-index').value = row.dataset.index;
+      document.getElementById('f-start').value = row.dataset.start;
+      document.getElementById('f-end').value = row.dataset.end;
+      document.getElementById('tickers').value = '';
+      document.getElementById('resolve-status').textContent =
+        'Leave tickers blank to keep current holdings; paste new tickers to replace.';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }));
+
+    document.querySelectorAll('.archive-btn').forEach(b => b.addEventListener('click', async e => {
+      const id = e.target.dataset.id;
+      if (!confirm(`Archive portfolio #${id}?`)) return;
+      const res = await fetch(`/admin/tracking/delete/${id}?hard=0`, { method: 'POST' });
+      const data = await res.json();
+      toast(data.success ? 'Archived' : (data.message || 'Failed'), data.success ? 'ok' : 'err');
+      if (data.success) setTimeout(() => location.reload(), 500);
+    }));
+
+    document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async e => {
+      const id = e.target.dataset.id;
+      if (!confirm(`Permanently DELETE portfolio #${id}? This cannot be undone.`)) return;
+      const res = await fetch(`/admin/tracking/delete/${id}?hard=1`, { method: 'POST' });
+      const data = await res.json();
+      toast(data.success ? 'Deleted' : (data.message || 'Failed'), data.success ? 'ok' : 'err');
+      if (data.success) document.getElementById(`port-row-${id}`)?.remove();
+    }));
+
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      await fetch('/logout', { method: 'POST' });
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

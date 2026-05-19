@@ -1,52 +1,57 @@
-"""Tracking-only frontend for Darrock."""
+"""Tracking v3 frontend. Reads /api/v3/tracking/* — company_id native,
+multi-portfolio, SP500 overlay, honors per-portfolio start_date.
+
+Runs alongside the legacy tracking/ app on a separate port (default 6301).
+"""
 from __future__ import annotations
 
-from flask import Flask, render_template, request
+import json
 
+from flask import Flask, jsonify, render_template, request
+
+import config
 from api_client import get_json
 
 
 app = Flask(__name__)
+app.secret_key = config.SECRET_KEY
 
 
-def build_tracking_params():
-    params = {
-        'portfolio_id': request.args.get('portfolio_id', 20, type=int),
-        'year': request.args.get('year', type=int),
-        'mode': request.args.get('mode', 'fixed_shares'),
-        'initial_cash': request.args.get('initial_cash', 10000, type=float),
-    }
-    store_portfolio = request.args.get('store_portfolio')
-    if store_portfolio is not None:
-        params['store_portfolio'] = store_portfolio
-    return params
+@app.get('/')
+def index():
+    data = get_json('/tracking/portfolios')
+    return render_template('list.html', portfolios=data.get('portfolios', []))
 
 
-def render_tracking_template(template_name: str):
-    params = build_tracking_params()
-    data = get_json('/api/tracking/portfolio', params=params)
-    return render_template(template_name, **data)
+@app.get('/portfolio/<int:portfolio_id>')
+def detail(portfolio_id: int):
+    initial_cash = request.args.get('initial_cash', 10000, type=float)
+    data = get_json(f'/tracking/portfolios/{portfolio_id}',
+                    params={'initial_cash': initial_cash})
+    if 'error' in data:
+        return render_template('error.html', message=data['error']), 404
+    return render_template(
+        'detail.html',
+        portfolio=data['portfolio'],
+        holdings=data['holdings'],
+        summary=data['summary'],
+        initial_cash=data['initial_cash'],
+        cash_remainder=data.get('cash_remainder', 0),
+        warnings=data.get('warnings', []),
+        series_json=json.dumps(data['series']),
+    )
 
 
-@app.route('/', methods=['GET'])
-@app.route('/track_portfolio', methods=['GET'])
-def track_portfolio():
-    return render_tracking_template('tracking3.html')
+@app.get('/api/portfolios')
+def api_portfolios():
+    return jsonify(get_json('/tracking/portfolios'))
 
 
-@app.route('/legacy', methods=['GET'])
-def track_portfolio_legacy():
-    return render_tracking_template('tracking3eski.html')
-
-
-@app.route('/tracking3eski.html', methods=['GET'])
-def track_portfolio_legacy_file():
-    return render_tracking_template('tracking3eski.html')
-
-
-@app.route('/tracking3.html', methods=['GET'])
-def track_portfolio_current_file():
-    return render_tracking_template('tracking3.html')
+@app.get('/api/portfolio/<int:portfolio_id>')
+def api_portfolio(portfolio_id: int):
+    initial_cash = request.args.get('initial_cash', 10000, type=float)
+    return jsonify(get_json(f'/tracking/portfolios/{portfolio_id}',
+                            params={'initial_cash': initial_cash}))
 
 
 if __name__ == '__main__':

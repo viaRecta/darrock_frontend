@@ -5,7 +5,7 @@ import os
 
 from flask import Flask, jsonify, redirect, render_template, request, session
 
-from api_client import delete_json, get_json, get_with_status, post_form, post_json
+from api_client import delete_json, get_json, get_with_status, patch_json, post_form, post_json
 import config
 
 
@@ -249,6 +249,52 @@ def set_default_portfolio_route(portfolio_id: int):
 @app.post('/clear_default_portfolio')
 def clear_default_portfolio_route():
     status_code, data = post_json('/api/v3/research/default/clear', data=b'')
+    return jsonify(data), status_code
+
+
+# ── Admin: tracked portfolios (CRUD page) ──────────────────────────────
+
+@app.get('/admin/tracking')
+def admin_tracking():
+    if USE_MOCKDATA:
+        return 'Admin requires live backend', 503
+    if not session.get('user'):
+        return redirect('/')
+    data = get_json('/admin/tracking/portfolios')
+    if not data.get('success'):
+        return 'Admin access required', 403
+    me = get_json('/auth/me')
+    return render_template('admin_tracking.html',
+                           portfolios=data.get('portfolios', []),
+                           user=me.get('user', {}))
+
+
+@app.post('/admin/tracking/resolve')
+def admin_tracking_resolve():
+    status_code, data = post_json('/admin/tracking/resolve-tickers',
+                                  data=request.get_data())
+    return jsonify(data), status_code
+
+
+@app.post('/admin/tracking/create')
+def admin_tracking_create():
+    status_code, data = post_json('/admin/tracking/portfolios',
+                                  data=request.get_data())
+    return jsonify(data), status_code
+
+
+@app.post('/admin/tracking/update/<int:portfolio_id>')
+def admin_tracking_update(portfolio_id: int):
+    status_code, data = patch_json(f'/admin/tracking/portfolios/{portfolio_id}',
+                                   data=request.get_data())
+    return jsonify(data), status_code
+
+
+@app.post('/admin/tracking/delete/<int:portfolio_id>')
+def admin_tracking_delete(portfolio_id: int):
+    hard = request.args.get('hard', '0')
+    status_code, data = delete_json(
+        f'/admin/tracking/portfolios/{portfolio_id}?hard={hard}')
     return jsonify(data), status_code
 
 

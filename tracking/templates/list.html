@@ -1,0 +1,29 @@
+{% extends "_base.html" %}
+{% block title %}Tracked Portfolios{% endblock %}
+{% block content %}
+<h1>Tracked Portfolios</h1>
+{% if not portfolios %}
+  <p>No active portfolios.</p>
+{% else %}
+<div class="card">
+<table>
+  <thead>
+    <tr><th>Name</th><th>Index</th><th>Year</th>
+        <th>Start</th><th>End</th><th>Holdings</th></tr>
+  </thead>
+  <tbody>
+    {% for p in portfolios %}
+    <tr>
+      <td><a class="row-link" href="/portfolio/{{ p.id }}">{{ p.name }}</a></td>
+      <td>{{ p.index_name }}</td>
+      <td>{{ p.year }}</td>
+      <td>{{ p.start_date }}</td>
+      <td>{{ p.end_date }}</td>
+      <td>{{ p.company_count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+{% endblock %}

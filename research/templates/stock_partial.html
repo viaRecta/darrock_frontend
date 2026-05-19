@@ -118,7 +118,7 @@
       <tbody>
         {% for m in stock_metrics %}
         <tr>
-          <td><strong>{{ m.year+1 }}</strong></td>
+          <td><strong>{{ m.year }}</strong></td>
           <td class="r">${{ m.price|f2 }}</td>
           <td class="r">{{ m.sales|f0 }}</td>
           <td class="r">{{ m.free_cash_flow|f0 }}</td>

@@ -1,0 +1,115 @@
+{% extends "_base.html" %}
+{% block title %}{{ portfolio.name }} — Tracking{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<h1>{{ portfolio.name }}</h1>
+<p style="color:#9aa;">
+  {{ portfolio.index_name }} · {{ portfolio.year }} ·
+  start <b>{{ portfolio.start_date }}</b> · end <b>{{ portfolio.end_date }}</b>
+</p>
+
+{% if warnings %}
+  {% for w in warnings %}<div class="warn">{{ w }}</div>{% endfor %}
+{% endif %}
+
+<div class="summary-grid" style="margin-bottom:16px;">
+  <div class="card"><div class="label">Initial cash</div>
+    <div class="value">${{ '%.2f'|format(initial_cash) }}</div></div>
+  <div class="card"><div class="label">Portfolio return</div>
+    <div class="value {% if summary.portfolio_return_pct and summary.portfolio_return_pct > 0 %}pos{% elif summary.portfolio_return_pct and summary.portfolio_return_pct < 0 %}neg{% endif %}">
+      {% if summary.portfolio_return_pct is not none %}{{ '%.2f'|format(summary.portfolio_return_pct) }}%{% else %}—{% endif %}
+    </div></div>
+  <div class="card"><div class="label">Benchmark return</div>
+    <div class="value {% if summary.benchmark_return_pct and summary.benchmark_return_pct > 0 %}pos{% elif summary.benchmark_return_pct and summary.benchmark_return_pct < 0 %}neg{% endif %}">
+      {% if summary.benchmark_return_pct is not none %}{{ '%.2f'|format(summary.benchmark_return_pct) }}%{% else %}—{% endif %}
+    </div></div>
+  <div class="card"><div class="label">Max drawdown</div>
+    <div class="value neg">
+      {% if summary.max_drawdown_pct is not none %}{{ '%.2f'|format(summary.max_drawdown_pct) }}%{% else %}—{% endif %}
+    </div></div>
+  <div class="card"><div class="label">Cash remainder</div>
+    <div class="value">${{ '%.2f'|format(cash_remainder) }}</div></div>
+</div>
+
+<div class="card">
+  <h2>Track record</h2>
+  <canvas id="chart" height="120"></canvas>
+</div>
+
+<div class="card">
+  <h2>Holdings</h2>
+  <table>
+    <thead><tr>
+      <th>Ticker</th><th>Name</th><th>Sector</th>
+      <th>Shares</th><th>Start $</th><th>Last $</th>
+      <th>Cost</th><th>Value</th><th>P&amp;L</th><th>Return</th>
+    </tr></thead>
+    <tbody>
+    {% for h in holdings %}
+      <tr>
+        <td>{{ h.ticker }}</td>
+        <td>{{ h.name }}</td>
+        <td style="text-align:left;">{{ h.sector }}</td>
+        <td>{{ h.shares }}</td>
+        <td>{{ '%.2f'|format(h.start_price) if h.start_price else '—' }}</td>
+        <td>{{ '%.2f'|format(h.last_price) if h.last_price else '—' }}</td>
+        <td>{{ '%.2f'|format(h.cost) if h.cost else '—' }}</td>
+        <td>{{ '%.2f'|format(h.value) if h.value else '—' }}</td>
+        <td class="{% if h.pnl and h.pnl > 0 %}pos{% elif h.pnl and h.pnl < 0 %}neg{% endif %}">
+          {{ '%.2f'|format(h.pnl) if h.pnl is not none else '—' }}
+        </td>
+        <td class="{% if h.return_pct and h.return_pct > 0 %}pos{% elif h.return_pct and h.return_pct < 0 %}neg{% endif %}">
+          {{ '%.2f'|format(h.return_pct) if h.return_pct is not none else '—' }}%
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script id="series-data" type="application/json">{{ series_json|safe }}</script>
+<script>
+(function () {
+  var series = JSON.parse(document.getElementById('series-data').textContent);
+  var labels = series.map(function (p) { return p.date; });
+  var portfolio = series.map(function (p) { return p.portfolio_value; });
+  var benchmark = series.map(function (p) {
+    return p.benchmark_value !== undefined ? p.benchmark_value : null;
+  });
+  var ctx = document.getElementById('chart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Portfolio', data: portfolio, borderColor: '#6cd97e',
+          backgroundColor: 'rgba(108,217,126,0.1)', tension: 0.1,
+          pointRadius: 0, borderWidth: 2 },
+        { label: 'SP500 (rebased)', data: benchmark, borderColor: '#9bd',
+          backgroundColor: 'rgba(155,187,221,0.1)', tension: 0.1,
+          pointRadius: 0, borderWidth: 2, borderDash: [5, 4] }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#e6e6e6' } },
+        tooltip: { callbacks: {
+          label: function (c) { return c.dataset.label + ': $' + c.parsed.y.toFixed(2); }
+        }}
+      },
+      scales: {
+        x: { ticks: { color: '#9aa', maxTicksLimit: 10 },
+             grid: { color: '#262a35' } },
+        y: { ticks: { color: '#9aa',
+               callback: function (v) { return '$' + v.toFixed(0); } },
+             grid: { color: '#262a35' } }
+      }
+    }
+  });
+})();
+</script>
+{% endblock %}

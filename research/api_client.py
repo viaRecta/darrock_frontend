@@ -56,6 +56,12 @@ def post_json(path: str, data=None):
     return response.status_code, response.json()
 
 
+def patch_json(path: str, data=None):
+    h = {**_auth_headers(), 'Content-Type': 'application/json'}
+    response = requests.patch(build_url(path), headers=h, data=data, timeout=config.TIMEOUT)
+    return response.status_code, response.json()
+
+
 def delete_json(path: str):
     response = requests.delete(build_url(path), headers=_auth_headers(), timeout=config.TIMEOUT)
     return response.status_code, response.json()
