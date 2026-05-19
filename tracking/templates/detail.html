@@ -4,112 +4,727 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 {% endblock %}
 {% block content %}
+
+{# ── Header ──────────────────────────────────────────────────────────── #}
 <h1>{{ portfolio.name }}</h1>
-<p style="color:#9aa;">
+<p class="meta-row">
   {{ portfolio.index_name }} · {{ portfolio.year }} ·
-  start <b>{{ portfolio.start_date }}</b> · end <b>{{ portfolio.end_date }}</b>
+  started <b>{{ portfolio.start_date }}</b> ·
+  {{ portfolio.days_elapsed }}{% if portfolio.days_total %}/{{ portfolio.days_total }}{% endif %} days ·
+  benchmark <b>{{ portfolio.benchmark_name }}</b>
 </p>
 
 {% if warnings %}
   {% for w in warnings %}<div class="warn">{{ w }}</div>{% endfor %}
 {% endif %}
 
-<div class="summary-grid" style="margin-bottom:16px;">
-  <div class="card"><div class="label">Initial cash</div>
-    <div class="value">${{ '%.2f'|format(initial_cash) }}</div></div>
-  <div class="card"><div class="label">Portfolio return</div>
+{# ── 7 summary cards ────────────────────────────────────────────────── #}
+<div class="summary-grid">
+  <div class="card">
+    <div class="label">Return</div>
     <div class="value {% if summary.portfolio_return_pct and summary.portfolio_return_pct > 0 %}pos{% elif summary.portfolio_return_pct and summary.portfolio_return_pct < 0 %}neg{% endif %}">
-      {% if summary.portfolio_return_pct is not none %}{{ '%.2f'|format(summary.portfolio_return_pct) }}%{% else %}—{% endif %}
-    </div></div>
-  <div class="card"><div class="label">Benchmark return</div>
+      {% if summary.portfolio_return_pct is not none %}{{ '%+.2f'|format(summary.portfolio_return_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Benchmark</div>
     <div class="value {% if summary.benchmark_return_pct and summary.benchmark_return_pct > 0 %}pos{% elif summary.benchmark_return_pct and summary.benchmark_return_pct < 0 %}neg{% endif %}">
-      {% if summary.benchmark_return_pct is not none %}{{ '%.2f'|format(summary.benchmark_return_pct) }}%{% else %}—{% endif %}
-    </div></div>
-  <div class="card"><div class="label">Max drawdown</div>
+      {% if summary.benchmark_return_pct is not none %}{{ '%+.2f'|format(summary.benchmark_return_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Alpha</div>
+    <div class="value {% if summary.alpha_pp and summary.alpha_pp > 0 %}pos{% elif summary.alpha_pp and summary.alpha_pp < 0 %}neg{% endif %}">
+      {% if summary.alpha_pp is not none %}{{ '%+.2f'|format(summary.alpha_pp) }}pp{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Max Drawdown</div>
     <div class="value neg">
       {% if summary.max_drawdown_pct is not none %}{{ '%.2f'|format(summary.max_drawdown_pct) }}%{% else %}—{% endif %}
-    </div></div>
-  <div class="card"><div class="label">Cash remainder</div>
-    <div class="value">${{ '%.2f'|format(cash_remainder) }}</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Value</div>
+    <div class="value">
+      {% if summary.current_value is not none %}${{ '{:,.0f}'.format(summary.current_value) }}{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Initial</div>
+    <div class="value">${{ '{:,.0f}'.format(summary.initial_cash) }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Cash</div>
+    <div class="value">${{ '{:,.0f}'.format(summary.cash_remainder) }}</div>
+  </div>
 </div>
 
-<div class="card">
-  <h2>Track record</h2>
-  <canvas id="chart" height="120"></canvas>
+{# ── Main chart ─────────────────────────────────────────────────────── #}
+<div class="card chart-card">
+  <div class="chart-controls">
+    <button class="active" data-series="value">Value</button>
+    <button data-series="rolling">Rolling 30d</button>
+  </div>
+  <canvas id="main-chart" height="100"></canvas>
 </div>
 
-<div class="card">
-  <h2>Holdings</h2>
-  <table>
-    <thead><tr>
-      <th>Ticker</th><th>Name</th><th>Sector</th>
-      <th>Shares</th><th>Start $</th><th>Last $</th>
-      <th>Cost</th><th>Value</th><th>P&amp;L</th><th>Return</th>
-    </tr></thead>
-    <tbody>
-    {% for h in holdings %}
-      <tr>
-        <td>{{ h.ticker }}</td>
-        <td>{{ h.name }}</td>
-        <td style="text-align:left;">{{ h.sector }}</td>
-        <td>{{ h.shares }}</td>
-        <td>{{ '%.2f'|format(h.start_price) if h.start_price else '—' }}</td>
-        <td>{{ '%.2f'|format(h.last_price) if h.last_price else '—' }}</td>
-        <td>{{ '%.2f'|format(h.cost) if h.cost else '—' }}</td>
-        <td>{{ '%.2f'|format(h.value) if h.value else '—' }}</td>
-        <td class="{% if h.pnl and h.pnl > 0 %}pos{% elif h.pnl and h.pnl < 0 %}neg{% endif %}">
-          {{ '%.2f'|format(h.pnl) if h.pnl is not none else '—' }}
-        </td>
-        <td class="{% if h.return_pct and h.return_pct > 0 %}pos{% elif h.return_pct and h.return_pct < 0 %}neg{% endif %}">
-          {{ '%.2f'|format(h.return_pct) if h.return_pct is not none else '—' }}%
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+{# ── Risk strip ─────────────────────────────────────────────────────── #}
+<div class="risk-strip">
+  <div class="item"><span class="lbl">Sharpe</span>
+    <span class="num">{% if risk_strip.sharpe is not none %}{{ '%.2f'|format(risk_strip.sharpe) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Sortino</span>
+    <span class="num">{% if risk_strip.sortino is not none %}{{ '%.2f'|format(risk_strip.sortino) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Volatility</span>
+    <span class="num">{% if risk_strip.volatility_pct is not none %}{{ '%.1f'|format(risk_strip.volatility_pct) }}%{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Beta</span>
+    <span class="num">{% if risk_strip.beta is not none %}{{ '%.2f'|format(risk_strip.beta) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">R²</span>
+    <span class="num">{% if risk_strip.r_squared is not none %}{{ '%.2f'|format(risk_strip.r_squared) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Treynor</span>
+    <span class="num">{% if risk_strip.treynor is not none %}{{ '%.2f'|format(risk_strip.treynor) }}{% else %}—{% endif %}</span></div>
 </div>
+
+{# ── Tabs ──────────────────────────────────────────────────────────── #}
+<div class="tabs">
+  <button class="active" data-tab="holdings">Holdings</button>
+  <button data-tab="contribution">Contribution</button>
+  <button data-tab="sectors">Sectors</button>
+  <button data-tab="risk">Risk Detail</button>
+  <button data-tab="daily">Daily Log</button>
+</div>
+
+{# Holdings tab — pre-rendered #}
+<div class="tab-panel active" id="panel-holdings">
+  <div class="card" style="padding: 0; overflow: auto; max-height: 600px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th><th>Sector</th>
+          <th>Shares</th><th>Buy $</th><th>Last $</th>
+          <th>Day Chg</th><th>Value</th><th>Weight</th>
+          <th>Return</th><th>Contribution</th><th>Cap</th><th>30d</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in holdings %}
+        <tr>
+          <td><b>{{ h.ticker }}</b></td>
+          <td>{{ h.sector }}</td>
+          <td class="tabular">{{ h.shares }}</td>
+          <td class="tabular">{% if h.buy_price is not none %}{{ '%.2f'|format(h.buy_price) }}{% else %}—{% endif %}</td>
+          <td class="tabular">{% if h.last_price is not none %}{{ '%.2f'|format(h.last_price) }}{% else %}—{% endif %}</td>
+          <td class="tabular {% if h.day_change_pct and h.day_change_pct > 0 %}pos{% elif h.day_change_pct and h.day_change_pct < 0 %}neg{% endif %}">
+            {% if h.day_change_pct is not none %}{{ '%+.2f'|format(h.day_change_pct) }}%{% else %}—{% endif %}
+          </td>
+          <td class="tabular">{% if h.value is not none %}${{ '{:,.0f}'.format(h.value) }}{% else %}—{% endif %}</td>
+          <td class="tabular">{% if h.weight_pct is not none %}{{ '%.1f'|format(h.weight_pct) }}%{% else %}—{% endif %}</td>
+          <td class="tabular {% if h.return_pct and h.return_pct > 0 %}pos{% elif h.return_pct and h.return_pct < 0 %}neg{% endif %}">
+            {% if h.return_pct is not none %}{{ '%+.2f'|format(h.return_pct) }}%{% else %}—{% endif %}
+          </td>
+          <td class="tabular {% if h.contribution_pp and h.contribution_pp > 0 %}pos{% elif h.contribution_pp and h.contribution_pp < 0 %}neg{% endif %}">
+            {% if h.contribution_pp is not none %}{{ '%+.2f'|format(h.contribution_pp) }}pp{% else %}—{% endif %}
+          </td>
+          <td class="tabular" title="{% if h.market_cap %}${{ '{:,.0f}'.format(h.market_cap) }}{% endif %}">
+            {% if h.market_cap is none %}—
+            {%- elif h.market_cap >= 1e12 %}${{ '%.2f'|format(h.market_cap / 1e12) }}T
+            {%- elif h.market_cap >= 1e9 %}${{ '%.1f'|format(h.market_cap / 1e9) }}B
+            {%- elif h.market_cap >= 1e6 %}${{ '%.0f'|format(h.market_cap / 1e6) }}M
+            {%- else %}${{ '{:,.0f}'.format(h.market_cap) }}{% endif %}
+          </td>
+          <td>
+            <svg class="spark" width="60" height="20" viewBox="0 0 60 20" preserveAspectRatio="none"
+                 data-spark='{{ h.spark_30d|tojson }}'></svg>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# Other tabs — empty containers, filled by JS on first click #}
+<div class="tab-panel" id="panel-contribution"><div class="tab-loading">click tab to load…</div></div>
+<div class="tab-panel" id="panel-sectors"><div class="tab-loading">click tab to load…</div></div>
+<div class="tab-panel" id="panel-risk"><div class="tab-loading">click tab to load…</div></div>
+<div class="tab-panel" id="panel-daily"><div class="tab-loading">click tab to load…</div></div>
 
 <script id="series-data" type="application/json">{{ series_json|safe }}</script>
 <script>
 (function () {
-  var series = JSON.parse(document.getElementById('series-data').textContent);
-  var labels = series.map(function (p) { return p.date; });
-  var portfolio = series.map(function (p) { return p.portfolio_value; });
-  var benchmark = series.map(function (p) {
-    return p.benchmark_value !== undefined ? p.benchmark_value : null;
+  const PORTFOLIO_ID = {{ portfolio_id|tojson }};
+  const series = JSON.parse(document.getElementById('series-data').textContent);
+
+  // ── Sparklines (inline SVG, no library) ──
+  document.querySelectorAll('svg.spark').forEach(svg => {
+    const data = JSON.parse(svg.dataset.spark || '[]');
+    if (!data.length) return;
+    const min = Math.min(...data), max = Math.max(...data);
+    const range = max - min || 1;
+    const w = 60, h = 20;
+    const pts = data.map((v, i) =>
+      `${(i / (data.length - 1) * w).toFixed(1)},${(h - (v - min) / range * h).toFixed(1)}`
+    ).join(' ');
+    const colour = data[data.length - 1] >= data[0] ? '#6cd97e' : '#ef6f6f';
+    svg.innerHTML = `<polyline fill="none" stroke="${colour}" stroke-width="1.5" points="${pts}"/>`;
   });
-  var ctx = document.getElementById('chart').getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: 'Portfolio', data: portfolio, borderColor: '#6cd97e',
-          backgroundColor: 'rgba(108,217,126,0.1)', tension: 0.1,
-          pointRadius: 0, borderWidth: 2 },
-        { label: 'SP500 (rebased)', data: benchmark, borderColor: '#9bd',
-          backgroundColor: 'rgba(155,187,221,0.1)', tension: 0.1,
-          pointRadius: 0, borderWidth: 2, borderDash: [5, 4] }
-      ]
+
+  // ── Main chart ──
+  const ctx = document.getElementById('main-chart').getContext('2d');
+  const baseDatasets = {
+    value: [
+      { label: 'Portfolio', data: series.portfolio_value,
+        borderColor: '#6cd97e', backgroundColor: 'rgba(108,217,126,0.08)',
+        tension: 0.1, pointRadius: 0, borderWidth: 2 },
+      { label: '{{ portfolio.benchmark_name }}', data: series.benchmark_value,
+        borderColor: '#9bd', backgroundColor: 'rgba(155,187,221,0.06)',
+        tension: 0.1, pointRadius: 0, borderWidth: 2, borderDash: [5, 4] }
+    ],
+    rolling: [
+      { label: '30d trailing return %', data: series.rolling_30d_pct,
+        borderColor: '#cba6f7', backgroundColor: 'rgba(203,166,247,0.08)',
+        tension: 0.1, pointRadius: 0, borderWidth: 2 }
+    ]
+  };
+  const baseOptions = (yFormatter) => ({
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#e6e6e6', font: { size: 11 } } },
+      tooltip: { callbacks: {
+        label: c => `${c.dataset.label}: ${yFormatter(c.parsed.y)}`
+      }}
     },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { labels: { color: '#e6e6e6' } },
-        tooltip: { callbacks: {
-          label: function (c) { return c.dataset.label + ': $' + c.parsed.y.toFixed(2); }
-        }}
-      },
-      scales: {
-        x: { ticks: { color: '#9aa', maxTicksLimit: 10 },
-             grid: { color: '#262a35' } },
-        y: { ticks: { color: '#9aa',
-               callback: function (v) { return '$' + v.toFixed(0); } },
-             grid: { color: '#262a35' } }
-      }
+    scales: {
+      x: { ticks: { color: '#9aa', maxTicksLimit: 10 }, grid: { color: '#262a35' } },
+      y: { ticks: { color: '#9aa', callback: yFormatter }, grid: { color: '#262a35' } }
     }
   });
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: series.dates, datasets: baseDatasets.value },
+    options: baseOptions(v => v == null ? '—' : '$' + Math.round(v).toLocaleString())
+  });
+
+  document.querySelectorAll('.chart-controls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.chart-controls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const which = btn.dataset.series;
+      chart.data.datasets = baseDatasets[which];
+      const fmt = which === 'value'
+        ? v => v == null ? '—' : '$' + Math.round(v).toLocaleString()
+        : v => v == null ? '—' : v.toFixed(2) + '%';
+      chart.options = baseOptions(fmt);
+      chart.update();
+    });
+  });
+
+  // ── Tabs ──
+  const loaded = { holdings: true };
+  function showTab(name) {
+    document.querySelectorAll('.tabs button').forEach(b =>
+      b.classList.toggle('active', b.dataset.tab === name));
+    document.querySelectorAll('.tab-panel').forEach(p =>
+      p.classList.toggle('active', p.id === `panel-${name}`));
+    if (!loaded[name]) {
+      loaded[name] = true;
+      fetch(`/portfolio/${PORTFOLIO_ID}/${name}`)
+        .then(r => r.json())
+        .then(data => renderTab(name, data))
+        .catch(e => {
+          document.getElementById(`panel-${name}`).innerHTML =
+            `<div class="warn">Failed to load: ${e}</div>`;
+        });
+    }
+  }
+  document.querySelectorAll('.tabs button').forEach(b =>
+    b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  function renderTab(name, data) {
+    // Per-tab renderers will be added as endpoints come online.
+    const panel = document.getElementById(`panel-${name}`);
+    if (data && data.error) {
+      panel.innerHTML = `<div class="warn">${data.error}</div>`;
+      return;
+    }
+    if (window[`renderTab_${name}`]) {
+      window[`renderTab_${name}`](panel, data);
+    } else {
+      panel.innerHTML = `<div class="warn">Renderer for "${name}" not implemented yet.</div>
+        <pre style="font-size:11px;color:#9aa;overflow:auto;max-height:300px;">${
+          JSON.stringify(data, null, 2)}</pre>`;
+    }
+  }
+
+  // ── Tab renderer: Daily Log ────────────────────────────────────────
+  window.renderTab_daily = function (panel, data) {
+    const heatmap = data.heatmap || [];
+    const rows = data.rows || [];
+    const page = data.page || {offset: 0, limit: 50, total: rows.length};
+
+    // Heatmap: group by ISO-week. SVG, no library.
+    let svgInner = '';
+    const cell = 12, gap = 2;
+    if (heatmap.length > 0) {
+      // Get max absolute return for normalization.
+      const maxAbs = Math.max(...heatmap.map(d => Math.abs(d.return_pct || 0)), 0.5);
+      heatmap.forEach((d, i) => {
+        const dt = new Date(d.date);
+        const dow = dt.getUTCDay();              // 0 Sun … 6 Sat
+        const startDate = new Date(heatmap[0].date);
+        const dayDiff = Math.floor((dt - startDate) / 86400000);
+        const week = Math.floor((dayDiff + (startDate.getUTCDay())) / 7);
+        const x = week * (cell + gap);
+        const y = dow * (cell + gap);
+        const r = d.return_pct || 0;
+        const intensity = Math.min(Math.abs(r) / maxAbs, 1);
+        const color = r >= 0
+          ? `rgba(108,217,126,${0.2 + 0.7 * intensity})`
+          : `rgba(239,111,111,${0.2 + 0.7 * intensity})`;
+        svgInner += `<rect x="${x}" y="${y}" width="${cell}" height="${cell}"
+          rx="2" fill="${color}"><title>${d.date}: ${r.toFixed(2)}%</title></rect>`;
+      });
+    }
+    const svgW = (Math.ceil(heatmap.length / 5) + 2) * (cell + gap);
+    const svgH = 7 * (cell + gap);
+
+    panel.innerHTML = `
+      <div class="card">
+        <h2>Calendar Heatmap (daily return)</h2>
+        <div style="overflow:auto;">
+          <svg width="${svgW}" height="${svgH}" style="display:block;">${svgInner}</svg>
+        </div>
+        <p style="color:#9aa;font-size:11px;margin-top:6px;">
+          Hover a cell for the exact return. Rows = day of week (Sun→Sat).
+        </p>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div style="padding:12px 16px 0;display:flex;justify-content:space-between;align-items:center;">
+          <h2 style="margin:0;">Daily Log</h2>
+          <span style="color:#9aa;font-size:11px;">
+            ${page.offset + 1}–${Math.min(page.offset + page.limit, page.total)} of ${page.total}
+          </span>
+        </div>
+        <div style="overflow:auto;max-height:500px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th><th>Portfolio</th><th>Benchmark</th>
+                <th>Diff</th><th>Cumulative</th><th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `
+                <tr>
+                  <td>${r.date}</td>
+                  <td class="tabular ${r.portfolio_return_pct > 0 ? 'pos' : r.portfolio_return_pct < 0 ? 'neg' : ''}">${r.portfolio_return_pct == null ? '—' : (r.portfolio_return_pct >= 0 ? '+' : '') + r.portfolio_return_pct.toFixed(2) + '%'}</td>
+                  <td class="tabular ${r.benchmark_return_pct > 0 ? 'pos' : r.benchmark_return_pct < 0 ? 'neg' : ''}">${r.benchmark_return_pct == null ? '—' : (r.benchmark_return_pct >= 0 ? '+' : '') + r.benchmark_return_pct.toFixed(2) + '%'}</td>
+                  <td class="tabular ${r.diff_pp > 0 ? 'pos' : r.diff_pp < 0 ? 'neg' : ''}">${r.diff_pp == null ? '—' : (r.diff_pp >= 0 ? '+' : '') + r.diff_pp.toFixed(2) + 'pp'}</td>
+                  <td class="tabular ${r.cumulative_pct > 0 ? 'pos' : r.cumulative_pct < 0 ? 'neg' : ''}">${r.cumulative_pct == null ? '—' : (r.cumulative_pct >= 0 ? '+' : '') + r.cumulative_pct.toFixed(2) + '%'}</td>
+                  <td class="tabular">$${Math.round(r.value).toLocaleString()}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${page.total > page.limit ? `
+          <div style="padding:10px 16px;display:flex;gap:8px;justify-content:flex-end;">
+            ${page.offset > 0 ? `<button class="dl-prev" style="background:transparent;border:1px solid #262a35;color:#9aa;padding:4px 10px;border-radius:4px;cursor:pointer;">← prev</button>` : ''}
+            ${page.offset + page.limit < page.total ? `<button class="dl-next" style="background:transparent;border:1px solid #262a35;color:#9aa;padding:4px 10px;border-radius:4px;cursor:pointer;">next →</button>` : ''}
+          </div>` : ''}
+      </div>
+    `;
+
+    // Pagination — refetch with new offset.
+    const refetch = newOffset => {
+      panel.innerHTML = '<div class="tab-loading">loading…</div>';
+      fetch(`/portfolio/${PORTFOLIO_ID}/daily?offset=${newOffset}&limit=${page.limit}`)
+        .then(r => r.json())
+        .then(d => window.renderTab_daily(panel, d));
+    };
+    panel.querySelector('.dl-prev')?.addEventListener('click',
+      () => refetch(Math.max(page.offset - page.limit, 0)));
+    panel.querySelector('.dl-next')?.addEventListener('click',
+      () => refetch(page.offset + page.limit));
+  };
+
+  // ── Tab renderer: Risk Detail ──────────────────────────────────────
+  window.renderTab_risk = function (panel, data) {
+    const dd = data.drawdown_series || {dates: [], drawdown_pct: []};
+    const eps = data.drawdown_episodes || [];
+    const rc = data.rolling_capm || {dates: [], alpha_annual_pct: [], beta: []};
+    const dist = data.return_distribution || {bins: [], counts: []};
+    const sc = data.risk_return_scatter || [];
+
+    panel.innerHTML = `
+      <div class="card">
+        <h2>Underwater (peak-to-trough drawdown)</h2>
+        <canvas id="dd-chart" height="120"></canvas>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:#9aa;">
+          ${eps.map(e => `
+            <div>
+              <b class="neg">${e.depth_pct.toFixed(2)}%</b>
+              <span>· ${e.start} → ${e.trough}</span>
+              <span>· ${e.recovered ? 'recovered ' + e.recovered : 'ongoing'}</span>
+              <span>· ${e.duration_days}d down${e.recovery_days != null ? ', ' + e.recovery_days + 'd up' : ''}</span>
+            </div>`).join('') || '<i>no drawdown episodes</i>'}
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Rolling 60-day Alpha and Beta</h2>
+        ${rc.dates.length === 0
+          ? '<p style="color:#9aa;font-size:12px;">Not enough data — need 60+ trading days.</p>'
+          : '<canvas id="rcapm-chart" height="120"></canvas>'}
+      </div>
+
+      <div style="display:grid;grid-template-columns: 1fr 1fr;gap:16px;">
+        <div class="card">
+          <h2>Daily Return Distribution</h2>
+          <canvas id="dist-chart" height="220"></canvas>
+          <div style="display:flex;gap:18px;margin-top:8px;font-size:12px;color:#9aa;">
+            <div>Skewness <b style="color:#e6e6e6">${dist.skewness == null ? '—' : dist.skewness.toFixed(2)}</b></div>
+            <div>Kurtosis <b style="color:#e6e6e6">${dist.kurtosis == null ? '—' : dist.kurtosis.toFixed(2)}</b></div>
+            <div>VaR 95% <b class="neg">${dist.var_95_pct == null ? '—' : dist.var_95_pct.toFixed(2) + '%'}</b></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Risk vs Return</h2>
+          <canvas id="rr-chart" height="220"></canvas>
+        </div>
+      </div>
+    `;
+
+    // Underwater chart — area fill below zero.
+    new Chart(document.getElementById('dd-chart').getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: dd.dates,
+        datasets: [{
+          label: 'Drawdown',
+          data: dd.drawdown_pct,
+          borderColor: '#ef6f6f',
+          backgroundColor: 'rgba(239,111,111,0.18)',
+          fill: { target: { value: 0 } },
+          tension: 0.1, pointRadius: 0, borderWidth: 1.5,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            label: c => `Drawdown: ${c.parsed.y.toFixed(2)}%`,
+          }},
+        },
+        scales: {
+          x: { ticks: { color: '#9aa', maxTicksLimit: 10 }, grid: { color: '#262a35' } },
+          y: { ticks: { color: '#9aa', callback: v => v + '%' },
+               grid: { color: '#262a35' }, max: 0 },
+        },
+      },
+    });
+
+    // Rolling alpha + beta dual axis.
+    if (rc.dates.length > 0) {
+      new Chart(document.getElementById('rcapm-chart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: rc.dates,
+          datasets: [
+            { label: 'Alpha (annualised %)', data: rc.alpha_annual_pct,
+              borderColor: '#cba6f7', backgroundColor: 'rgba(203,166,247,0.08)',
+              yAxisID: 'yAlpha', pointRadius: 0, borderWidth: 2, tension: 0.1 },
+            { label: 'Beta', data: rc.beta,
+              borderColor: '#9bd', backgroundColor: 'rgba(155,187,221,0.08)',
+              yAxisID: 'yBeta', pointRadius: 0, borderWidth: 2, tension: 0.1,
+              borderDash: [4, 3] },
+          ],
+        },
+        options: {
+          responsive: true, interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { labels: { color: '#e6e6e6', font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: '#9aa', maxTicksLimit: 8 }, grid: { color: '#262a35' } },
+            yAlpha: { position: 'left',
+                      ticks: { color: '#cba6f7', callback: v => v + '%' },
+                      grid: { color: '#262a35' } },
+            yBeta: { position: 'right',
+                     ticks: { color: '#9bd' },
+                     grid: { display: false } },
+          },
+        },
+      });
+    }
+
+    // Distribution histogram.
+    new Chart(document.getElementById('dist-chart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: (dist.bins.slice(0, -1) || []).map((b, i) =>
+          `${b.toFixed(1)}…${dist.bins[i+1].toFixed(1)}%`),
+        datasets: [{
+          label: 'Days',
+          data: dist.counts,
+          backgroundColor: (dist.bins.slice(0, -1) || []).map((b, i) =>
+            dist.bins[i+1] <= 0 ? 'rgba(239,111,111,0.55)' : 'rgba(108,217,126,0.55)'),
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#9aa', font: { size: 9 }, maxRotation: 75, minRotation: 60 },
+               grid: { display: false } },
+          y: { ticks: { color: '#9aa' }, grid: { color: '#262a35' } },
+        },
+      },
+    });
+
+    // Risk/return scatter — bigger labelled points.
+    new Chart(document.getElementById('rr-chart').getContext('2d'), {
+      type: 'scatter',
+      data: {
+        datasets: sc.map((p, i) => ({
+          label: p.label,
+          data: [{ x: p.volatility_pct, y: p.return_pct }],
+          backgroundColor: i === 0 ? '#6cd97e' : '#9bd',
+          pointRadius: 10, pointHoverRadius: 12,
+        })),
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e6e6e6', font: { size: 11 } } },
+          tooltip: { callbacks: {
+            label: c => `${c.dataset.label}: vol ${c.parsed.x.toFixed(2)}% · return ${c.parsed.y.toFixed(2)}%`,
+          }},
+        },
+        scales: {
+          x: { title: { display: true, text: 'Volatility (annualised %)', color: '#9aa' },
+               ticks: { color: '#9aa', callback: v => v + '%' },
+               grid: { color: '#262a35' } },
+          y: { title: { display: true, text: 'Return (%)', color: '#9aa' },
+               ticks: { color: '#9aa', callback: v => v + '%' },
+               grid: { color: '#262a35' } },
+        },
+      },
+    });
+  };
+
+  // ── Tab renderer: Sectors ──────────────────────────────────────────
+  window.renderTab_sectors = function (panel, data) {
+    const donut = data.donut || [];
+    const ret = data.sector_returns || [];
+    const c = data.concentration || {};
+    const palette = ['#9bd', '#cba6f7', '#6cd97e', '#fbd28a', '#ef6f6f',
+                     '#7dd3fc', '#f0abfc', '#a3e635', '#fdba74', '#fb7185',
+                     '#67e8f9'];
+
+    panel.innerHTML = `
+      <div style="display:grid;grid-template-columns: 1fr 1fr;gap:16px;">
+        <div class="card">
+          <h2>Sector Weights (current value)</h2>
+          <canvas id="donut-chart" height="260"></canvas>
+        </div>
+        <div class="card">
+          <h2>Concentration</h2>
+          <table style="margin-top:4px;">
+            <tr><td>Top 1</td><td class="tabular">${(c.top1_pct || 0).toFixed(2)}%</td></tr>
+            <tr><td>Top 3</td><td class="tabular">${(c.top3_pct || 0).toFixed(2)}%</td></tr>
+            <tr><td>Top 5</td><td class="tabular">${(c.top5_pct || 0).toFixed(2)}%</td></tr>
+            <tr><td>HHI</td><td class="tabular">${(c.hhi || 0).toFixed(4)}</td></tr>
+            <tr><td>Holdings</td><td class="tabular">${c.holdings_count || 0}</td></tr>
+          </table>
+          <p style="color:#9aa;font-size:11px;margin-top:12px;">
+            HHI = sum of squared weights (0 = perfectly diversified, 1 = single stock).
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Portfolio vs Benchmark by Sector
+          <span style="color:#9aa;font-size:11px;font-weight:400;">
+            (benchmark = ${data.benchmark_weighting}-weighted SPY constituents)
+          </span>
+        </h2>
+        <canvas id="sector-bars-chart" height="${Math.max(120, ret.length * 40)}"></canvas>
+      </div>
+    `;
+
+    // Donut
+    new Chart(document.getElementById('donut-chart').getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: donut.map(d => d.sector),
+        datasets: [{
+          data: donut.map(d => d.value),
+          backgroundColor: donut.map((_, i) => palette[i % palette.length]),
+          borderColor: '#181b22',
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#e6e6e6', font: { size: 11 } } },
+          tooltip: { callbacks: {
+            label: c => {
+              const d = donut[c.dataIndex];
+              return `${d.sector}: $${Math.round(d.value).toLocaleString()} (${d.weight_pct.toFixed(1)}%)`;
+            },
+          }},
+        },
+      },
+    });
+
+    // Sector bars — portfolio vs benchmark
+    new Chart(document.getElementById('sector-bars-chart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ret.map(r => r.sector),
+        datasets: [
+          { label: 'Portfolio',
+            data: ret.map(r => r.portfolio_return_pct),
+            backgroundColor: 'rgba(108,217,126,0.7)',
+            borderColor: '#6cd97e', borderWidth: 1 },
+          { label: 'Benchmark',
+            data: ret.map(r => r.benchmark_return_pct),
+            backgroundColor: 'rgba(155,187,221,0.55)',
+            borderColor: '#9bd', borderWidth: 1 },
+        ],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { labels: { color: '#e6e6e6', font: { size: 11 } } },
+          tooltip: { callbacks: {
+            label: c => `${c.dataset.label}: ${c.parsed.x == null ? '—' : c.parsed.x.toFixed(2) + '%'}`,
+          }},
+        },
+        scales: {
+          x: { ticks: { color: '#9aa', callback: v => v + '%' },
+               grid: { color: '#262a35' } },
+          y: { ticks: { color: '#e6e6e6', font: { size: 11 } },
+               grid: { display: false } },
+        },
+      },
+    });
+  };
+
+  // ── Tab renderer: Contribution ─────────────────────────────────────
+  window.renderTab_contribution = function (panel, data) {
+    const w = data.waterfall || [];
+    const t = data.totals || {};
+    const fmtPp = v => (v >= 0 ? '+' : '') + v.toFixed(2) + 'pp';
+
+    panel.innerHTML = `
+      <div class="card" style="display:flex;gap:30px;flex-wrap:wrap;font-size:13px;">
+        <div><span style="color:#9aa">Winners</span>
+             <b class="pos" style="margin-left:6px">${fmtPp(t.winners_pp || 0)}</b></div>
+        <div><span style="color:#9aa">Losers</span>
+             <b class="neg" style="margin-left:6px">${fmtPp(t.losers_pp || 0)}</b></div>
+        <div><span style="color:#9aa">Net</span>
+             <b style="margin-left:6px"
+                class="${(t.total_return_pp || 0) > 0 ? 'pos' : 'neg'}">${
+               fmtPp(t.total_return_pp || 0)}</b></div>
+      </div>
+
+      <div class="card">
+        <h2>Contribution Waterfall</h2>
+        <canvas id="waterfall-chart" height="${Math.max(120, w.length * 22)}"></canvas>
+      </div>
+
+      <div class="card">
+        <h2>Weight at Buy vs Return</h2>
+        <canvas id="scatter-chart" height="220"></canvas>
+      </div>
+    `;
+
+    // Waterfall — horizontal bar, sorted desc by contribution.
+    new Chart(document.getElementById('waterfall-chart').getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: w.map(x => x.ticker),
+        datasets: [{
+          label: 'Contribution (pp)',
+          data: w.map(x => x.contribution_pp),
+          backgroundColor: w.map(x => x.contribution_pp >= 0
+            ? 'rgba(108,217,126,0.7)' : 'rgba(239,111,111,0.7)'),
+          borderColor: w.map(x => x.contribution_pp >= 0 ? '#6cd97e' : '#ef6f6f'),
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            label: c => {
+              const row = w[c.dataIndex];
+              return [
+                `Contribution: ${fmtPp(row.contribution_pp)}`,
+                `Return: ${row.return_pct.toFixed(2)}%`,
+                `Weight at buy: ${row.weight_at_buy_pct.toFixed(2)}%`,
+              ];
+            },
+          }},
+        },
+        scales: {
+          x: { ticks: { color: '#9aa', callback: v => v + 'pp' },
+               grid: { color: '#262a35' } },
+          y: { ticks: { color: '#e6e6e6', font: { size: 11 } },
+               grid: { display: false } },
+        },
+      },
+    });
+
+    // Scatter — bubble, x=weight at buy, y=return, r=value_now (scaled).
+    const sc = data.scatter || [];
+    const maxVal = Math.max(...sc.map(p => p.value_now || 0), 1);
+    new Chart(document.getElementById('scatter-chart').getContext('2d'), {
+      type: 'bubble',
+      data: {
+        datasets: [{
+          label: 'Holdings',
+          data: sc.map(p => ({
+            x: p.weight_at_buy_pct,
+            y: p.return_pct,
+            r: 4 + 18 * Math.sqrt((p.value_now || 0) / maxVal),
+            ticker: p.ticker,
+          })),
+          backgroundColor: sc.map(p => (p.return_pct || 0) >= 0
+            ? 'rgba(108,217,126,0.45)' : 'rgba(239,111,111,0.45)'),
+          borderColor: sc.map(p => (p.return_pct || 0) >= 0
+            ? '#6cd97e' : '#ef6f6f'),
+          borderWidth: 1,
+        }],
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: {
+            label: c => {
+              const d = c.raw;
+              return `${d.ticker} · weight ${d.x.toFixed(2)}% · return ${d.y.toFixed(2)}%`;
+            },
+          }},
+        },
+        scales: {
+          x: { title: { display: true, text: 'Weight at buy (%)', color: '#9aa' },
+               ticks: { color: '#9aa', callback: v => v + '%' },
+               grid: { color: '#262a35' } },
+          y: { title: { display: true, text: 'Return (%)', color: '#9aa' },
+               ticks: { color: '#9aa', callback: v => v + '%' },
+               grid: { color: '#262a35' } },
+        },
+      },
+    });
+  };
 })();
 </script>
 {% endblock %}
