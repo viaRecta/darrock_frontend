@@ -636,18 +636,28 @@
                 Returns &mdash; how the portfolio chosen in {{ r.year - 1 }} performed during {{ r.year }}
               </summary>
               <div class="tbl-wrap tbl-scroll mt-1">
-                <table class="tbl">
+                <table class="tbl sortable-table">
                   <thead>
                     <tr>
-                      <th>Ticker</th><th>Sector</th>
-                      <th class="r">Buy</th><th class="r">Sell</th><th class="r">Return</th>
+                      <th class="sortable" data-sort="ticker">Ticker</th>
+                      <th class="sortable" data-sort="sector">Sector</th>
+                      <th class="r sortable" data-sort="buy">Buy</th>
+                      <th class="r sortable" data-sort="sell">Sell</th>
+                      <th class="r sortable" data-sort="ret">Return</th>
                     </tr>
                   </thead>
                   <tbody>
                     {% for cid, ret in r.last_port_returns.items() %}
-                    <tr>
+                    {% set sec = r.last_port_info[cid].sector if r.last_port_info and r.last_port_info[cid] else '' %}
+                    <tr
+                      data-ticker="{{ ret.ticker }}"
+                      data-sector="{{ sec }}"
+                      data-buy="{{ ret.buy_price if ret.buy_price is not none else -1e18 }}"
+                      data-sell="{{ ret.sell_price if ret.sell_price is not none else -1e18 }}"
+                      data-ret="{{ ret.return if ret.return is not none else -1e18 }}"
+                    >
                       <td><a href="#" data-cid="{{ cid }}" data-ticker="{{ ret.ticker }}" class="badge badge-ticker">{{ ret.ticker }}</a></td>
-                      <td class="text-muted" style="font-size:var(--fs-xs);">{{ r.last_port_info[cid].sector if r.last_port_info and r.last_port_info[cid] else '' }}</td>
+                      <td class="text-muted" style="font-size:var(--fs-xs);">{{ sec }}</td>
                       <td class="r">${{ ret.buy_price|f2 }}</td>
                       <td class="r">${{ ret.sell_price|f2 }}</td>
                       <td class="r {{ 'text-pos' if ret.return and ret.return > 0 else 'text-neg' }}">{{ ret.return|f1 }}%</td>
@@ -666,24 +676,64 @@
                 Details &mdash; why these stocks were chosen in {{ r.year }} for {{ r.year + 1 }} ({{ r.filtered_candidates_details|length }} candidates ranked)
               </summary>
               <div class="tbl-wrap tbl-scroll mt-1">
-                <table class="tbl">
+                <table class="tbl sortable-table">
                   <thead><tr>
-                    <th>Rank</th><th>Ticker</th><th>Sector</th><th class="r">Score</th>
-                    <th class="r" title="Sales CAGR over the past N years (start-to-end)">S 5Y</th>
-                    <th class="r">S 4Y</th><th class="r">S 3Y</th><th class="r">S 2Y</th>
-                    <th class="r">S 1Y CAGR</th>
-                    <th class="r" title="FCF CAGR over the past N years">F 5Y</th>
-                    <th class="r">F 4Y</th><th class="r">F 3Y</th><th class="r">F 2Y</th><th class="r">F 1Y</th>
-                    <th class="r" title="Gross Profit divided by Revenue. Higher means the company keeps more gross profit from sales.">GP / Rev</th>
-                    <th class="r" title="Operating Cash Flow divided by Revenue. Higher means the company turns more sales into operating cash.">OpCF / Rev</th>
-                    <th class="r">Sales $M</th><th class="r">GP $M</th><th class="r">EBIT $M</th>
-                    <th class="r">FCF $M</th><th class="r">OpCF $M</th><th class="r">CapEx</th>
-                    <th class="r">Cash</th><th class="r">Debt</th><th class="r">Equity</th>
+                    <th class="sortable" data-sort="rank">Rank</th>
+                    <th class="sortable" data-sort="ticker">Ticker</th>
+                    <th class="sortable" data-sort="sector">Sector</th>
+                    <th class="r sortable" data-sort="score">Score</th>
+                    <th class="r sortable" data-sort="s5y" title="Sales CAGR over the past N years (start-to-end)">S 5Y</th>
+                    <th class="r sortable" data-sort="s4y">S 4Y</th>
+                    <th class="r sortable" data-sort="s3y">S 3Y</th>
+                    <th class="r sortable" data-sort="s2y">S 2Y</th>
+                    <th class="r sortable" data-sort="s1y">S 1Y CAGR</th>
+                    <th class="r sortable" data-sort="f5y" title="FCF CAGR over the past N years">F 5Y</th>
+                    <th class="r sortable" data-sort="f4y">F 4Y</th>
+                    <th class="r sortable" data-sort="f3y">F 3Y</th>
+                    <th class="r sortable" data-sort="f2y">F 2Y</th>
+                    <th class="r sortable" data-sort="f1y">F 1Y</th>
+                    <th class="r sortable" data-sort="gpm" title="Gross Profit divided by Revenue. Higher means the company keeps more gross profit from sales.">GP / Rev</th>
+                    <th class="r sortable" data-sort="opcfm" title="Operating Cash Flow divided by Revenue. Higher means the company turns more sales into operating cash.">OpCF / Rev</th>
+                    <th class="r sortable" data-sort="sales">Sales $M</th>
+                    <th class="r sortable" data-sort="gp">GP $M</th>
+                    <th class="r sortable" data-sort="ebit">EBIT $M</th>
+                    <th class="r sortable" data-sort="fcf">FCF $M</th>
+                    <th class="r sortable" data-sort="opcf">OpCF $M</th>
+                    <th class="r sortable" data-sort="capex">CapEx</th>
+                    <th class="r sortable" data-sort="cash">Cash</th>
+                    <th class="r sortable" data-sort="debt">Debt</th>
+                    <th class="r sortable" data-sort="equity">Equity</th>
                   </tr></thead>
                   <tbody>
                     {% for c in r.filtered_candidates_details %}
                     {% set in_port = c.company_id in r.portfolio %}
-                    <tr class="{{ 'candidate-selected' if in_port }}">
+                    <tr class="{{ 'candidate-selected' if in_port }}"
+                      data-rank="{{ loop.index }}"
+                      data-ticker="{{ c.ticker }}"
+                      data-sector="{{ c.sector or '' }}"
+                      data-score="{{ c.score if c.score is not none else -1e18 }}"
+                      data-s5y="{{ c.sales_CAGR_5Y if c.sales_CAGR_5Y is not none else -1e18 }}"
+                      data-s4y="{{ c.sales_CAGR_4Y if c.sales_CAGR_4Y is not none else -1e18 }}"
+                      data-s3y="{{ c.sales_CAGR_3Y if c.sales_CAGR_3Y is not none else -1e18 }}"
+                      data-s2y="{{ c.sales_CAGR_2Y if c.sales_CAGR_2Y is not none else -1e18 }}"
+                      data-s1y="{{ c.sales_CAGR_1Y if c.sales_CAGR_1Y is not none else -1e18 }}"
+                      data-f5y="{{ c.free_cash_flow_CAGR_5Y if c.free_cash_flow_CAGR_5Y is not none else -1e18 }}"
+                      data-f4y="{{ c.free_cash_flow_CAGR_4Y if c.free_cash_flow_CAGR_4Y is not none else -1e18 }}"
+                      data-f3y="{{ c.free_cash_flow_CAGR_3Y if c.free_cash_flow_CAGR_3Y is not none else -1e18 }}"
+                      data-f2y="{{ c.free_cash_flow_CAGR_2Y if c.free_cash_flow_CAGR_2Y is not none else -1e18 }}"
+                      data-f1y="{{ c.free_cash_flow_CAGR_1Y if c.free_cash_flow_CAGR_1Y is not none else -1e18 }}"
+                      data-gpm="{{ c.gp_margin if c.gp_margin is not none else -1e18 }}"
+                      data-opcfm="{{ c.op_cf_margin if c.op_cf_margin is not none else -1e18 }}"
+                      data-sales="{{ c.sales if c.sales is not none else -1e18 }}"
+                      data-gp="{{ c.gross_profit if c.gross_profit is not none else -1e18 }}"
+                      data-ebit="{{ c.operating_income if c.operating_income is not none else -1e18 }}"
+                      data-fcf="{{ c.free_cash_flow if c.free_cash_flow is not none else -1e18 }}"
+                      data-opcf="{{ c.operating_cash_flow if c.operating_cash_flow is not none else -1e18 }}"
+                      data-capex="{{ c.capex if c.capex is not none else -1e18 }}"
+                      data-cash="{{ c.cash if c.cash is not none else -1e18 }}"
+                      data-debt="{{ c.total_debt if c.total_debt is not none else -1e18 }}"
+                      data-equity="{{ c.shareholders_equity if c.shareholders_equity is not none else -1e18 }}"
+                    >
                       <td>{{ loop.index }}{% if in_port %} &check;{% endif %}</td>
                       <td><a href="#" data-cid="{{ c.company_id }}" data-ticker="{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
                       <td class="text-muted">{{ c.sector or '' }}</td>

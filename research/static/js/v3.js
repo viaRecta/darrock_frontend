@@ -16,7 +16,55 @@ document.addEventListener('DOMContentLoaded', () => {
   initSkipToggles();
   initFlowPills();
   initLogout();
+  initSortableTables();
 });
+
+/* --- Sortable tables ---
+   Any <table class="sortable-table"> with <th class="sortable" data-sort="KEY">
+   sorts its tbody rows by the matching data-KEY attribute on each <tr>.
+   Numeric vs text is auto-detected from the first row's value. Missing values
+   should be encoded as -1e18 (sentinel) in the data-* attribute by the renderer. */
+function initSortableTables() {
+  document.querySelectorAll('table.sortable-table').forEach(table => {
+    const headers = table.querySelectorAll('thead th.sortable');
+    const tbody = table.tBodies[0];
+    if (!headers.length || !tbody) return;
+
+    let activeKey = null, asc = true;
+
+    headers.forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        const firstRow = tbody.querySelector('tr');
+        const sample = firstRow ? firstRow.dataset[key] : '';
+        const isText = sample === undefined || sample === '' || isNaN(parseFloat(sample));
+
+        if (key === activeKey) {
+          asc = !asc;
+        } else {
+          activeKey = key;
+          // Default: text ascending (A-Z), numeric descending (largest on top).
+          asc = isText;
+        }
+
+        headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+        th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort((a, b) => {
+          const va = a.dataset[key] ?? '';
+          const vb = b.dataset[key] ?? '';
+          if (isText) {
+            return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+          }
+          return asc ? parseFloat(va) - parseFloat(vb)
+                     : parseFloat(vb) - parseFloat(va);
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  });
+}
 
 /* --- Flow-pill ticker-list modal ---
    Pills carry data-cids (JSON cid list), data-stage (label), data-year.

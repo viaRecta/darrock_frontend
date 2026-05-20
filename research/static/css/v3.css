@@ -621,6 +621,23 @@ table.tbl tbody td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--div
 table.tbl tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
 table.tbl tbody tr:hover { background: rgba(0,0,0,0.02); }
 
+/* Sortable headers */
+table.tbl thead th.sortable { cursor: pointer; user-select: none; }
+table.tbl thead th.sortable:hover { color: var(--text); }
+table.tbl thead th.sortable::after {
+  content: " \25B4\25BE";      /* ▴▾ */
+  opacity: 0.45; font-size: 0.65rem; margin-left: 3px;
+  letter-spacing: -2px;
+}
+table.tbl thead th.sort-asc::after {
+  content: " \25B2"; opacity: 1; color: var(--text);
+  letter-spacing: normal;
+}
+table.tbl thead th.sort-desc::after {
+  content: " \25BC"; opacity: 1; color: var(--text);
+  letter-spacing: normal;
+}
+
 /* Highlight rows that made it into the final portfolio */
 table.tbl tbody tr.candidate-selected {
   background: rgba(46, 125, 64, 0.08);
