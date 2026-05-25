@@ -1,0 +1,150 @@
+{% extends "_base.html" %}
+{% block title %}{{ portfolio.name }} vs Wikifolio — Tracking{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+{# ── Header ──────────────────────────────────────────────────────────── #}
+<h1>{{ portfolio.name }} <small style="font-size:14px;color:#9aa;">vs {{ portfolio.benchmark_name }}</small></h1>
+<p class="meta-row">
+  {{ portfolio.index_name }} · {{ portfolio.year }} ·
+  started <b>{{ portfolio.start_date }}</b> ·
+  {{ portfolio.days_elapsed }}{% if portfolio.days_total %}/{{ portfolio.days_total }}{% endif %} days ·
+  benchmark <b>{{ portfolio.benchmark_name }}</b> ·
+  <a href="/portfolio/{{ portfolio_id }}" class="row-link">&larr; back to main scorecard</a>
+</p>
+
+{% if warnings %}
+  {% for w in warnings %}<div class="warn">{{ w }}</div>{% endfor %}
+{% endif %}
+
+{# ── 7 summary cards (same shape as detail.html, benchmark now wikifolio) ─ #}
+<div class="summary-grid">
+  <div class="card">
+    <div class="label">Return</div>
+    <div class="value {% if summary.portfolio_return_pct and summary.portfolio_return_pct > 0 %}pos{% elif summary.portfolio_return_pct and summary.portfolio_return_pct < 0 %}neg{% endif %}">
+      {% if summary.portfolio_return_pct is not none %}{{ '%+.2f'|format(summary.portfolio_return_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">{{ portfolio.benchmark_name }}</div>
+    <div class="value {% if summary.benchmark_return_pct and summary.benchmark_return_pct > 0 %}pos{% elif summary.benchmark_return_pct and summary.benchmark_return_pct < 0 %}neg{% endif %}">
+      {% if summary.benchmark_return_pct is not none %}{{ '%+.2f'|format(summary.benchmark_return_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Alpha</div>
+    <div class="value {% if summary.alpha_pp and summary.alpha_pp > 0 %}pos{% elif summary.alpha_pp and summary.alpha_pp < 0 %}neg{% endif %}">
+      {% if summary.alpha_pp is not none %}{{ '%+.2f'|format(summary.alpha_pp) }}pp{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Max Drawdown</div>
+    <div class="value neg">
+      {% if summary.max_drawdown_pct is not none %}{{ '%.2f'|format(summary.max_drawdown_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Value</div>
+    <div class="value">
+      {% if summary.current_value is not none %}${{ '{:,.0f}'.format(summary.current_value) }}{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Initial</div>
+    <div class="value">${{ '{:,.0f}'.format(summary.initial_cash) }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Cash</div>
+    <div class="value">${{ '{:,.0f}'.format(summary.cash_remainder) }}</div>
+  </div>
+</div>
+
+{# ── Main chart ─────────────────────────────────────────────────────── #}
+<div class="card chart-card">
+  <div class="chart-controls">
+    <button class="active" data-series="value">Value</button>
+    <button data-series="rolling">Rolling 30d</button>
+  </div>
+  <canvas id="main-chart" height="50"></canvas>
+</div>
+
+{# ── Risk strip (against wikifolio benchmark) ───────────────────────── #}
+<div class="risk-strip">
+  <div class="item"><span class="lbl">Sharpe</span>
+    <span class="num">{% if risk_strip.sharpe is not none %}{{ '%.2f'|format(risk_strip.sharpe) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Sortino</span>
+    <span class="num">{% if risk_strip.sortino is not none %}{{ '%.2f'|format(risk_strip.sortino) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Volatility</span>
+    <span class="num">{% if risk_strip.volatility_pct is not none %}{{ '%.1f'|format(risk_strip.volatility_pct) }}%{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Beta vs {{ portfolio.benchmark_name }}</span>
+    <span class="num">{% if risk_strip.beta is not none %}{{ '%.2f'|format(risk_strip.beta) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">R²</span>
+    <span class="num">{% if risk_strip.r_squared is not none %}{{ '%.2f'|format(risk_strip.r_squared) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Treynor</span>
+    <span class="num">{% if risk_strip.treynor is not none %}{{ '%.2f'|format(risk_strip.treynor) }}{% else %}—{% endif %}</span></div>
+</div>
+
+<p class="meta-row" style="margin-top:18px;color:#9aa;font-size:12px;">
+  Wikifolio NAV from <a href="https://www.ls-tc.de/de/wikifolio/4420141" target="_blank" rel="noopener">ls-tc.de</a>.
+  Series accumulates ~90 days per update — older history fills in as the cron runs forward.
+</p>
+
+<script id="series-data" type="application/json">{{ series_json|safe }}</script>
+<script>
+(function () {
+  const series = JSON.parse(document.getElementById('series-data').textContent);
+
+  const ctx = document.getElementById('main-chart').getContext('2d');
+  const baseDatasets = {
+    value: [
+      { label: 'Portfolio', data: series.portfolio_value,
+        borderColor: '#6cd97e', backgroundColor: 'rgba(108,217,126,0.08)',
+        tension: 0.1, pointRadius: 0, borderWidth: 2 },
+      { label: '{{ portfolio.benchmark_name }}', data: series.benchmark_value,
+        borderColor: '#d4007c', backgroundColor: 'rgba(212,0,124,0.06)',
+        tension: 0.1, pointRadius: 0, borderWidth: 2, borderDash: [5, 4] }
+    ],
+    rolling: [
+      { label: '30d trailing return %', data: series.rolling_30d_pct,
+        borderColor: '#cba6f7', backgroundColor: 'rgba(203,166,247,0.08)',
+        tension: 0.1, pointRadius: 0, borderWidth: 2 }
+    ]
+  };
+  const baseOptions = (yFormatter) => ({
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#e6e6e6', font: { size: 11 } } },
+      tooltip: { callbacks: {
+        label: c => `${c.dataset.label}: ${yFormatter(c.parsed.y)}`
+      }}
+    },
+    scales: {
+      x: { ticks: { color: '#9aa', maxTicksLimit: 10 }, grid: { color: '#262a35' } },
+      y: { ticks: { color: '#9aa', callback: yFormatter }, grid: { color: '#262a35' } }
+    }
+  });
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: series.dates, datasets: baseDatasets.value },
+    options: baseOptions(v => v == null ? '—' : '$' + Math.round(v).toLocaleString())
+  });
+
+  document.querySelectorAll('.chart-controls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.chart-controls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const which = btn.dataset.series;
+      chart.data.datasets = baseDatasets[which];
+      const fmt = which === 'value'
+        ? v => v == null ? '—' : '$' + Math.round(v).toLocaleString()
+        : v => v == null ? '—' : v.toFixed(2) + '%';
+      chart.options = baseOptions(fmt);
+      chart.update();
+    });
+  });
+})();
+</script>
+{% endblock %}

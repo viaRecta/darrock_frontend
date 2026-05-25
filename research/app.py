@@ -131,6 +131,17 @@ def custom():
     return render_template('custom.html', **data)
 
 
+@app.get('/api/tickers')
+def api_tickers():
+    """Frontend proxy → backend /api/research/tickers. Used by the custom-backtest
+    pill input typeahead. Auth flows through api_client._auth_headers."""
+    try:
+        data = get_json('/api/research/tickers')
+    except Exception as exc:
+        return jsonify({"error": str(exc), "tickers": []}), 502
+    return jsonify(data)
+
+
 @app.route('/admin')
 def admin():
     if USE_MOCKDATA:
@@ -220,35 +231,35 @@ def share_portfolio_route(portfolio_id: int):
     return jsonify(data), status_code
 
 
-# Portfolio CRUD proxies — backend API still lives under /api/v3/research/.
+# Portfolio CRUD proxies — backend API at /api/research/ (v3 alias also accepted).
 @app.get('/get_portfolio/<int:portfolio_id>')
 def get_portfolio_route(portfolio_id: int):
-    status_code, data = get_with_status(f'/api/v3/research/{portfolio_id}')
+    status_code, data = get_with_status(f'/api/research/{portfolio_id}')
     return jsonify(data), status_code
 
 
 @app.post('/save_portfolio')
 def save_portfolio_route():
     payload = request.form.to_dict(flat=False)
-    status_code, data = post_form('/api/v3/research/save', data=payload)
+    status_code, data = post_form('/api/research/save', data=payload)
     return jsonify(data), status_code
 
 
 @app.post('/delete_portfolio/<int:portfolio_id>')
 def delete_portfolio_route(portfolio_id: int):
-    status_code, data = delete_json(f'/api/v3/research/{portfolio_id}')
+    status_code, data = delete_json(f'/api/research/{portfolio_id}')
     return jsonify(data), status_code
 
 
 @app.post('/set_default_portfolio/<int:portfolio_id>')
 def set_default_portfolio_route(portfolio_id: int):
-    status_code, data = post_json(f'/api/v3/research/{portfolio_id}/default', data=b'')
+    status_code, data = post_json(f'/api/research/{portfolio_id}/default', data=b'')
     return jsonify(data), status_code
 
 
 @app.post('/clear_default_portfolio')
 def clear_default_portfolio_route():
-    status_code, data = post_json('/api/v3/research/default/clear', data=b'')
+    status_code, data = post_json('/api/research/default/clear', data=b'')
     return jsonify(data), status_code
 
 

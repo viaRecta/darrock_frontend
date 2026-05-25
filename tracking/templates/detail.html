@@ -11,7 +11,8 @@
   {{ portfolio.index_name }} · {{ portfolio.year }} ·
   started <b>{{ portfolio.start_date }}</b> ·
   {{ portfolio.days_elapsed }}{% if portfolio.days_total %}/{{ portfolio.days_total }}{% endif %} days ·
-  benchmark <b>{{ portfolio.benchmark_name }}</b>
+  benchmark <b>{{ portfolio.benchmark_name }}</b> ·
+  <a href="/portfolio/{{ portfolio_id }}/external" class="row-link">Compare to Wikifolio &rarr;</a>
 </p>
 
 {% if warnings %}

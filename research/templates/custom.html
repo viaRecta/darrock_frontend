@@ -23,171 +23,744 @@
     {% endif %}
   </div>
 </header>
+
+{# ============================================================
+   APP SHELL: Left Panel (form) + Right Panel (results)
+   ============================================================ #}
 <div class="panels">
-  <main class="panel-right" style="max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem;">
 
-  <h1 class="h3" style="margin-bottom:0.5rem;">Custom Portfolio Backtest</h1>
-  <p class="text-muted ui" style="font-size:var(--fs-sm); margin-bottom:1rem;">
-    Supply a fixed list of tickers and a year range. The same basket is held every year;
-    tickers that don't have price data for a given year are simply dropped from that year.
-  </p>
+  {# ==================== LEFT PANEL ==================== #}
+  <aside class="panel-left">
+    <div class="panel-toggle">
+      <span>Custom Inputs</span>
+      <span class="panel-toggle-icon">&#9664;</span>
+    </div>
+    <div class="panel-collapse-label">Custom</div>
 
-  {# --- Form --- #}
-  <form method="post" action="/custom" class="card" style="padding:1rem; margin-bottom:1.5rem;">
+    <form id="custom-form" method="post" action="/custom">
+    <div class="panel-content">
 
-    <div class="f-group mb-1">
-      <label>Tickers (comma or newline separated)</label>
-      <textarea name="tickers" rows="3" placeholder="AAPL, MSFT, NVDA, GOOGL, TSLA"
-                style="width:100%; font-family:var(--mono);">{{ tickers_requested|default([])|join(', ') }}</textarea>
+      <div class="acc acc-open">
+        <div class="acc-head">Portfolio</div>
+        <div class="acc-body">
+
+          <div class="f-group mb-1">
+            <label>Tickers</label>
+            <div class="ticker-pills-wrap">
+              <div id="ticker-pills" class="ticker-pills">
+                {# Pills get injected here by JS on load (from value of #tickers-hidden);
+                   confirmed pills carry .tag and either .pill-ok / .pill-bad based on
+                   server feedback after submit. The visible input is always last. #}
+                <input type="text" id="ticker-input" class="ticker-pills-input"
+                       autocomplete="off" autocapitalize="characters"
+                       placeholder="AAPL  MSFT  NVDA …">
+              </div>
+              <div id="ticker-suggest" class="ticker-suggest" hidden></div>
+            </div>
+            <input type="hidden" name="tickers" id="tickers-hidden"
+                   value="{{ tickers_used|default(tickers_requested|default([]))|join(',') }}">
+            <p class="text-muted ui" style="font-size:0.55rem; margin-top:0.3rem;">
+              Type, then <kbd>Enter</kbd> or <kbd>,</kbd> to add. <kbd>&larr;</kbd> deletes the last pill.
+            </p>
+            {% if tickers_used or tickers_unknown %}
+            <p class="text-muted ui" style="font-size:0.55rem; margin-top:0.3rem;">
+              <span class="text-pos">&#10003; {{ tickers_used|length }} matched</span>
+              {% if tickers_unknown %}
+                · <span class="text-neg">&times; {{ tickers_unknown|length }} unknown</span>
+              {% endif %}
+            </p>
+            {% endif %}
+          </div>
+
+          <div class="f-group mb-1" style="max-width:160px;">
+            <label>Start Year</label>
+            <input type="number" name="start_year" value="{{ start_year|default(2005) }}" min="1985" max="2030">
+          </div>
+          <div class="f-group mb-1" style="max-width:160px;">
+            <label>End Year <span class="text-muted ui" style="font-size:0.55rem;">(0 = current)</span></label>
+            <input type="number" name="end_year" value="{{ end_year|default(0) }}" min="0" max="2030">
+          </div>
+          <div class="f-group mb-1" style="max-width:160px;">
+            <label>Buying Quarter</label>
+            <select name="buying_quarter">
+              {% set bq = buying_quarter|default('q4') %}
+              <option value="q1" {{ 'selected' if bq == 'q1' }}>Q1 (Mar)</option>
+              <option value="q2" {{ 'selected' if bq == 'q2' }}>Q2 (Jun)</option>
+              <option value="q3" {{ 'selected' if bq == 'q3' }}>Q3 (Sep)</option>
+              <option value="q4" {{ 'selected' if bq == 'q4' }}>Q4 (Dec)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn" style="margin-top:0.5rem;">Run Backtest</button>
+        </div>
+      </div>
+
+    </div>
+    </form>
+  </aside>
+
+  {# ==================== RIGHT PANEL: RESULTS ==================== #}
+  <main class="panel-right">
+    {% if results %}
+
+    {# --- Active-period notice --- #}
+    {% if performance_metrics.active_years and performance_metrics.active_years < performance_metrics.years_analyzed %}
+    <div class="text-muted ui" style="font-size:var(--fs-lg); margin-bottom:0.5em;">
+      Performance computed over
+      <strong>{{ performance_metrics.active_years }} of {{ performance_metrics.years_analyzed }}</strong>
+      years that had a held portfolio.
+      {% if performance_metrics.inactive_years %}
+      <br>Inactive Years: {{ performance_metrics.inactive_years|join(', ') }}.
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# --- Primary Summary --- #}
+    <div class="summary-strip" style="border-left: 3px solid var(--text);">
+      <div class="summary-item">
+        <span class="label">$1 &rarr; Strategy</span>
+        <span class="value text-pos">${{ performance_metrics.final_value|f2 }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">$1 &rarr; S&amp;P 500</span>
+        <span class="value">${{ performance_metrics.sp500_final_value|f2 }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Annualized Return</span>
+        <span class="value">{{ performance_metrics.annualized_return_strategy|f2 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">S&amp;P Annualized</span>
+        <span class="value">{{ performance_metrics.annualized_return_sp500|f2 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Compound Return</span>
+        <span class="value">{{ performance_metrics.total_return|f2 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">S&amp;P 500 Compound</span>
+        <span class="value">{{ performance_metrics.sp500_return|f2 }}%</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Outperformance</span>
+        <span class="value {{ 'text-pos' if performance_metrics.outperformance and performance_metrics.outperformance > 0 else 'text-neg' }}">{{ performance_metrics.outperformance|f2 }}%</span>
+      </div>
     </div>
 
-    <div class="flex gap-2" style="flex-wrap:wrap;">
-      <div class="f-group" style="max-width:140px;">
-        <label>Start Year</label>
-        <input type="number" name="start_year" value="{{ start_year|default(2005) }}" min="1970" max="2030">
+    {# --- Secondary Metrics --- #}
+    <div class="summary-strip" style="border-left: 3px solid var(--border);">
+      <div class="summary-item">
+        <span class="label">Win Rate</span>
+        <span class="value">{{ performance_metrics.win_rate|f1 }}%</span>
       </div>
-      <div class="f-group" style="max-width:140px;">
-        <label>End Year</label>
-        <input type="number" name="end_year" value="{{ end_year|default(0) }}" min="0" max="2030">
-        <span class="text-muted ui" style="font-size:var(--fs-xs);">0 = current year</span>
+      <div class="summary-item">
+        <span class="label">Volatility</span>
+        <span class="value">{{ performance_metrics.volatility|f1 }}%</span>
       </div>
-      <div class="f-group" style="max-width:140px;">
-        <label>Buying Quarter</label>
-        <select name="buying_quarter">
-          {% set bq = buying_quarter|default('q4') %}
-          <option value="q1" {{ 'selected' if bq == 'q1' }}>Q1 (Mar)</option>
-          <option value="q2" {{ 'selected' if bq == 'q2' }}>Q2 (Jun)</option>
-          <option value="q3" {{ 'selected' if bq == 'q3' }}>Q3 (Sep)</option>
-          <option value="q4" {{ 'selected' if bq == 'q4' }}>Q4 (Dec)</option>
-        </select>
+      <div class="summary-item">
+        <span class="label">Max Drawdown</span>
+        <span class="value text-neg">{{ performance_metrics.max_drawdown|f1 }}%</span>
       </div>
+      <div class="summary-item">
+        <span class="label">Sharpe Ratio</span>
+        <span class="value">{{ performance_metrics.sharpe_ratio|f2 }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Sortino Ratio</span>
+        <span class="value">{{ performance_metrics.sortino_ratio|f2 }}</span>
+      </div>
+      {% if performance_metrics.calmar_ratio is defined %}
+      <div class="summary-item">
+        <span class="label">Calmar Ratio</span>
+        <span class="value">{{ performance_metrics.calmar_ratio|f2 }}</span>
+      </div>
+      {% endif %}
     </div>
 
-    <div style="margin-top:0.75rem;">
-      <button type="submit" class="btn">Run Backtest</button>
+    {# --- Held basket --- #}
+    {% if tickers_used %}
+    <div class="flex items-center gap-2 mb-2" style="margin-top:0.75rem;">
+      <span class="label">Held every year:</span>
+      <div class="port-strip">
+        {% for t in tickers_used %}
+        <span class="tag" style="font-family:var(--mono);">{{ t }}</span>
+        {% endfor %}
+      </div>
     </div>
-  </form>
-
-  {# --- Results --- #}
-  {% if results %}
-
-  {# Tickers feedback strip #}
-  <div class="card" style="padding:0.75rem 1rem; margin-bottom:1rem;">
-    <span class="label">Using:</span>
-    {% for t in tickers_used %}
-      <span class="tag" style="font-family:var(--mono);">{{ t }}</span>
-    {% endfor %}
+    {% endif %}
     {% if tickers_unknown %}
-    <div style="margin-top:0.4rem;">
+    <div class="flex items-center gap-2 mb-2">
       <span class="label text-neg">Unknown / no data:</span>
-      {% for t in tickers_unknown %}
-        <span class="tag" style="font-family:var(--mono); color:var(--muted);">{{ t }}</span>
-      {% endfor %}
+      <div class="port-strip">
+        {% for t in tickers_unknown %}
+        <span class="tag" style="font-family:var(--mono); color:var(--negative); border-color:var(--negative);">{{ t }}</span>
+        {% endfor %}
+      </div>
     </div>
     {% endif %}
-  </div>
 
-  {# Active-period notice #}
-  {% if performance_metrics.active_years and performance_metrics.active_years < performance_metrics.years_analyzed %}
-  <div class="text-muted ui" style="font-size:var(--fs-sm); margin-bottom:0.75em;">
-    Performance computed over
-    <strong>{{ performance_metrics.active_years }} of {{ performance_metrics.years_analyzed }}</strong>
-    years with a held portfolio.
-    {% if performance_metrics.inactive_years %}
-    Inactive: {{ performance_metrics.inactive_years|join(', ') }}.
+    {# --- Year Table --- #}
+    <table class="year-table">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th class="r">Strategy</th>
+          <th class="r">S&amp;P</th>
+          <th class="r">&plusmn;</th>
+          <th class="r">$1</th>
+          <th class="r">Stocks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results|reverse %}
+
+        {# Build one row per held cid, joined with last_port_returns where the
+           engine could compute returns, otherwise '—'. Same logic the research
+           dashboard would use; for custom every cid in lastPort is identical
+           year-over-year (no filter pipeline). #}
+        {% set held_rows = [] %}
+        {% for cid in r.lastPort %}
+          {% set ret = (r.last_port_returns or {}).get(cid|string) %}
+          {% set comp = (company_details or {}).get(cid|string) %}
+          {% set _ = held_rows.append({
+              'cid': cid,
+              'ticker': (ret.ticker if ret and ret.ticker else (comp.ticker if comp else ('cid:' ~ cid))),
+              'sector': (comp.sector if comp else ''),
+              'return': ret.return if ret else None,
+              'buy_price': ret.buy_price if ret else None,
+              'sell_price': ret.sell_price if ret else None,
+          }) %}
+        {% endfor %}
+        {% set sorted_rows = held_rows|rejectattr('return', 'none')|sort(attribute='return', reverse=true)|list
+                           + held_rows|selectattr('return', 'none')|list %}
+
+        <tr class="year-row" data-year="{{ r.year }}">
+          <td><strong>{{ r.year }}</strong></td>
+          <td class="r {{ 'text-pos' if r.strategy_return and r.strategy_return > 0 else 'text-neg' }}">
+            {% if r.is_active %}{{ r.strategy_return|f1 }}%{% else %}—{% endif %}
+          </td>
+          <td class="r">{% if r.is_active %}{{ r.sp500_return|f1 }}%{% else %}—{% endif %}</td>
+          <td class="r">
+            <span class="badge {{ 'badge-pos' if r.outperformance and r.outperformance > 0 else 'badge-neg' }}">
+              {% if r.is_active %}{{ r.outperformance|f1 }}%{% else %}—{% endif %}
+            </span>
+          </td>
+          <td class="r mono">${{ r.investment|f2 }}</td>
+          <td class="r">{{ r.lastPort|length }}</td>
+        </tr>
+        <tr><td colspan="6" style="padding:0;">
+          <div class="year-detail" id="detail-{{ r.year }}">
+
+            {# Held basket — every cid in lastPort, sortable by return via the
+               table below. Same chip styling as research's portfolio row. #}
+            <div class="flex flex-wrap gap-1 mb-2">
+              <span class="label" style="margin-right:0.4rem;">
+                Held during {{ r.year }}{% if r.is_active %} (returns measured this year){% else %} (no returns yet){% endif %}:
+              </span>
+              {% for s in sorted_rows %}
+              <a href="#" data-cid="{{ s.cid }}" data-ticker="{{ s.ticker }}" class="tag">{{ s.ticker }}</a>
+              {% endfor %}
+            </div>
+
+            {# Collapsible: Returns table — every held stock, dash for missing #}
+            <details class="mt-2" style="font-family:var(--font-ui);font-size:var(--fs-xs);" open>
+              <summary style="cursor:pointer;color:var(--muted);">
+                Returns &mdash; per-stock buy / sell / return for {{ r.year }}
+              </summary>
+              <div class="tbl-wrap tbl-scroll mt-1">
+                <table class="tbl sortable-table">
+                  <thead>
+                    <tr>
+                      <th class="sortable" data-sort="ticker">Ticker</th>
+                      <th class="sortable" data-sort="sector">Sector</th>
+                      <th class="r sortable" data-sort="buy">Buy</th>
+                      <th class="r sortable" data-sort="sell">Sell</th>
+                      <th class="r sortable" data-sort="ret">Return</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for s in sorted_rows %}
+                    <tr
+                      data-ticker="{{ s.ticker }}"
+                      data-sector="{{ s.sector }}"
+                      data-buy="{{ s.buy_price if s.buy_price is not none else -1e18 }}"
+                      data-sell="{{ s.sell_price if s.sell_price is not none else -1e18 }}"
+                      data-ret="{{ s.return if s.return is not none else -1e18 }}"
+                    >
+                      <td><a href="#" data-cid="{{ s.cid }}" data-ticker="{{ s.ticker }}" class="badge badge-ticker">{{ s.ticker }}</a></td>
+                      <td class="text-muted" style="font-size:var(--fs-xs);">{{ s.sector }}</td>
+                      <td class="r">{% if s.buy_price is not none %}${{ s.buy_price|f2 }}{% else %}—{% endif %}</td>
+                      <td class="r">{% if s.sell_price is not none %}${{ s.sell_price|f2 }}{% else %}—{% endif %}</td>
+                      <td class="r {{ 'text-pos' if s.return is not none and s.return > 0 else 'text-neg' if s.return is not none and s.return < 0 else '' }}">
+                        {% if s.return is not none %}{{ s.return|f1 }}%{% else %}—{% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+
+            {# Collapsible: Per-stock fundamentals — CAGRs/margins/absolute $M
+               for each held cid in the decision year (year-1). Same table
+               shape research uses for filtered_candidates_details. #}
+            {% if r.filtered_candidates_details %}
+            <details class="mt-2" style="font-family:var(--font-ui);font-size:var(--fs-xs);">
+              <summary style="cursor:pointer;color:var(--muted);">
+                Fundamentals &mdash; per-stock CAGRs / margins / balance for {{ r.year - 1 }} ({{ r.filtered_candidates_details|length }} stocks)
+              </summary>
+              <div class="tbl-wrap tbl-scroll mt-1">
+                <table class="tbl sortable-table">
+                  <thead><tr>
+                    <th class="sortable" data-sort="rank">Rank</th>
+                    <th class="sortable" data-sort="ticker">Ticker</th>
+                    <th class="sortable" data-sort="sector">Sector</th>
+                    <th class="r sortable" data-sort="score">Score</th>
+                    <th class="r sortable" data-sort="s5y" title="Sales CAGR over the past N years">S 5Y</th>
+                    <th class="r sortable" data-sort="s4y">S 4Y</th>
+                    <th class="r sortable" data-sort="s3y">S 3Y</th>
+                    <th class="r sortable" data-sort="s2y">S 2Y</th>
+                    <th class="r sortable" data-sort="s1y">S 1Y</th>
+                    <th class="r sortable" data-sort="f5y" title="FCF CAGR over the past N years">F 5Y</th>
+                    <th class="r sortable" data-sort="f4y">F 4Y</th>
+                    <th class="r sortable" data-sort="f3y">F 3Y</th>
+                    <th class="r sortable" data-sort="f2y">F 2Y</th>
+                    <th class="r sortable" data-sort="f1y">F 1Y</th>
+                    <th class="r sortable" data-sort="gpm" title="Gross Profit divided by Revenue.">GP / Rev</th>
+                    <th class="r sortable" data-sort="opcfm" title="Operating Cash Flow divided by Revenue.">OpCF / Rev</th>
+                    <th class="r sortable" data-sort="sales">Sales $M</th>
+                    <th class="r sortable" data-sort="gp">GP $M</th>
+                    <th class="r sortable" data-sort="ebit">EBIT $M</th>
+                    <th class="r sortable" data-sort="fcf">FCF $M</th>
+                    <th class="r sortable" data-sort="opcf">OpCF $M</th>
+                    <th class="r sortable" data-sort="capex">CapEx</th>
+                    <th class="r sortable" data-sort="cash">Cash</th>
+                    <th class="r sortable" data-sort="debt">Debt</th>
+                    <th class="r sortable" data-sort="equity">Equity</th>
+                  </tr></thead>
+                  <tbody>
+                    {% for c in r.filtered_candidates_details %}
+                    <tr
+                      data-rank="{{ loop.index }}"
+                      data-ticker="{{ c.ticker }}"
+                      data-sector="{{ c.sector or '' }}"
+                      data-score="{{ c.score if c.score is not none else -1e18 }}"
+                      data-s5y="{{ c.sales_CAGR_5Y if c.sales_CAGR_5Y is not none else -1e18 }}"
+                      data-s4y="{{ c.sales_CAGR_4Y if c.sales_CAGR_4Y is not none else -1e18 }}"
+                      data-s3y="{{ c.sales_CAGR_3Y if c.sales_CAGR_3Y is not none else -1e18 }}"
+                      data-s2y="{{ c.sales_CAGR_2Y if c.sales_CAGR_2Y is not none else -1e18 }}"
+                      data-s1y="{{ c.sales_CAGR_1Y if c.sales_CAGR_1Y is not none else -1e18 }}"
+                      data-f5y="{{ c.free_cash_flow_CAGR_5Y if c.free_cash_flow_CAGR_5Y is not none else -1e18 }}"
+                      data-f4y="{{ c.free_cash_flow_CAGR_4Y if c.free_cash_flow_CAGR_4Y is not none else -1e18 }}"
+                      data-f3y="{{ c.free_cash_flow_CAGR_3Y if c.free_cash_flow_CAGR_3Y is not none else -1e18 }}"
+                      data-f2y="{{ c.free_cash_flow_CAGR_2Y if c.free_cash_flow_CAGR_2Y is not none else -1e18 }}"
+                      data-f1y="{{ c.free_cash_flow_CAGR_1Y if c.free_cash_flow_CAGR_1Y is not none else -1e18 }}"
+                      data-gpm="{{ c.gp_margin if c.gp_margin is not none else -1e18 }}"
+                      data-opcfm="{{ c.op_cf_margin if c.op_cf_margin is not none else -1e18 }}"
+                      data-sales="{{ c.sales if c.sales is not none else -1e18 }}"
+                      data-gp="{{ c.gross_profit if c.gross_profit is not none else -1e18 }}"
+                      data-ebit="{{ c.operating_income if c.operating_income is not none else -1e18 }}"
+                      data-fcf="{{ c.free_cash_flow if c.free_cash_flow is not none else -1e18 }}"
+                      data-opcf="{{ c.operating_cash_flow if c.operating_cash_flow is not none else -1e18 }}"
+                      data-capex="{{ c.capex if c.capex is not none else -1e18 }}"
+                      data-cash="{{ c.cash if c.cash is not none else -1e18 }}"
+                      data-debt="{{ c.total_debt if c.total_debt is not none else -1e18 }}"
+                      data-equity="{{ c.shareholders_equity if c.shareholders_equity is not none else -1e18 }}"
+                    >
+                      <td>{{ loop.index }}</td>
+                      <td><a href="#" data-cid="{{ c.company_id }}" data-ticker="{{ c.ticker }}" class="badge badge-ticker">{{ c.ticker }}</a></td>
+                      <td class="text-muted">{{ c.sector or '' }}</td>
+                      <td class="r">{{ c.score|f2 }}</td>
+                      <td class="r">{{ c.sales_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_4Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_3Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_2Y|pct0 }}</td>
+                      <td class="r">{{ c.sales_CAGR_1Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_5Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_4Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_3Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_2Y|pct0 }}</td>
+                      <td class="r">{{ c.free_cash_flow_CAGR_1Y|pct0 }}</td>
+                      <td class="r">{{ c.gp_margin|pct0 }}</td>
+                      <td class="r">{{ c.op_cf_margin|pct0 }}</td>
+                      <td class="r">{{ c.sales|f0 }}</td>
+                      <td class="r">{{ c.gross_profit|f0 }}</td>
+                      <td class="r">{{ c.operating_income|f0 }}</td>
+                      <td class="r">{{ c.free_cash_flow|f0 }}</td>
+                      <td class="r">{{ c.operating_cash_flow|f0 }}</td>
+                      <td class="r">{{ c.capex|f0 }}</td>
+                      <td class="r">{{ c.cash|f0 }}</td>
+                      <td class="r">{{ c.total_debt|f0 }}</td>
+                      <td class="r">{{ c.shareholders_equity|f0 }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+            {% endif %}
+
+          </div>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% else %}
+    <div class="text-center p-2" style="margin-top:20vh;">
+      <h2 style="color:var(--muted);">Custom Backtest</h2>
+      <p class="ui text-muted mt-1" style="font-size:var(--fs-sm);">
+        Add tickers in the left panel, then run a backtest. The same basket is held every year.
+      </p>
+    </div>
     {% endif %}
-  </div>
-  {% endif %}
+  </main>
 
-  {# Primary summary #}
-  <div class="summary-strip" style="border-left: 3px solid var(--text);">
-    <div class="summary-item">
-      <span class="label">$1 &rarr; Strategy</span>
-      <span class="value text-pos">${{ performance_metrics.final_value|f2 }}</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">$1 &rarr; S&amp;P 500</span>
-      <span class="value">${{ performance_metrics.sp500_final_value|f2 }}</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">Annualized</span>
-      <span class="value">{{ performance_metrics.annualized_return_strategy|f2 }}%</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">S&amp;P Annualized</span>
-      <span class="value">{{ performance_metrics.annualized_return_sp500|f2 }}%</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">Outperformance</span>
-      <span class="value {{ 'text-pos' if performance_metrics.outperformance and performance_metrics.outperformance > 0 else 'text-neg' }}">{{ performance_metrics.outperformance|f2 }}%</span>
-    </div>
-  </div>
+</div>{# /panels #}
 
-  <div class="summary-strip" style="border-left: 3px solid var(--border);">
-    <div class="summary-item">
-      <span class="label">Win Rate</span>
-      <span class="value">{{ performance_metrics.win_rate|f1 }}%</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">Volatility</span>
-      <span class="value">{{ performance_metrics.volatility|f1 }}%</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">Max Drawdown</span>
-      <span class="value text-neg">{{ performance_metrics.max_drawdown|f1 }}%</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">Sharpe</span>
-      <span class="value">{{ performance_metrics.sharpe_ratio|f2 }}</span>
-    </div>
-    <div class="summary-item">
-      <span class="label">Sortino</span>
-      <span class="value">{{ performance_metrics.sortino_ratio|f2 }}</span>
-    </div>
-  </div>
+{# ============================================================
+   MOBILE: Floating filter button + backdrop for bottom sheet
+   ============================================================ #}
+<button class="fab-filters" id="fab-filters" aria-label="Open Inputs">&#9776;</button>
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
 
-  {# Per-year table #}
-  <table class="year-table" style="margin-top:1rem;">
-    <thead>
-      <tr>
-        <th>Year</th>
-        <th class="r">Strategy</th>
-        <th class="r">S&amp;P</th>
-        <th class="r">&plusmn;</th>
-        <th class="r">$1 Strategy</th>
-        <th class="r">$1 S&amp;P</th>
-        <th class="r">Held</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in results %}
-      <tr class="{{ 'inactive-year' if not r.is_active else '' }}">
-        <td>{{ r.year }}</td>
-        <td class="r {{ 'text-pos' if r.strategy_return > 0 else 'text-neg' if r.strategy_return < 0 else '' }}">
-          {% if r.is_active %}{{ r.strategy_return|f2 }}%{% else %}—{% endif %}
-        </td>
-        <td class="r">
-          {% if r.is_active %}{{ r.sp500_return|f2 }}%{% else %}—{% endif %}
-        </td>
-        <td class="r {{ 'text-pos' if r.outperformance > 0 else 'text-neg' if r.outperformance < 0 else '' }}">
-          {% if r.is_active %}{{ r.outperformance|f2 }}%{% else %}—{% endif %}
-        </td>
-        <td class="r">${{ r.investment|f2 }}</td>
-        <td class="r">${{ r.investmentsp|f2 }}</td>
-        <td class="r text-muted" style="font-size:var(--fs-xs);">{{ r.lastPort|length }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{# ============================================================
+   SLIDE-OVER: Stock Detail (loaded via AJAX) — same markup as research
+   so the v3.js initSlideOver handler can render against it.
+   ============================================================ #}
+<div id="slide-over-backdrop" class="slide-over-backdrop"></div>
+<div id="slide-over" class="slide-over">
+  <button class="slide-close">&times; Close</button>
+  <div id="slide-over-content"></div>
+</div>
 
-  {% endif %}
-</main>
-</div> 
 <script>
-document.getElementById('logout-btn')?.addEventListener('click', async () => {
-  await fetch('/logout', { method: 'POST' });
-  window.location.href = '/';
-});
+  {# cid -> ticker map for client-side resolution (used by slide-over + flow modals).
+     Populated only when a backtest has run (company_details lands in the payload). #}
+  window._cidToTicker = {
+  {%- if company_details -%}
+  {%- for cid, detail in company_details.items() -%}
+    "{{ cid }}": "{{ detail.ticker }}"{% if not loop.last %},{% endif %}
+  {%- endfor -%}
+  {%- endif -%}
+  };
+</script>
+
+{# ============================================================
+   PILL INPUT CSS (scoped) — uses existing .tag colors via var(--positive/negative).
+   ============================================================ #}
+<style>
+  .ticker-pills-wrap { position: relative; }
+  .ticker-pills {
+    display: flex; flex-wrap: wrap; gap: 0.25rem; align-items: center;
+    border: 1px solid var(--border); border-radius: 2px;
+    padding: 0.35rem; background: var(--surface);
+    min-height: 2.1rem; cursor: text;
+  }
+  .ticker-suggest {
+    position: absolute; left: 0; right: 0; top: 100%;
+    margin-top: 2px; max-height: 240px; overflow: auto;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 2px; z-index: 50;
+    font-family: var(--font-ui); font-size: var(--fs-xs);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .ticker-suggest-row {
+    display: flex; gap: 0.5rem; align-items: baseline;
+    padding: 0.3rem 0.55rem; cursor: pointer;
+    border-bottom: 1px solid var(--border);
+  }
+  .ticker-suggest-row:last-child { border-bottom: 0; }
+  .ticker-suggest-row.active,
+  .ticker-suggest-row:hover { background: rgba(0,0,0,0.04); }
+  .ticker-suggest-row.in-basket { opacity: 0.5; }
+  .ticker-suggest .ts-ticker {
+    font-family: var(--mono); font-weight: 600; min-width: 4rem;
+  }
+  .ticker-suggest .ts-name {
+    color: var(--muted); flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .ticker-suggest .ts-sector {
+    color: var(--muted); font-size: 0.55rem;
+  }
+  .ticker-suggest mark {
+    background: transparent; color: var(--text); font-weight: 600;
+  }
+  .ticker-pills:focus-within { border-color: var(--text); }
+  .ticker-pills-input {
+    border: none; outline: none; background: transparent;
+    flex: 1; min-width: 80px;
+    font-family: var(--mono); font-size: var(--fs-xs);
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .ticker-pill {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-family: var(--mono); font-size: var(--fs-xs); font-weight: 500;
+    padding: 0.15rem 0.45rem; border-radius: 2px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text);
+  }
+  .ticker-pill.pill-ok  { border-color: var(--positive); color: var(--positive); }
+  .ticker-pill.pill-bad { border-color: var(--negative); color: var(--negative); }
+  .ticker-pill .pill-x {
+    background: none; border: 0; padding: 0 0 0 0.1rem; margin: 0;
+    color: inherit; opacity: 0.6; cursor: pointer; font-size: 0.85rem;
+    line-height: 1;
+  }
+  .ticker-pill .pill-x:hover { opacity: 1; }
+  kbd {
+    font-family: var(--mono); font-size: 0.55rem;
+    padding: 0.05rem 0.25rem; border: 1px solid var(--border); border-radius: 2px;
+    background: var(--surface);
+  }
+</style>
+
+<script src="/static/js/v3.js"></script>
+
+{# ============================================================
+   TICKER PILLS — vanilla JS. Reads/writes #tickers-hidden so the
+   existing /custom POST handler is unchanged. After a backtest the
+   server returns tickers_used (green) and tickers_unknown (red);
+   we color the pills accordingly on re-render.
+   ============================================================ #}
+<script>
+(function () {
+  const wrap = document.getElementById('ticker-pills');
+  const input = document.getElementById('ticker-input');
+  const hidden = document.getElementById('tickers-hidden');
+  const suggest = document.getElementById('ticker-suggest');
+  if (!wrap || !input || !hidden || !suggest) return;
+
+  const okSet  = new Set({{ tickers_used|default([])|tojson }});
+  const badSet = new Set({{ tickers_unknown|default([])|tojson }});
+
+  // ── Ticker directory (lazy-loaded once from /api/tickers) ──────────
+  // Holds { ticker, name, sector, cid } rows. Filter happens client-side
+  // because the full list is ~1590 rows — way cheaper than per-keystroke roundtrip.
+  let directory = null;
+  let directoryPromise = null;
+  function loadDirectory() {
+    if (directory) return Promise.resolve(directory);
+    if (directoryPromise) return directoryPromise;
+    directoryPromise = fetch('/api/tickers')
+      .then(r => r.ok ? r.json() : { tickers: [] })
+      .then(d => { directory = d.tickers || []; return directory; })
+      .catch(() => { directory = []; return directory; });
+    return directoryPromise;
+  }
+  // Warm cache on page load — non-blocking.
+  loadDirectory();
+
+  // ── Suggestion state ───────────────────────────────────────────────
+  let activeIdx = -1;        // index within the currently-rendered suggestion list
+  let currentRows = [];      // matches for the current query
+
+  function inBasket(ticker) {
+    return Array.from(wrap.querySelectorAll('.ticker-pill'))
+      .some(p => p.dataset.ticker === ticker);
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const idx = text.toUpperCase().indexOf(query);
+    if (idx < 0) return text;
+    return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
+  }
+
+  function renderSuggest(query) {
+    if (!directory || !query) {
+      suggest.hidden = true;
+      currentRows = [];
+      activeIdx = -1;
+      return;
+    }
+    const q = query.toUpperCase();
+    // Score: prefix-on-ticker first, then ticker substring, then name substring.
+    const matches = [];
+    for (const r of directory) {
+      const tickerUp = r.ticker.toUpperCase();
+      const nameUp = (r.name || '').toUpperCase();
+      let score;
+      if (tickerUp === q) score = 0;
+      else if (tickerUp.startsWith(q)) score = 1;
+      else if (tickerUp.includes(q)) score = 2;
+      else if (nameUp.includes(q)) score = 3;
+      else continue;
+      matches.push({ score, row: r });
+      if (matches.length > 200) break;  // soft cap before sort
+    }
+    matches.sort((a, b) => a.score - b.score || a.row.ticker.localeCompare(b.row.ticker));
+    currentRows = matches.slice(0, 10).map(m => m.row);
+    if (!currentRows.length) {
+      suggest.hidden = true;
+      activeIdx = -1;
+      return;
+    }
+    suggest.innerHTML = currentRows.map((r, i) => `
+      <div class="ticker-suggest-row${inBasket(r.ticker) ? ' in-basket' : ''}${i === 0 ? ' active' : ''}" data-i="${i}">
+        <span class="ts-ticker">${highlight(r.ticker, q)}</span>
+        <span class="ts-name">${highlight(r.name || '', q)}</span>
+        <span class="ts-sector">${r.sector || ''}</span>
+      </div>
+    `).join('');
+    suggest.hidden = false;
+    activeIdx = 0;
+  }
+
+  function setActive(i) {
+    const items = suggest.querySelectorAll('.ticker-suggest-row');
+    if (!items.length) return;
+    activeIdx = (i + items.length) % items.length;
+    items.forEach((el, idx) => el.classList.toggle('active', idx === activeIdx));
+    const el = items[activeIdx];
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  }
+
+  function pickActive() {
+    if (activeIdx < 0 || !currentRows[activeIdx]) return false;
+    const ticker = currentRows[activeIdx].ticker;
+    addPill(ticker);
+    input.value = '';
+    suggest.hidden = true;
+    activeIdx = -1;
+    currentRows = [];
+    return true;
+  }
+
+  // Mouse interaction with suggestions
+  suggest.addEventListener('mousedown', (e) => {
+    // mousedown (not click) so it fires before input loses focus
+    const row = e.target.closest('.ticker-suggest-row');
+    if (!row) return;
+    e.preventDefault();
+    activeIdx = Number(row.dataset.i);
+    pickActive();
+    input.focus();
+  });
+
+  // Hide on outside click
+  document.addEventListener('click', (e) => {
+    if (!wrap.contains(e.target) && !suggest.contains(e.target)) {
+      suggest.hidden = true;
+    }
+  });
+
+  function serialize() {
+    const pills = wrap.querySelectorAll('.ticker-pill');
+    hidden.value = Array.from(pills).map(p => p.dataset.ticker).join(',');
+  }
+
+  function pillFor(ticker) {
+    const span = document.createElement('span');
+    span.className = 'ticker-pill';
+    if (okSet.has(ticker))       span.classList.add('pill-ok');
+    else if (badSet.has(ticker)) span.classList.add('pill-bad');
+    span.dataset.ticker = ticker;
+    span.textContent = ticker;
+
+    const x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'pill-x';
+    x.setAttribute('aria-label', 'Remove ' + ticker);
+    x.textContent = '×';
+    x.addEventListener('click', (e) => {
+      e.stopPropagation();
+      span.remove();
+      serialize();
+      input.focus();
+    });
+    span.appendChild(x);
+    return span;
+  }
+
+  function addPill(raw) {
+    const t = (raw || '').trim().toUpperCase();
+    if (!t) return;
+    // Allow A-Z, digits, dot, dash. Max 8 chars (covers share classes like BRK.B, BF-B).
+    if (!/^[A-Z0-9.\-]{1,8}$/.test(t)) return;
+    // De-dupe: skip if a pill with this ticker is already present.
+    const existing = Array.from(wrap.querySelectorAll('.ticker-pill'))
+      .some(p => p.dataset.ticker === t);
+    if (existing) return;
+    wrap.insertBefore(pillFor(t), input);
+    serialize();
+  }
+
+  // Click anywhere in the wrapper focuses the typing input.
+  wrap.addEventListener('click', (e) => {
+    if (e.target === wrap) input.focus();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    // Suggestion navigation takes priority while the dropdown is open.
+    if (!suggest.hidden && currentRows.length) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setActive(activeIdx + 1); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setActive(activeIdx - 1); return; }
+      if (e.key === 'Escape')    { e.preventDefault(); suggest.hidden = true; return; }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        if (pickActive()) {
+          if (e.key !== 'Tab') e.preventDefault();
+          return;
+        }
+      }
+    }
+    if (e.key === 'Enter' || e.key === ',' || e.key === ' ' || e.key === 'Tab') {
+      const v = input.value.trim();
+      if (v) {
+        if (e.key !== 'Tab') e.preventDefault();
+        addPill(v);
+        input.value = '';
+        suggest.hidden = true;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('custom-form').submit();
+      }
+    } else if (e.key === 'Backspace' && input.value === '') {
+      const pills = wrap.querySelectorAll('.ticker-pill');
+      if (pills.length) {
+        pills[pills.length - 1].remove();
+        serialize();
+      }
+    }
+  });
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (!q) { suggest.hidden = true; return; }
+    if (directory) renderSuggest(q);
+    else loadDirectory().then(() => renderSuggest(input.value.trim()));
+  });
+
+  input.addEventListener('focus', () => {
+    const q = input.value.trim();
+    if (q && directory) renderSuggest(q);
+  });
+
+  // Paste handling: split on whitespace/commas, add each as a pill.
+  input.addEventListener('paste', (e) => {
+    const text = (e.clipboardData || window.clipboardData).getData('text');
+    if (!text) return;
+    e.preventDefault();
+    text.split(/[\s,;]+/).forEach(addPill);
+    input.value = '';
+  });
+
+  // Form submit safety: flush any in-progress input as a pill first.
+  document.getElementById('custom-form').addEventListener('submit', () => {
+    if (input.value.trim()) addPill(input.value);
+    input.value = '';
+    serialize();
+  });
+
+  // Hydrate from hidden field on page load (initial render or after submit).
+  (function hydrate() {
+    const initial = (hidden.value || '').split(',').map(s => s.trim()).filter(Boolean);
+    initial.forEach(t => addPill(t));
+    serialize();
+  })();
+})();
 </script>
 </body>
 </html>

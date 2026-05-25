@@ -44,6 +44,29 @@ def detail(portfolio_id: int):
     )
 
 
+@app.get('/portfolio/<int:portfolio_id>/external')
+def detail_external(portfolio_id: int):
+    """External-benchmark page — same scorecard shape as detail.html but with
+    the wikifolio as the benchmark line in place of SPY. Standalone page;
+    main scorecard at /portfolio/<id> is untouched."""
+    params = {}
+    if request.args.get('initial_cash'):
+        params['initial_cash'] = request.args.get('initial_cash', type=float)
+    data = get_json(f'/api/tracking/portfolios/{portfolio_id}/external',
+                    params=params)
+    if 'error' in data:
+        return render_template('error.html', message=data['error']), 404
+    return render_template(
+        'external.html',
+        portfolio=data['portfolio'],
+        summary=data['summary'],
+        risk_strip=data['risk_strip'],
+        warnings=data.get('warnings', []),
+        series_json=json.dumps(data['series']),
+        portfolio_id=portfolio_id,
+    )
+
+
 # ── Tab proxies — frontend fetches these on tab click ──────────────────
 
 @app.get('/portfolio/<int:portfolio_id>/<tab>')
