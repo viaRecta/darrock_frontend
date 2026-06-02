@@ -108,11 +108,40 @@
             padding: 10px 14px; border-radius: 6px; color: var(--warn-fg);
             margin-bottom: 12px; font-size: 13px; }
     .tabular { font-variant-numeric: tabular-nums; }
+
+    /* header user section */
+    header { display: flex; justify-content: space-between; align-items: center; }
+    .header-user { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+    .header-user .username { color: var(--muted); }
+    #logout-btn {
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
+      transition: all 0.2s;
+    }
+    #logout-btn:hover { color: var(--text); border-color: var(--accent); }
   </style>
   {% block head %}{% endblock %}
 </head>
 <body>
-  <header><a href="/">Darrock Tracking</a></header>
+  <header>
+    <a href="/">Darrock Tracking</a>
+    {% if user %}
+    <div class="header-user">
+      <span class="username">{{ user.username }}</span>
+      <button id="logout-btn">logout</button>
+    </div>
+    {% endif %}
+  </header>
   <main>{% block content %}{% endblock %}</main>
+
+  <script>
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async () => {
+        await fetch('/logout', { method: 'POST' });
+        window.location.href = '/login';
+      });
+    }
+  </script>
 </body>
 </html>

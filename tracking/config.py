@@ -6,10 +6,10 @@ import os
 ENV = os.environ.get("DARROCK_ENV", "development")
 
 if ENV == "production":
-    BACKEND_URL = "http://127.0.0.1:6100/api/v3"
+    BACKEND_URL = "http://127.0.0.1:6100"
     BACKEND_AUTH = None
 else:
-    BACKEND_URL = "https://darrock-backend.viasyazilim.com/api/v3"
+    BACKEND_URL = "https://darrock-backend.viasyazilim.com"
     BACKEND_AUTH = ("apiUser", "viashipyard1907")
 
 BACKEND_URL = os.environ.get("DARROCK_BACKEND_URL", BACKEND_URL)

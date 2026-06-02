@@ -7,19 +7,8 @@ from flask import session
 import config
 
 
-def _backend_root() -> str:
-    """Strip any /api/vN suffix from BACKEND_URL to get the bare server root."""
-    backend_url = config.BACKEND_URL.rstrip('/')
-    for suffix in ('/api/v3', '/api/v2', '/api/v1'):
-        if backend_url.endswith(suffix):
-            return backend_url[:-len(suffix)]
-    return backend_url
-
-
 def build_url(path: str) -> str:
     safe_path = path if path.startswith('/') else f'/{path}'
-    if safe_path.startswith('/api/'):
-        return f'{_backend_root()}{safe_path}'
     return f'{config.BACKEND_URL.rstrip("/")}{safe_path}'
 
 

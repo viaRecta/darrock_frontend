@@ -6,14 +6,47 @@ from __future__ import annotations
 
 import json
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session, redirect
 
 import config
-from api_client import get_json
+from api_client import get_json, post_json
 
 
 app = Flask(__name__)
 app.secret_key = config.SECRET_KEY
+
+
+@app.before_request
+def require_login():
+    open_paths = {'/login', '/logout', '/static'}
+    if not session.get('user') and not any(request.path.startswith(p) for p in open_paths):
+        return redirect('/login')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        req_data = request.get_json() or {}
+        _, data = post_json('/api/auth/login', data=request.get_data())
+        if data.get('success') and data.get('user'):
+            session['user'] = data['user']
+            session['password'] = req_data.get('password', '')
+        status = 200 if data.get('success') else 401
+        return jsonify(data), status
+    if session.get('user'):
+        return redirect('/')
+    return render_template('login.html')
+
+
+@app.post('/logout')
+def logout():
+    session.clear()
+    return jsonify({'success': True})
+
+
+@app.context_processor
+def inject_user():
+    return {'user': session.get('user')}
 
 
 @app.get('/')

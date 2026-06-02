@@ -84,7 +84,7 @@ USE_MOCKDATA = False
 def login():
     if request.method == 'POST':
         req_data = request.get_json() or {}
-        _, data = post_json('/auth/login', data=request.get_data())
+        _, data = post_json('/api/auth/login', data=request.get_data())
         if data.get('success') and data.get('user'):
             session['user'] = data['user']
             session['password'] = req_data.get('password', '')
@@ -108,9 +108,9 @@ def research():
     if USE_MOCKDATA:
         data = _load_mock('dashboard_response.json')
     elif request.method == 'POST':
-        _, data = post_form('/research/dashboard', data=request.form)
+        _, data = post_form('/api/research/dashboard', data=request.form)
     else:
-        data = get_json('/research/dashboard')
+        data = get_json('/api/research/dashboard')
     if not data.get('user') and session.get('user'):
         data['user'] = session['user']
     return render_template('research.html', **data)
@@ -123,7 +123,7 @@ def custom():
         return redirect('/')
     data = {}
     if request.method == 'POST':
-        _, data = post_form('/research/custom-backtest', data=request.form)
+        _, data = post_form('/api/research/custom-backtest', data=request.form)
         if not isinstance(data, dict):
             data = {}
     if not data.get('user') and session.get('user'):
@@ -146,28 +146,28 @@ def api_tickers():
 def admin():
     if USE_MOCKDATA:
         return 'Admin requires live backend', 503
-    data = get_json('/admin/users')
+    data = get_json('/api/admin/users')
     if not data.get('success'):
         return 'Admin access required', 403
-    me = get_json('/auth/me')
+    me = get_json('/api/auth/me')
     return render_template('admin.html', users=data['users'], user=me.get('user', {}))
 
 
 @app.post('/admin/add_user')
 def admin_add_user():
-    _, data = post_json('/admin/users', data=request.get_data())
+    _, data = post_json('/api/admin/users', data=request.get_data())
     return jsonify(data)
 
 
 @app.post('/admin/reset_password/<int:user_id>')
 def admin_reset_pw(user_id: int):
-    _, data = post_json(f'/admin/users/{user_id}/password', data=request.get_data())
+    _, data = post_json(f'/api/admin/users/{user_id}/password', data=request.get_data())
     return jsonify(data)
 
 
 @app.post('/admin/delete_user/<int:user_id>')
 def admin_delete(user_id: int):
-    _, data = delete_json(f'/admin/users/{user_id}')
+    _, data = delete_json(f'/api/admin/users/{user_id}')
     return jsonify(data)
 
 
@@ -207,7 +207,7 @@ def stock(ticker: str, company_id: int):
         bq = request.args.get('buying_quarter', 'q4')
         if bq not in ('q1', 'q2', 'q3', 'q4'):
             bq = 'q4'
-        data = get_json(f'/research/stock/{company_id}?buying_quarter={bq}')
+        data = get_json(f'/api/research/stock/{company_id}?buying_quarter={bq}')
 
     # If ?partial=1 → return just the fragment (for slide-over AJAX)
     if request.args.get('partial') == '1':
@@ -233,8 +233,8 @@ def public(portfolio_id: int):
             'results': mock.get('results', []),
         }
     else:
-        _, portfolio_data = get_with_status(f'/research/portfolio/{portfolio_id}')
-        dashboard_data = get_json('/research/dashboard')
+        _, portfolio_data = get_with_status(f'/api/research/{portfolio_id}')
+        dashboard_data = get_json('/api/research/dashboard')
         data = {
             'portfolio': portfolio_data.get('portfolio', {}),
             'company_details': dashboard_data.get('company_details', {}),
@@ -247,7 +247,7 @@ def public(portfolio_id: int):
 @app.post('/share_portfolio/<int:portfolio_id>')
 def share_portfolio_route(portfolio_id: int):
     status_code, data = post_form(
-        f'/research/portfolio/{portfolio_id}/share',
+        f'/api/research/{portfolio_id}/share',
         data=request.get_data(),
     )
     return jsonify(data), status_code
@@ -293,10 +293,10 @@ def admin_tracking():
         return 'Admin requires live backend', 503
     if not session.get('user'):
         return redirect('/')
-    data = get_json('/admin/tracking/portfolios')
+    data = get_json('/api/admin/tracking/portfolios')
     if not data.get('success'):
         return 'Admin access required', 403
-    me = get_json('/auth/me')
+    me = get_json('/api/auth/me')
     return render_template('admin_tracking.html',
                            portfolios=data.get('portfolios', []),
                            user=me.get('user', {}))
@@ -304,21 +304,21 @@ def admin_tracking():
 
 @app.post('/admin/tracking/resolve')
 def admin_tracking_resolve():
-    status_code, data = post_json('/admin/tracking/resolve-tickers',
+    status_code, data = post_json('/api/admin/tracking/resolve-tickers',
                                   data=request.get_data())
     return jsonify(data), status_code
 
 
 @app.post('/admin/tracking/create')
 def admin_tracking_create():
-    status_code, data = post_json('/admin/tracking/portfolios',
+    status_code, data = post_json('/api/admin/tracking/portfolios',
                                   data=request.get_data())
     return jsonify(data), status_code
 
 
 @app.post('/admin/tracking/update/<int:portfolio_id>')
 def admin_tracking_update(portfolio_id: int):
-    status_code, data = patch_json(f'/admin/tracking/portfolios/{portfolio_id}',
+    status_code, data = patch_json(f'/api/admin/tracking/portfolios/{portfolio_id}',
                                    data=request.get_data())
     return jsonify(data), status_code
 
@@ -327,7 +327,7 @@ def admin_tracking_update(portfolio_id: int):
 def admin_tracking_delete(portfolio_id: int):
     hard = request.args.get('hard', '0')
     status_code, data = delete_json(
-        f'/admin/tracking/portfolios/{portfolio_id}?hard={hard}')
+        f'/api/admin/tracking/portfolios/{portfolio_id}?hard={hard}')
     return jsonify(data), status_code
 
 

@@ -5,159 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ ticker }} — {{ company_name }}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/v3.css">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-         background: #0f1117; color: #e2e8f0; font-size: 14px; }
-
-  /* ── Layout ── */
-  .page { max-width: 1400px; margin: 0 auto; padding: 0 20px 60px; }
-
-  /* ── Hero ── */
-  .hero {
-    padding: 20px 0 16px;
-    border-bottom: 1px solid #1e2532;
-    display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
-  }
-  .hero-left { display: flex; flex-direction: column; gap: 8px; }
-  .ticker-badge {
-    background: #1e3a5f; color: #60a5fa; font-size: 22px; font-weight: 700;
-    padding: 4px 14px; border-radius: 8px; display: inline-block;
-    letter-spacing: 0.04em; border: 1px solid #2d4a6b;
-  }
-  .company-name { font-size: 20px; font-weight: 600; color: #f1f5f9; }
-  .meta-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip {
-    padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;
-    background: #1a2030; border: 1px solid #2d3748; color: #94a3b8;
-  }
-  .chip.sector { border-color: #2d4a6b; color: #60a5fa; background: #1e2d3d; }
-  .hero-right { margin-left: auto; display: flex; flex-direction: column;
-                align-items: flex-end; gap: 6px; }
-  .nav-link { color: #60a5fa; text-decoration: none; font-size: 13px; }
-  .nav-link:hover { text-decoration: underline; }
-  .bq-select {
-    background: #1a2030; border: 1px solid #2d3748; color: #94a3b8;
-    font-size: 12px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
-  }
-
-  /* ── Section titles ── */
-  .section { margin-top: 32px; }
-  .section-title {
-    font-size: 13px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.07em; color: #64748b; margin-bottom: 16px;
-    padding-bottom: 8px; border-bottom: 1px solid #1a2030;
-  }
-
-  /* ── Metric scorecard ── */
-  .scorecard { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-  .metric-card {
-    background: #141b26; border: 1px solid #1e2532; border-radius: 10px;
-    padding: 14px 16px;
-  }
-  .metric-card .label { font-size: 11px; color: #64748b; font-weight: 500;
-                        text-transform: uppercase; letter-spacing: 0.05em; }
-  .metric-card .value { font-size: 22px; font-weight: 700; color: #f1f5f9;
-                        margin: 4px 0 2px; }
-  .metric-card .trend { font-size: 11px; }
-  .trend.up   { color: #22c55e; }
-  .trend.down { color: #ef4444; }
-  .trend.flat { color: #64748b; }
-
-  /* ── Charts ── */
-  .charts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px; }
-  .chart-card {
-    background: #141b26; border: 1px solid #1e2532; border-radius: 10px;
-    padding: 16px;
-  }
-  .chart-card .chart-title { font-size: 12px; font-weight: 600; color: #94a3b8;
-                              margin-bottom: 12px; text-transform: uppercase;
-                              letter-spacing: 0.05em; }
-  .chart-card canvas { max-height: 220px; }
-
-  /* ── Tables ── */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  thead th {
-    padding: 8px 10px; text-align: right; font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.04em; color: #64748b;
-    border-bottom: 1px solid #1e2532; white-space: nowrap;
-  }
-  thead th:first-child { text-align: left; }
-  tbody tr { border-bottom: 1px solid #1a2030; }
-  tbody tr:hover { background: #161c28; }
-  td { padding: 7px 10px; text-align: right; color: #cbd5e1; white-space: nowrap; }
-  td:first-child { text-align: left; color: #94a3b8; font-weight: 500; }
-  td.year-col { color: #f1f5f9; font-weight: 600; }
-  .pos { color: #22c55e; }
-  .neg { color: #ef4444; }
-
-  /* ── FMP metrics table ── */
-  .fmp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .fmp-table td:first-child { color: #64748b; font-size: 12px; }
-  .fmp-table td:last-child  { text-align: right; color: #e2e8f0; }
-
-  /* ── Comparison table ── */
-  .comparison-table { max-width: 600px; }
-  .match   { color: #22c55e; }
-  .warning { color: #f59e0b; }
-  .mismatch { color: #ef4444; }
-
-  /* ── Balance sheet ── */
-  .bs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-  .bs-card {
-    background: #141b26; border: 1px solid #1e2532; border-radius: 8px;
-    padding: 10px 14px;
-  }
-  .bs-card .bs-label { font-size: 11px; color: #4a5568; margin-bottom: 3px; }
-  .bs-card .bs-value { font-size: 16px; font-weight: 600; color: #e2e8f0; }
-
-  /* ── S&P membership strip ── */
-  .member-years { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-  .year-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: #2d4a6b;
-    display: inline-block; title: '';
-  }
-  .year-dot.active { background: #3b82f6; }
+  body { overflow: auto; }
+  .scorecard  { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+  .charts-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 1.25rem; }
+  .fmp-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .bs-grid    { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.75rem; }
+  .member-years{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+  .year-dot   { width:7px; height:7px; border-radius:50%; background:var(--border); display:inline-block; }
+  .year-dot.active { background:var(--text); }
+  .fmp-table td:first-child { color:var(--muted); font-size:var(--fs-xs); }
+  .fmp-table td:last-child  { text-align:right; }
+  .comparison-table { max-width:600px; }
+  .match   { color:var(--positive); }
+  .warning { color:#b45309; }
+  .mismatch { color:var(--negative); }
 </style>
 </head>
 <body>
-<div class="page">
 
 <!-- ─── Topbar ───────────────────────────────────────────────── -->
-<header class="topbar" style="background:#0f1117;border-bottom:1px solid #1e2532;padding:0 20px;display:flex;align-items:center;gap:16px;height:44px;position:sticky;top:0;z-index:10;">
-  <a href="/research" style="font-weight:700;color:#f1f5f9;text-decoration:none;font-size:15px;">Darrock</a>
-  <div style="display:flex;gap:14px;align-items:center;margin-left:8px;">
-    <a href="/research"  style="color:#94a3b8;text-decoration:none;font-size:13px;">Research</a>
-    <a href="/universe"  style="color:#94a3b8;text-decoration:none;font-size:13px;">Universe</a>
-    <a href="/custom"    style="color:#94a3b8;text-decoration:none;font-size:13px;">Custom</a>
+<header class="topbar">
+  <a href="/research" class="topbar-brand">Darrock</a>
+  <div class="topbar-actions">
+    <a href="/research">Research</a>
+    <a href="/universe">Universe</a>
+    <a href="/custom">Custom</a>
+    {% if user %}
+      {% if user.role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
+      <span class="ui text-muted" style="font-size:var(--fs-xs);">{{ user.display_name }}</span>
+      <button id="logout-btn" class="btn btn-sm btn-ghost">logout</button>
+    {% endif %}
   </div>
-  {% if user %}
-  <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
-    {% if user.role == 'admin' %}<a href="/admin" style="color:#94a3b8;text-decoration:none;font-size:12px;">Admin</a>{% endif %}
-    <span style="color:#4a5568;font-size:12px;">{{ user.display_name }}</span>
-    <a href="/logout" style="color:#ef4444;text-decoration:none;font-size:12px;">Logout</a>
-  </div>
-  {% endif %}
 </header>
 
+<div style="max-width:1400px; margin:0 auto; padding:calc(44px + 1.5rem) 1.5rem 3rem;">
+
 <!-- ─── Hero ─────────────────────────────────────────────────── -->
-<div class="hero">
-  <div class="hero-left">
-    <div>
-      <span class="ticker-badge">{{ ticker }}</span>
-    </div>
-    <div class="company-name">{{ company_name }}</div>
-    <div class="meta-chips">
-      <span class="chip sector">{{ sector }}</span>
-      <span class="chip">{{ industry }}</span>
+<div style="display:flex; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border);">
+  <div>
+    <span class="badge badge-ticker" style="font-size:1.1rem;">{{ ticker }}</span>
+    <h2 style="margin:0.4rem 0 0.2rem;">{{ company_name }}</h2>
+    <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+      <span class="badge badge-sector">{{ sector }}</span>
+      <span class="badge">{{ industry }}</span>
       {% if sp500_years %}
-      <span class="chip">S&P 500 since {{ sp500_years[0] }}</span>
+      <span class="badge">S&P 500 since {{ sp500_years[0] }}</span>
       {% endif %}
     </div>
   </div>
-  <div class="hero-right">
-    <select class="bq-select" id="bq-select">
+  <div style="margin-left:auto;">
+    <select id="bq-select" style="font-family:var(--font-ui);font-size:var(--fs-xs);padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);">
       <option value="q4" {% if buying_quarter=='q4' %}selected{% endif %}>Q4 buying (Dec)</option>
       <option value="q1" {% if buying_quarter=='q1' %}selected{% endif %}>Q1 buying (Mar)</option>
       <option value="q2" {% if buying_quarter=='q2' %}selected{% endif %}>Q2 buying (Jun)</option>
@@ -173,154 +72,160 @@
 {% macro trend(val, prev) %}
 {% if val is not none and prev is not none %}
   {% set delta = val - prev %}
-  {% if delta > 0.005 %}<span class="trend up">▲ {{ (delta*100)|round(1) }}pp</span>
-  {% elif delta < -0.005 %}<span class="trend down">▼ {{ (delta*100)|abs|round(1) }}pp</span>
-  {% else %}<span class="trend flat">— flat</span>{% endif %}
+  {% if delta > 0.005 %}<span class="text-pos" style="font-size:var(--fs-xs);">▲ {{ (delta*100)|round(1) }}pp</span>
+  {% elif delta < -0.005 %}<span class="text-neg" style="font-size:var(--fs-xs);">▼ {{ (delta*100)|abs|round(1) }}pp</span>
+  {% else %}<span class="text-muted" style="font-size:var(--fs-xs);">— flat</span>{% endif %}
 {% endif %}
 {% endmacro %}
 
 <!-- ─── Scorecard ─────────────────────────────────────────────── -->
 <div class="section">
-  <div class="section-title">Key Metrics — Latest Year</div>
+  <div class="section-head">Key Metrics — Latest Year</div>
+  <div class="section-body">
   <div class="scorecard">
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">ROIC</div>
       <div class="value">{{ latest.roic|pct1 }}</div>
       {{ trend(latest.roic, prev3.roic) }}
     </div>
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">FCF Yield</div>
       <div class="value">{{ latest.fcf_yield|pct1 }}</div>
       {{ trend(latest.fcf_yield, prev3.fcf_yield) }}
     </div>
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">GP Margin</div>
       <div class="value">{{ latest.gp_margin|pct1 }}</div>
       {{ trend(latest.gp_margin, prev3.gp_margin) }}
     </div>
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">Net Margin</div>
       <div class="value">{{ latest.net_margin|pct1 }}</div>
       {{ trend(latest.net_margin, prev3.net_margin) }}
     </div>
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">5Y Sales CAGR</div>
       <div class="value">{{ latest.sales_CAGR_5Y|pct1 }}</div>
     </div>
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">5Y FCF CAGR</div>
       <div class="value">{{ latest.free_cash_flow_CAGR_5Y|pct1 }}</div>
     </div>
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">EBITDA Margin</div>
       <div class="value">{{ latest.ebitda_margin|pct1 }}</div>
       {{ trend(latest.ebitda_margin, prev3.ebitda_margin) }}
     </div>
-    <div class="metric-card">
+    <div class="card metric-card">
       <div class="label">Int. Coverage</div>
       <div class="value">{{ latest.interest_coverage|f1 }}x</div>
     </div>
+  </div>
   </div>
 </div>
 
 <!-- ─── Charts ────────────────────────────────────────────────── -->
 <div class="section">
-  <div class="section-title">Financial History Charts</div>
+  <div class="section-head">Financial History Charts</div>
+  <div class="section-body">
   <div class="charts-grid">
 
-    <div class="chart-card">
-      <div class="chart-title">Revenue, FCF &amp; Gross Profit ($M)</div>
+    <div class="card">
+      <div style="font-size:var(--fs-xs); font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:0.75rem;">Revenue, FCF &amp; Gross Profit ($M)</div>
       <canvas id="chart-revenue"></canvas>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-title">Margin Trends (%)</div>
+    <div class="card">
+      <div style="font-size:var(--fs-xs); font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:0.75rem;">Margin Trends (%)</div>
       <canvas id="chart-margins"></canvas>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-title">CAGR Comparison (5Y / 2Y / 1Y)</div>
+    <div class="card">
+      <div style="font-size:var(--fs-xs); font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:0.75rem;">CAGR Comparison (5Y / 2Y / 1Y)</div>
       <canvas id="chart-cagr"></canvas>
     </div>
 
     {% if fmp_metrics %}
-    <div class="chart-card">
-      <div class="chart-title">FMP Metrics Over Time</div>
+    <div class="card">
+      <div style="font-size:var(--fs-xs); font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:0.75rem;">FMP Metrics Over Time</div>
       <canvas id="chart-fmp"></canvas>
     </div>
     {% endif %}
 
   </div>
+  </div>
 </div>
 
 <!-- ─── Financial History Table ───────────────────────────────── -->
 <div class="section">
-  <div class="section-title">Financial History — Annual</div>
-  <div class="table-wrap">
-  <table>
+  <div class="section-head">Financial History — Annual</div>
+  <div class="section-body tbl-wrap">
+  <table class="tbl">
     <thead>
       <tr>
-        <th style="text-align:left">Year</th>
-        <th>Price</th>
-        <th>Sales $M</th>
-        <th>FCF $M</th>
-        <th>GP $M</th>
-        <th>Net Inc $M</th>
-        <th>EBITDA $M</th>
-        <th>Op Inc $M</th>
-        <th>GP %</th>
-        <th>Net %</th>
-        <th>EBITDA %</th>
-        <th>ROIC %</th>
-        <th>FCF Yld %</th>
-        <th>Int Cov</th>
-        <th>5Y Sales CAGR</th>
-        <th>5Y FCF CAGR</th>
-        <th>2Y Sales CAGR</th>
-        <th>Sales Slope</th>
-        <th>FCF Slope</th>
+        <th>Year</th>
+        <th class="r">Price</th>
+        <th class="r">Sales $M</th>
+        <th class="r">FCF $M</th>
+        <th class="r">GP $M</th>
+        <th class="r">Net Inc $M</th>
+        <th class="r">EBITDA $M</th>
+        <th class="r">Op Inc $M</th>
+        <th class="r">GP %</th>
+        <th class="r">Net %</th>
+        <th class="r">EBITDA %</th>
+        <th class="r">ROIC %</th>
+        <th class="r">FCF Yld %</th>
+        <th class="r">Int Cov</th>
+        <th class="r">5Y Sales CAGR</th>
+        <th class="r">5Y FCF CAGR</th>
+        <th class="r">2Y Sales CAGR</th>
+        <th class="r">Sales Slope</th>
+        <th class="r">FCF Slope</th>
       </tr>
     </thead>
     <tbody>
       {% for m in metrics %}
       <tr>
-        <td class="year-col">{{ m.year }}</td>
-        <td>{{ m.price|f2 }}</td>
-        <td>{{ m.sales|f0 }}</td>
-        <td>{{ m.free_cash_flow|f0 }}</td>
-        <td>{{ m.gross_profit|f0 }}</td>
-        <td>{{ m.net_income|f0 }}</td>
-        <td>{{ m.ebitda|f0 }}</td>
-        <td>{{ m.operating_income|f0 }}</td>
-        <td>{{ m.gp_margin|pct0 }}</td>
-        <td>{{ m.net_margin|pct0 }}</td>
-        <td>{{ m.ebitda_margin|pct0 }}</td>
-        <td class="{{ 'pos' if m.roic is not none and m.roic > 0.15 else 'neg' if m.roic is not none and m.roic < 0 else '' }}">{{ m.roic|pct1 }}</td>
-        <td>{{ m.fcf_yield|pct1 }}</td>
-        <td>{{ m.interest_coverage|f1 }}{% if m.interest_coverage is not none %}x{% endif %}</td>
-        <td class="{{ 'pos' if m.sales_CAGR_5Y is not none and m.sales_CAGR_5Y > 0 else 'neg' if m.sales_CAGR_5Y is not none and m.sales_CAGR_5Y < 0 else '' }}">{{ m.sales_CAGR_5Y|pct1 }}</td>
-        <td class="{{ 'pos' if m.free_cash_flow_CAGR_5Y is not none and m.free_cash_flow_CAGR_5Y > 0 else 'neg' if m.free_cash_flow_CAGR_5Y is not none and m.free_cash_flow_CAGR_5Y < 0 else '' }}">{{ m.free_cash_flow_CAGR_5Y|pct1 }}</td>
-        <td>{{ m.sales_CAGR_2Y|pct1 }}</td>
-        <td>{{ m.sales_slope_5Y|f2 }}</td>
-        <td>{{ m.free_cash_flow_slope_5Y|f2 }}</td>
+        <td style="font-weight:600;">{{ m.year }}</td>
+        <td class="r">{{ m.price|f2 }}</td>
+        <td class="r">{{ m.sales|f0 }}</td>
+        <td class="r">{{ m.free_cash_flow|f0 }}</td>
+        <td class="r">{{ m.gross_profit|f0 }}</td>
+        <td class="r">{{ m.net_income|f0 }}</td>
+        <td class="r">{{ m.ebitda|f0 }}</td>
+        <td class="r">{{ m.operating_income|f0 }}</td>
+        <td class="r">{{ m.gp_margin|pct0 }}</td>
+        <td class="r">{{ m.net_margin|pct0 }}</td>
+        <td class="r">{{ m.ebitda_margin|pct0 }}</td>
+        <td class="r {% if m.roic is not none and m.roic > 0.15 %}text-pos{% elif m.roic is not none and m.roic < 0 %}text-neg{% endif %}">{{ m.roic|pct1 }}</td>
+        <td class="r">{{ m.fcf_yield|pct1 }}</td>
+        <td class="r">{{ m.interest_coverage|f1 }}{% if m.interest_coverage is not none %}x{% endif %}</td>
+        <td class="r {% if m.sales_CAGR_5Y is not none and m.sales_CAGR_5Y > 0 %}text-pos{% elif m.sales_CAGR_5Y is not none and m.sales_CAGR_5Y < 0 %}text-neg{% endif %}">{{ m.sales_CAGR_5Y|pct1 }}</td>
+        <td class="r {% if m.free_cash_flow_CAGR_5Y is not none and m.free_cash_flow_CAGR_5Y > 0 %}text-pos{% elif m.free_cash_flow_CAGR_5Y is not none and m.free_cash_flow_CAGR_5Y < 0 %}text-neg{% endif %}">{{ m.free_cash_flow_CAGR_5Y|pct1 }}</td>
+        <td class="r">{{ m.sales_CAGR_2Y|pct1 }}</td>
+        <td class="r">{{ m.sales_slope_5Y|f2 }}</td>
+        <td class="r">{{ m.free_cash_flow_slope_5Y|f2 }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
   </div>
 </div>
 
 <!-- ─── FMP Metrics ────────────────────────────────────────────── -->
 {% if fmp_metrics %}
 <div class="section">
-  <div class="section-title">FMP Pre-calculated Metrics</div>
+  <div class="section-head">FMP Pre-calculated Metrics</div>
+  <div class="section-body">
   <div class="fmp-grid">
     <!-- Latest quarter snapshot -->
     <div>
-      <div style="font-size:12px; color:#64748b; margin-bottom:8px;">
+      <div style="font-size:var(--fs-xs); color:var(--muted); margin-bottom:0.5rem;">
         Latest: {{ fmp_metrics[0].period_end_date }} ({{ fmp_metrics[0].fiscal_period }})
       </div>
-      <table class="fmp-table">
+      <table class="tbl fmp-table">
         <tbody>
           {% set fm = fmp_metrics[0] %}
           {% for label, key, fmt in [
@@ -358,15 +263,15 @@
     </div>
     <!-- 8-quarter trend table -->
     <div>
-      <div style="font-size:12px; color:#64748b; margin-bottom:8px;">Quarterly trend (last 8)</div>
-      <table class="fmp-table">
+      <div style="font-size:var(--fs-xs); color:var(--muted); margin-bottom:0.5rem;">Quarterly trend (last 8)</div>
+      <table class="tbl fmp-table">
         <thead>
           <tr>
-            <th style="text-align:left">Period</th>
-            <th>ROIC</th>
-            <th>FCF Yld</th>
-            <th>P/E</th>
-            <th>EV/EBITDA</th>
+            <th>Period</th>
+            <th class="r">ROIC</th>
+            <th class="r">FCF Yld</th>
+            <th class="r">P/E</th>
+            <th class="r">EV/EBITDA</th>
           </tr>
         </thead>
         <tbody>
@@ -383,21 +288,23 @@
       </table>
     </div>
   </div>
+  </div>
 </div>
 {% endif %}
 
 <!-- ─── Our Calc vs FMP ─────────────────────────────────────────── -->
 {% if comparison %}
 <div class="section">
-  <div class="section-title">Our Calculation vs FMP — Latest Year</div>
-  <table class="comparison-table">
+  <div class="section-head">Our Calculation vs FMP — Latest Year</div>
+  <div class="section-body">
+  <table class="tbl comparison-table">
     <thead>
       <tr>
-        <th style="text-align:left">Metric</th>
-        <th>Our Calc</th>
-        <th>FMP Value</th>
-        <th>Difference</th>
-        <th>Status</th>
+        <th>Metric</th>
+        <th class="r">Our Calc</th>
+        <th class="r">FMP Value</th>
+        <th class="r">Difference</th>
+        <th class="r">Status</th>
       </tr>
     </thead>
     <tbody>
@@ -418,31 +325,34 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 {% endif %}
 
 <!-- ─── Balance Sheet ──────────────────────────────────────────── -->
 <div class="section">
-  <div class="section-title">Balance Sheet — Latest Annual</div>
+  <div class="section-head">Balance Sheet — Latest Annual</div>
+  <div class="section-body">
   <div class="bs-grid">
-    <div class="bs-card"><div class="bs-label">Cash</div><div class="bs-value">{{ latest.cash|f0 }}M</div></div>
-    <div class="bs-card"><div class="bs-label">ST Investments</div><div class="bs-value">{{ latest.short_term_investments|f0 }}M</div></div>
-    <div class="bs-card"><div class="bs-label">Accounts Receivable</div><div class="bs-value">{{ latest.accounts_receivable|f0 }}M</div></div>
-    <div class="bs-card"><div class="bs-label">Total Debt</div><div class="bs-value">{{ latest.total_debt|f0 }}M</div></div>
-    <div class="bs-card"><div class="bs-label">Accounts Payable</div><div class="bs-value">{{ latest.accounts_payable|f0 }}M</div></div>
-    <div class="bs-card"><div class="bs-label">Current Liabilities</div><div class="bs-value">{{ latest.current_liabilities|f0 }}M</div></div>
-    <div class="bs-card"><div class="bs-label">Shareholders' Equity</div><div class="bs-value">{{ latest.shareholders_equity|f0 }}M</div></div>
-    <div class="bs-card"><div class="bs-label">Shares Diluted</div><div class="bs-value">{{ latest.shares_diluted|f0 }}M</div></div>
+    <div class="card"><div class="label">Cash</div><div class="value">{{ latest.cash|f0 }}M</div></div>
+    <div class="card"><div class="label">ST Investments</div><div class="value">{{ latest.short_term_investments|f0 }}M</div></div>
+    <div class="card"><div class="label">Accounts Receivable</div><div class="value">{{ latest.accounts_receivable|f0 }}M</div></div>
+    <div class="card"><div class="label">Total Debt</div><div class="value">{{ latest.total_debt|f0 }}M</div></div>
+    <div class="card"><div class="label">Accounts Payable</div><div class="value">{{ latest.accounts_payable|f0 }}M</div></div>
+    <div class="card"><div class="label">Current Liabilities</div><div class="value">{{ latest.current_liabilities|f0 }}M</div></div>
+    <div class="card"><div class="label">Shareholders' Equity</div><div class="value">{{ latest.shareholders_equity|f0 }}M</div></div>
+    <div class="card"><div class="label">Shares Diluted</div><div class="value">{{ latest.shares_diluted|f0 }}M</div></div>
+  </div>
   </div>
 </div>
 
-</div><!-- /page -->
+</div><!-- /page wrapper -->
 
 <script>
 // ── Shared Chart.js defaults ──────────────────────────────────
-Chart.defaults.color = '#64748b';
-Chart.defaults.borderColor = '#1e2532';
-Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.color = '#8a8a8a';
+Chart.defaults.borderColor = '#d4d4d4';
+Chart.defaults.font.family = 'Jost, "Segoe UI", sans-serif';
 Chart.defaults.font.size = 11;
 
 const PALETTE = {
@@ -489,8 +399,8 @@ new Chart(document.getElementById('chart-revenue'), {
     responsive: true, maintainAspectRatio: true,
     plugins: { legend: { labels: { boxWidth: 12 } } },
     scales: {
-      x: { grid: { color: '#1e2532' } },
-      y: { grid: { color: '#1e2532' }, title: { display: true, text: '$M' } },
+      x: { grid: { color: '#d4d4d4' } },
+      y: { grid: { color: '#d4d4d4' }, title: { display: true, text: '$M' } },
       pct: { position: 'right', grid: { display: false },
              title: { display: true, text: '%' },
              ticks: { callback: v => v.toFixed(0) + '%' } },
@@ -589,6 +499,11 @@ new Chart(document.getElementById('chart-margins'), {
 // ── Buying quarter switcher ───────────────────────────────────
 document.getElementById('bq-select').addEventListener('change', function() {
   window.location.href = '/company/{{ company_id }}?buying_quarter=' + this.value;
+});
+
+// ── Logout handler ──────────────────────────────────────────────
+document.getElementById('logout-btn')?.addEventListener('click', () => {
+  fetch('/api/auth/logout', { method: 'POST' }).then(() => location.href = '/');
 });
 </script>
 </body>

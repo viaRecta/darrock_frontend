@@ -7,18 +7,8 @@ from flask import session
 import config
 
 
-def _backend_root() -> str:
-    url = config.BACKEND_URL.rstrip('/')
-    for suffix in ('/api/v3', '/api/v2', '/api/v1'):
-        if url.endswith(suffix):
-            return url[:-len(suffix)]
-    return url
-
-
 def build_url(path: str) -> str:
     safe = path if path.startswith('/') else f'/{path}'
-    if safe.startswith('/api/'):
-        return f'{_backend_root()}{safe}'
     return f'{config.BACKEND_URL.rstrip("/")}{safe}'
 
 
@@ -45,5 +35,13 @@ def get_json(path: str, **kwargs):
 
 def post_json(path: str, data=None):
     h = {**_auth_headers(), 'Content-Type': 'application/json'}
+    # If data is bytes (raw request body), decode it and parse as JSON, then re-encode
+    if isinstance(data, bytes):
+        try:
+            import json
+            data_dict = json.loads(data.decode('utf-8'))
+            data = json.dumps(data_dict)
+        except:
+            pass
     r = requests.post(build_url(path), headers=h, data=data, timeout=config.TIMEOUT)
     return r.status_code, r.json()

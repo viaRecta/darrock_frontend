@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Darrock Tracking</title>
+  <style>
+    :root {
+      --bg: #0f1116; --surface: #181b22; --border: #262a35;
+      --muted: #9aa; --text: #e6e6e6; --accent: #9bd;
+      --positive: #6cd97e; --negative: #ef6f6f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+      margin: 0; padding: 0; background: var(--bg); color: var(--text);
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh;
+    }
+    .login-wrap { width: 100%; display: flex; justify-content: center; align-items: center; }
+    .login-box {
+      width: 100%; max-width: 300px; padding: 40px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; text-align: center;
+    }
+    h1 { margin: 0 0 4px; font-size: 32px; font-weight: 600; letter-spacing: -0.02em; }
+    .sub { margin: 0 0 24px; color: var(--muted); font-size: 12px;
+           text-transform: uppercase; letter-spacing: 0.08em; }
+
+    #login-error {
+      background: rgba(239, 111, 111, 0.1); border: 1px solid var(--negative);
+      border-radius: 4px; padding: 8px 10px; margin-bottom: 16px;
+      font-size: 13px; color: var(--negative);
+    }
+    #login-error.hidden { display: none; }
+
+    .f-group { text-align: left; margin-bottom: 12px; }
+    label { display: block; font-size: 12px; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    input {
+      width: 100%; padding: 8px 10px;
+      background: var(--bg); color: var(--text); border: 1px solid var(--border);
+      border-radius: 4px; font-family: inherit; font-size: 14px;
+    }
+    input:focus { outline: none; border-color: var(--accent); }
+
+    button {
+      width: 100%; padding: 10px 16px; margin-top: 16px;
+      background: var(--accent); color: var(--bg);
+      border: 0; border-radius: 4px; font-family: inherit; font-size: 14px;
+      font-weight: 600; cursor: pointer;
+    }
+    button:hover:not(:disabled) { opacity: 0.9; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-box">
+      <h1>darrock</h1>
+      <p class="sub">tracking</p>
+
+      <div id="login-error" class="hidden"></div>
+
+      <div class="f-group">
+        <label>username</label>
+        <input type="text" id="login-user" autocomplete="username">
+      </div>
+      <div class="f-group">
+        <label>password</label>
+        <input type="password" id="login-pass" autocomplete="current-password">
+      </div>
+      <button id="login-btn">enter</button>
+    </div>
+  </div>
+
+  <script>
+    const btn = document.getElementById('login-btn');
+    const userEl = document.getElementById('login-user');
+    const passEl = document.getElementById('login-pass');
+    const errEl = document.getElementById('login-error');
+
+    async function doLogin() {
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'signing in...';
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: userEl.value, password: passEl.value }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = '/';
+        } else {
+          errEl.textContent = data.message || 'Invalid credentials';
+          errEl.classList.remove('hidden');
+        }
+      } catch (e) {
+        errEl.textContent = 'Connection error';
+        errEl.classList.remove('hidden');
+      }
+      btn.disabled = false;
+      btn.textContent = 'enter';
+    }
+
+    btn.addEventListener('click', doLogin);
+    passEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+    userEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') passEl.focus(); });
+  </script>
+</body>
+</html>
