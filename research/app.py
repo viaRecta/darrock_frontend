@@ -171,6 +171,28 @@ def admin_delete(user_id: int):
     return jsonify(data)
 
 
+@app.route('/universe')
+def universe():
+    if not USE_MOCKDATA and not session.get('user'):
+        return redirect('/')
+    data = get_json('/api/universe')
+    return render_template('universe.html',
+                           companies=data.get('companies', []),
+                           user=session.get('user'))
+
+
+@app.route('/company/<int:company_id>')
+def company_detail(company_id: int):
+    if not USE_MOCKDATA and not session.get('user'):
+        return redirect('/')
+    bq = request.args.get('buying_quarter', 'q4')
+    if bq not in ('q1', 'q2', 'q3', 'q4'):
+        bq = 'q4'
+    data = get_json(f'/api/company/{company_id}/full?buying_quarter={bq}')
+    data['user'] = session.get('user')
+    return render_template('company_detail.html', **data)
+
+
 @app.route('/stock/<ticker>/<int:company_id>')
 def stock(ticker: str, company_id: int):
     # ticker is decorative for the URL (human-readable); company_id drives the lookup.

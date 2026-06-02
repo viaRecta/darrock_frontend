@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ ticker }} — {{ company_name }}</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+         background: #0f1117; color: #e2e8f0; font-size: 14px; }
+
+  /* ── Layout ── */
+  .page { max-width: 1400px; margin: 0 auto; padding: 0 20px 60px; }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 20px 0 16px;
+    border-bottom: 1px solid #1e2532;
+    display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;
+  }
+  .hero-left { display: flex; flex-direction: column; gap: 8px; }
+  .ticker-badge {
+    background: #1e3a5f; color: #60a5fa; font-size: 22px; font-weight: 700;
+    padding: 4px 14px; border-radius: 8px; display: inline-block;
+    letter-spacing: 0.04em; border: 1px solid #2d4a6b;
+  }
+  .company-name { font-size: 20px; font-weight: 600; color: #f1f5f9; }
+  .meta-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500;
+    background: #1a2030; border: 1px solid #2d3748; color: #94a3b8;
+  }
+  .chip.sector { border-color: #2d4a6b; color: #60a5fa; background: #1e2d3d; }
+  .hero-right { margin-left: auto; display: flex; flex-direction: column;
+                align-items: flex-end; gap: 6px; }
+  .nav-link { color: #60a5fa; text-decoration: none; font-size: 13px; }
+  .nav-link:hover { text-decoration: underline; }
+  .bq-select {
+    background: #1a2030; border: 1px solid #2d3748; color: #94a3b8;
+    font-size: 12px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+  }
+
+  /* ── Section titles ── */
+  .section { margin-top: 32px; }
+  .section-title {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.07em; color: #64748b; margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 1px solid #1a2030;
+  }
+
+  /* ── Metric scorecard ── */
+  .scorecard { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .metric-card {
+    background: #141b26; border: 1px solid #1e2532; border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .metric-card .label { font-size: 11px; color: #64748b; font-weight: 500;
+                        text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric-card .value { font-size: 22px; font-weight: 700; color: #f1f5f9;
+                        margin: 4px 0 2px; }
+  .metric-card .trend { font-size: 11px; }
+  .trend.up   { color: #22c55e; }
+  .trend.down { color: #ef4444; }
+  .trend.flat { color: #64748b; }
+
+  /* ── Charts ── */
+  .charts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 20px; }
+  .chart-card {
+    background: #141b26; border: 1px solid #1e2532; border-radius: 10px;
+    padding: 16px;
+  }
+  .chart-card .chart-title { font-size: 12px; font-weight: 600; color: #94a3b8;
+                              margin-bottom: 12px; text-transform: uppercase;
+                              letter-spacing: 0.05em; }
+  .chart-card canvas { max-height: 220px; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    padding: 8px 10px; text-align: right; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; color: #64748b;
+    border-bottom: 1px solid #1e2532; white-space: nowrap;
+  }
+  thead th:first-child { text-align: left; }
+  tbody tr { border-bottom: 1px solid #1a2030; }
+  tbody tr:hover { background: #161c28; }
+  td { padding: 7px 10px; text-align: right; color: #cbd5e1; white-space: nowrap; }
+  td:first-child { text-align: left; color: #94a3b8; font-weight: 500; }
+  td.year-col { color: #f1f5f9; font-weight: 600; }
+  .pos { color: #22c55e; }
+  .neg { color: #ef4444; }
+
+  /* ── FMP metrics table ── */
+  .fmp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .fmp-table td:first-child { color: #64748b; font-size: 12px; }
+  .fmp-table td:last-child  { text-align: right; color: #e2e8f0; }
+
+  /* ── Comparison table ── */
+  .comparison-table { max-width: 600px; }
+  .match   { color: #22c55e; }
+  .warning { color: #f59e0b; }
+  .mismatch { color: #ef4444; }
+
+  /* ── Balance sheet ── */
+  .bs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .bs-card {
+    background: #141b26; border: 1px solid #1e2532; border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .bs-card .bs-label { font-size: 11px; color: #4a5568; margin-bottom: 3px; }
+  .bs-card .bs-value { font-size: 16px; font-weight: 600; color: #e2e8f0; }
+
+  /* ── S&P membership strip ── */
+  .member-years { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .year-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #2d4a6b;
+    display: inline-block; title: '';
+  }
+  .year-dot.active { background: #3b82f6; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ─── Topbar ───────────────────────────────────────────────── -->
+<header class="topbar" style="background:#0f1117;border-bottom:1px solid #1e2532;padding:0 20px;display:flex;align-items:center;gap:16px;height:44px;position:sticky;top:0;z-index:10;">
+  <a href="/research" style="font-weight:700;color:#f1f5f9;text-decoration:none;font-size:15px;">Darrock</a>
+  <div style="display:flex;gap:14px;align-items:center;margin-left:8px;">
+    <a href="/research"  style="color:#94a3b8;text-decoration:none;font-size:13px;">Research</a>
+    <a href="/universe"  style="color:#94a3b8;text-decoration:none;font-size:13px;">Universe</a>
+    <a href="/custom"    style="color:#94a3b8;text-decoration:none;font-size:13px;">Custom</a>
+  </div>
+  {% if user %}
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+    {% if user.role == 'admin' %}<a href="/admin" style="color:#94a3b8;text-decoration:none;font-size:12px;">Admin</a>{% endif %}
+    <span style="color:#4a5568;font-size:12px;">{{ user.display_name }}</span>
+    <a href="/logout" style="color:#ef4444;text-decoration:none;font-size:12px;">Logout</a>
+  </div>
+  {% endif %}
+</header>
+
+<!-- ─── Hero ─────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="hero-left">
+    <div>
+      <span class="ticker-badge">{{ ticker }}</span>
+    </div>
+    <div class="company-name">{{ company_name }}</div>
+    <div class="meta-chips">
+      <span class="chip sector">{{ sector }}</span>
+      <span class="chip">{{ industry }}</span>
+      {% if sp500_years %}
+      <span class="chip">S&P 500 since {{ sp500_years[0] }}</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="hero-right">
+    <select class="bq-select" id="bq-select">
+      <option value="q4" {% if buying_quarter=='q4' %}selected{% endif %}>Q4 buying (Dec)</option>
+      <option value="q1" {% if buying_quarter=='q1' %}selected{% endif %}>Q1 buying (Mar)</option>
+      <option value="q2" {% if buying_quarter=='q2' %}selected{% endif %}>Q2 buying (Jun)</option>
+      <option value="q3" {% if buying_quarter=='q3' %}selected{% endif %}>Q3 buying (Sep)</option>
+    </select>
+  </div>
+</div>
+
+{% set metrics = stock_metrics %}
+{% set latest = metrics[0] if metrics else {} %}
+{% set prev3  = metrics[3] if metrics|length > 3 else {} %}
+
+{% macro trend(val, prev) %}
+{% if val is not none and prev is not none %}
+  {% set delta = val - prev %}
+  {% if delta > 0.005 %}<span class="trend up">▲ {{ (delta*100)|round(1) }}pp</span>
+  {% elif delta < -0.005 %}<span class="trend down">▼ {{ (delta*100)|abs|round(1) }}pp</span>
+  {% else %}<span class="trend flat">— flat</span>{% endif %}
+{% endif %}
+{% endmacro %}
+
+<!-- ─── Scorecard ─────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Key Metrics — Latest Year</div>
+  <div class="scorecard">
+    <div class="metric-card">
+      <div class="label">ROIC</div>
+      <div class="value">{{ latest.roic|pct1 }}</div>
+      {{ trend(latest.roic, prev3.roic) }}
+    </div>
+    <div class="metric-card">
+      <div class="label">FCF Yield</div>
+      <div class="value">{{ latest.fcf_yield|pct1 }}</div>
+      {{ trend(latest.fcf_yield, prev3.fcf_yield) }}
+    </div>
+    <div class="metric-card">
+      <div class="label">GP Margin</div>
+      <div class="value">{{ latest.gp_margin|pct1 }}</div>
+      {{ trend(latest.gp_margin, prev3.gp_margin) }}
+    </div>
+    <div class="metric-card">
+      <div class="label">Net Margin</div>
+      <div class="value">{{ latest.net_margin|pct1 }}</div>
+      {{ trend(latest.net_margin, prev3.net_margin) }}
+    </div>
+    <div class="metric-card">
+      <div class="label">5Y Sales CAGR</div>
+      <div class="value">{{ latest.sales_CAGR_5Y|pct1 }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">5Y FCF CAGR</div>
+      <div class="value">{{ latest.free_cash_flow_CAGR_5Y|pct1 }}</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">EBITDA Margin</div>
+      <div class="value">{{ latest.ebitda_margin|pct1 }}</div>
+      {{ trend(latest.ebitda_margin, prev3.ebitda_margin) }}
+    </div>
+    <div class="metric-card">
+      <div class="label">Int. Coverage</div>
+      <div class="value">{{ latest.interest_coverage|f1 }}x</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Charts ────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Financial History Charts</div>
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <div class="chart-title">Revenue, FCF &amp; Gross Profit ($M)</div>
+      <canvas id="chart-revenue"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Margin Trends (%)</div>
+      <canvas id="chart-margins"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">CAGR Comparison (5Y / 2Y / 1Y)</div>
+      <canvas id="chart-cagr"></canvas>
+    </div>
+
+    {% if fmp_metrics %}
+    <div class="chart-card">
+      <div class="chart-title">FMP Metrics Over Time</div>
+      <canvas id="chart-fmp"></canvas>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- ─── Financial History Table ───────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Financial History — Annual</div>
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Year</th>
+        <th>Price</th>
+        <th>Sales $M</th>
+        <th>FCF $M</th>
+        <th>GP $M</th>
+        <th>Net Inc $M</th>
+        <th>EBITDA $M</th>
+        <th>Op Inc $M</th>
+        <th>GP %</th>
+        <th>Net %</th>
+        <th>EBITDA %</th>
+        <th>ROIC %</th>
+        <th>FCF Yld %</th>
+        <th>Int Cov</th>
+        <th>5Y Sales CAGR</th>
+        <th>5Y FCF CAGR</th>
+        <th>2Y Sales CAGR</th>
+        <th>Sales Slope</th>
+        <th>FCF Slope</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in metrics %}
+      <tr>
+        <td class="year-col">{{ m.year }}</td>
+        <td>{{ m.price|f2 }}</td>
+        <td>{{ m.sales|f0 }}</td>
+        <td>{{ m.free_cash_flow|f0 }}</td>
+        <td>{{ m.gross_profit|f0 }}</td>
+        <td>{{ m.net_income|f0 }}</td>
+        <td>{{ m.ebitda|f0 }}</td>
+        <td>{{ m.operating_income|f0 }}</td>
+        <td>{{ m.gp_margin|pct0 }}</td>
+        <td>{{ m.net_margin|pct0 }}</td>
+        <td>{{ m.ebitda_margin|pct0 }}</td>
+        <td class="{{ 'pos' if m.roic is not none and m.roic > 0.15 else 'neg' if m.roic is not none and m.roic < 0 else '' }}">{{ m.roic|pct1 }}</td>
+        <td>{{ m.fcf_yield|pct1 }}</td>
+        <td>{{ m.interest_coverage|f1 }}{% if m.interest_coverage is not none %}x{% endif %}</td>
+        <td class="{{ 'pos' if m.sales_CAGR_5Y is not none and m.sales_CAGR_5Y > 0 else 'neg' if m.sales_CAGR_5Y is not none and m.sales_CAGR_5Y < 0 else '' }}">{{ m.sales_CAGR_5Y|pct1 }}</td>
+        <td class="{{ 'pos' if m.free_cash_flow_CAGR_5Y is not none and m.free_cash_flow_CAGR_5Y > 0 else 'neg' if m.free_cash_flow_CAGR_5Y is not none and m.free_cash_flow_CAGR_5Y < 0 else '' }}">{{ m.free_cash_flow_CAGR_5Y|pct1 }}</td>
+        <td>{{ m.sales_CAGR_2Y|pct1 }}</td>
+        <td>{{ m.sales_slope_5Y|f2 }}</td>
+        <td>{{ m.free_cash_flow_slope_5Y|f2 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- ─── FMP Metrics ────────────────────────────────────────────── -->
+{% if fmp_metrics %}
+<div class="section">
+  <div class="section-title">FMP Pre-calculated Metrics</div>
+  <div class="fmp-grid">
+    <!-- Latest quarter snapshot -->
+    <div>
+      <div style="font-size:12px; color:#64748b; margin-bottom:8px;">
+        Latest: {{ fmp_metrics[0].period_end_date }} ({{ fmp_metrics[0].fiscal_period }})
+      </div>
+      <table class="fmp-table">
+        <tbody>
+          {% set fm = fmp_metrics[0] %}
+          {% for label, key, fmt in [
+            ('ROIC',            'roic',                    'pct'),
+            ('ROE',             'roe',                     'pct'),
+            ('FCF Yield',       'freeCashFlowYield',       'pct'),
+            ('P/E Ratio',       'peRatio',                 'num'),
+            ('P/B Ratio',       'pbRatio',                 'num'),
+            ('P/S Ratio',       'priceToSalesRatio',       'num'),
+            ('EV/EBITDA',       'enterpriseValueOverEBITDA','num'),
+            ('EV/Sales',        'evToSales',               'num'),
+            ('EV/FCF',          'evToFreeCashFlow',        'num'),
+            ('Debt/Equity',     'debtToEquity',            'num'),
+            ('Net Debt/EBITDA', 'netDebtToEBITDA',         'num'),
+            ('Interest Coverage','interestCoverage',       'num'),
+            ('Current Ratio',   'currentRatio',            'num'),
+            ('Dividend Yield',  'dividendYield',           'pct'),
+            ('Earnings Yield',  'earningsYield',           'pct'),
+            ('CapEx/Revenue',   'capexToRevenue',          'pct'),
+          ] %}
+          <tr>
+            <td>{{ label }}</td>
+            <td>
+              {% set v = fm[key] %}
+              {% if v is not none %}
+                {% if fmt == 'pct' %}{{ (v * 100)|round(2) }}%
+                {% else %}{{ v|round(2) }}
+                {% endif %}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <!-- 8-quarter trend table -->
+    <div>
+      <div style="font-size:12px; color:#64748b; margin-bottom:8px;">Quarterly trend (last 8)</div>
+      <table class="fmp-table">
+        <thead>
+          <tr>
+            <th style="text-align:left">Period</th>
+            <th>ROIC</th>
+            <th>FCF Yld</th>
+            <th>P/E</th>
+            <th>EV/EBITDA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fm in fmp_metrics[:8] %}
+          <tr>
+            <td>{{ fm.period_end_date[:7] }} {{ fm.fiscal_period }}</td>
+            <td>{% if fm.roic is not none %}{{ (fm.roic*100)|round(1) }}%{% else %}—{% endif %}</td>
+            <td>{% if fm.freeCashFlowYield is not none %}{{ (fm.freeCashFlowYield*100)|round(1) }}%{% else %}—{% endif %}</td>
+            <td>{% if fm.peRatio is not none %}{{ fm.peRatio|round(1) }}{% else %}—{% endif %}</td>
+            <td>{% if fm.enterpriseValueOverEBITDA is not none %}{{ fm.enterpriseValueOverEBITDA|round(1) }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ─── Our Calc vs FMP ─────────────────────────────────────────── -->
+{% if comparison %}
+<div class="section">
+  <div class="section-title">Our Calculation vs FMP — Latest Year</div>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th style="text-align:left">Metric</th>
+        <th>Our Calc</th>
+        <th>FMP Value</th>
+        <th>Difference</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for key, v in comparison.items() %}
+      <tr>
+        <td>{{ key|replace('_', ' ')|title }}</td>
+        <td>{{ (v.ours * 100)|round(2) }}%</td>
+        <td>{{ (v.fmp  * 100)|round(2) }}%</td>
+        <td>{{ (v.diff * 100)|round(2) }}pp</td>
+        <td>
+          {% if v.pct_diff is not none %}
+            {% if v.pct_diff < 5 %}<span class="match">✓ &lt;5%</span>
+            {% elif v.pct_diff < 15 %}<span class="warning">△ {{ v.pct_diff }}%</span>
+            {% else %}<span class="mismatch">✗ {{ v.pct_diff }}%</span>{% endif %}
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- ─── Balance Sheet ──────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Balance Sheet — Latest Annual</div>
+  <div class="bs-grid">
+    <div class="bs-card"><div class="bs-label">Cash</div><div class="bs-value">{{ latest.cash|f0 }}M</div></div>
+    <div class="bs-card"><div class="bs-label">ST Investments</div><div class="bs-value">{{ latest.short_term_investments|f0 }}M</div></div>
+    <div class="bs-card"><div class="bs-label">Accounts Receivable</div><div class="bs-value">{{ latest.accounts_receivable|f0 }}M</div></div>
+    <div class="bs-card"><div class="bs-label">Total Debt</div><div class="bs-value">{{ latest.total_debt|f0 }}M</div></div>
+    <div class="bs-card"><div class="bs-label">Accounts Payable</div><div class="bs-value">{{ latest.accounts_payable|f0 }}M</div></div>
+    <div class="bs-card"><div class="bs-label">Current Liabilities</div><div class="bs-value">{{ latest.current_liabilities|f0 }}M</div></div>
+    <div class="bs-card"><div class="bs-label">Shareholders' Equity</div><div class="bs-value">{{ latest.shareholders_equity|f0 }}M</div></div>
+    <div class="bs-card"><div class="bs-label">Shares Diluted</div><div class="bs-value">{{ latest.shares_diluted|f0 }}M</div></div>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<script>
+// ── Shared Chart.js defaults ──────────────────────────────────
+Chart.defaults.color = '#64748b';
+Chart.defaults.borderColor = '#1e2532';
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+Chart.defaults.font.size = 11;
+
+const PALETTE = {
+  blue:   '#3b82f6', green: '#22c55e', amber: '#f59e0b',
+  purple: '#a78bfa', teal:  '#2dd4bf', red:   '#ef4444',
+  slate:  '#94a3b8',
+};
+
+// ── Data from Jinja ───────────────────────────────────────────
+const metricsRaw = {{ stock_metrics | tojson }};
+const fmpRaw     = {{ fmp_metrics   | tojson }};
+
+// Sort by year ascending for charts
+const mAll = [...metricsRaw].sort((a, b) => a.year - b.year);
+// Last 10 years for most charts
+const m10  = mAll.slice(-10);
+const years10 = m10.map(r => r.year);
+
+function safeArr(arr, key) {
+  return arr.map(r => {
+    const v = r[key];
+    return (v == null || isNaN(v)) ? null : v;
+  });
+}
+function pctArr(arr, key) {
+  return safeArr(arr, key).map(v => v === null ? null : v * 100);
+}
+
+// ── Chart 1: Revenue, FCF, Gross Profit ──────────────────────
+new Chart(document.getElementById('chart-revenue'), {
+  type: 'bar',
+  data: {
+    labels: years10,
+    datasets: [
+      { label: 'Sales',        data: safeArr(m10, 'sales'),        backgroundColor: PALETTE.blue  + '99', order: 2 },
+      { label: 'Gross Profit', data: safeArr(m10, 'gross_profit'), backgroundColor: PALETTE.teal  + '99', order: 2 },
+      { label: 'FCF',          data: safeArr(m10, 'free_cash_flow'),backgroundColor: PALETTE.green + '99', order: 2 },
+      { label: 'GP Margin %',  data: pctArr(m10, 'gp_margin'),
+        type: 'line', yAxisID: 'pct', borderColor: PALETTE.amber, backgroundColor: 'transparent',
+        borderWidth: 2, pointRadius: 3, tension: 0.3, order: 1 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { labels: { boxWidth: 12 } } },
+    scales: {
+      x: { grid: { color: '#1e2532' } },
+      y: { grid: { color: '#1e2532' }, title: { display: true, text: '$M' } },
+      pct: { position: 'right', grid: { display: false },
+             title: { display: true, text: '%' },
+             ticks: { callback: v => v.toFixed(0) + '%' } },
+    }
+  }
+});
+
+// ── Chart 2: Margin trends ────────────────────────────────────
+new Chart(document.getElementById('chart-margins'), {
+  type: 'line',
+  data: {
+    labels: years10,
+    datasets: [
+      { label: 'GP Margin',    data: pctArr(m10, 'gp_margin'),      borderColor: PALETTE.blue,   backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.3 },
+      { label: 'EBITDA Margin',data: pctArr(m10, 'ebitda_margin'),  borderColor: PALETTE.teal,   backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.3 },
+      { label: 'Net Margin',   data: pctArr(m10, 'net_margin'),     borderColor: PALETTE.green,  backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.3 },
+      { label: 'OpCF Margin',  data: pctArr(m10, 'op_cf_margin'),   borderColor: PALETTE.purple, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.3 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true,
+    plugins: { legend: { labels: { boxWidth: 12 } } },
+    scales: {
+      x: { grid: { color: '#1e2532' } },
+      y: { grid: { color: '#1e2532' }, ticks: { callback: v => v.toFixed(0) + '%' } },
+    }
+  }
+});
+
+// ── Chart 3: CAGR comparison ──────────────────────────────────
+(function() {
+  const latest = mAll[mAll.length - 1] || {};
+  const keys = [
+    { label: 'Sales',     c5: 'sales_CAGR_5Y',            c2: 'sales_CAGR_2Y',            c1: 'sales_CAGR_1Y' },
+    { label: 'FCF',       c5: 'free_cash_flow_CAGR_5Y',   c2: 'free_cash_flow_CAGR_2Y',   c1: 'free_cash_flow_CAGR_1Y' },
+    { label: 'Gross Prof',c5: 'gross_profit_CAGR_5Y',     c2: 'gross_profit_CAGR_2Y',     c1: 'gross_profit_CAGR_1Y' },
+    { label: 'Net Inc',   c5: 'net_income_CAGR_5Y',       c2: 'net_income_CAGR_2Y',       c1: 'net_income_CAGR_1Y' },
+  ];
+  const g = (key) => { const v = latest[key]; return (v == null || isNaN(v)) ? null : v * 100; };
+  new Chart(document.getElementById('chart-cagr'), {
+    type: 'bar',
+    data: {
+      labels: keys.map(k => k.label),
+      datasets: [
+        { label: '5Y CAGR', data: keys.map(k => g(k.c5)), backgroundColor: PALETTE.blue  + 'cc' },
+        { label: '2Y CAGR', data: keys.map(k => g(k.c2)), backgroundColor: PALETTE.teal  + 'cc' },
+        { label: '1Y CAGR', data: keys.map(k => g(k.c1)), backgroundColor: PALETTE.green + 'cc' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, indexAxis: 'y',
+      plugins: { legend: { labels: { boxWidth: 12 } } },
+      scales: {
+        x: { grid: { color: '#1e2532' }, ticks: { callback: v => v.toFixed(0) + '%' } },
+        y: { grid: { color: '#1e2532' } },
+      }
+    }
+  });
+})();
+
+// ── Chart 4: FMP metrics over time ───────────────────────────
+{% if fmp_metrics %}
+(function() {
+  const fmpSorted = [...fmpRaw]
+    .filter(r => r.period_end_date)
+    .sort((a, b) => a.period_end_date.localeCompare(b.period_end_date))
+    .slice(-16);  // last 16 quarters (~4 years)
+  const fmpLabels = fmpSorted.map(r => r.period_end_date.slice(0,7));
+  const safe = (key) => fmpSorted.map(r => {
+    const v = r[key]; return (v == null || isNaN(v)) ? null : parseFloat(v);
+  });
+  new Chart(document.getElementById('chart-fmp'), {
+    type: 'line',
+    data: {
+      labels: fmpLabels,
+      datasets: [
+        { label: 'ROIC (FMP)',     data: safe('roic').map(v => v?v*100:null),            borderColor: PALETTE.blue,   backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: 'pct' },
+        { label: 'FCF Yield (FMP)',data: safe('freeCashFlowYield').map(v=>v?v*100:null), borderColor: PALETTE.green,  backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: 'pct' },
+        { label: 'P/E',            data: safe('peRatio'),                                borderColor: PALETTE.amber,  backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: 'ratio' },
+        { label: 'EV/EBITDA',      data: safe('enterpriseValueOverEBITDA'),              borderColor: PALETTE.purple, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: 'ratio' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { boxWidth: 12 } } },
+      scales: {
+        x: { grid: { color: '#1e2532' }, ticks: { maxRotation: 45 } },
+        pct:   { position: 'left',  grid: { color: '#1e2532' }, ticks: { callback: v => v.toFixed(0)+'%' } },
+        ratio: { position: 'right', grid: { display: false },   ticks: { callback: v => v.toFixed(0)+'x' } },
+      }
+    }
+  });
+})();
+{% endif %}
+
+// ── Buying quarter switcher ───────────────────────────────────
+document.getElementById('bq-select').addEventListener('change', function() {
+  window.location.href = '/company/{{ company_id }}?buying_quarter=' + this.value;
+});
+</script>
+</body>
+</html>
