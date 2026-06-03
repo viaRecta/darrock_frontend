@@ -104,7 +104,7 @@ def detail_external(portfolio_id: int):
 
 @app.get('/portfolio/<int:portfolio_id>/<tab>')
 def detail_tab(portfolio_id: int, tab: str):
-    if tab not in ('contribution', 'sectors', 'risk', 'daily'):
+    if tab not in ('contribution', 'sectors', 'risk', 'daily', 'compare'):
         return jsonify({'error': 'unknown tab'}), 404
     params = {}
     if request.args.get('initial_cash'):

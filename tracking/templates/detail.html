@@ -12,7 +12,7 @@
   started <b>{{ portfolio.start_date }}</b> ·
   {{ portfolio.days_elapsed }}{% if portfolio.days_total %}/{{ portfolio.days_total }}{% endif %} days ·
   benchmark <b>{{ portfolio.benchmark_name }}</b> ·
-  <a href="/portfolio/{{ portfolio_id }}/external" class="row-link">Compare to Wikifolio &rarr;</a>
+  <a href="/portfolio/{{ portfolio_id }}/external" class="row-link">Compare to External &rarr;</a>
 </p>
 
 {% if warnings %}
@@ -93,6 +93,7 @@
   <button data-tab="sectors">Sectors</button>
   <button data-tab="risk">Risk Detail</button>
   <button data-tab="daily">Daily Log</button>
+  <button data-tab="compare">Compare All</button>
 </div>
 
 {# Holdings tab — pre-rendered #}
@@ -169,6 +170,7 @@
 <div class="tab-panel" id="panel-sectors"><div class="tab-loading">click tab to load…</div></div>
 <div class="tab-panel" id="panel-risk"><div class="tab-loading">click tab to load…</div></div>
 <div class="tab-panel" id="panel-daily"><div class="tab-loading">click tab to load…</div></div>
+<div class="tab-panel" id="panel-compare"><div class="tab-loading">click tab to load…</div></div>
 
 <script id="series-data" type="application/json">{{ series_json|safe }}</script>
 <script>
@@ -785,6 +787,108 @@
       },
     });
   };
+
+  // ── Tab renderer: Compare All ──────────────────────────────────────
+  window.renderTab_compare = function (panel, data) {
+    const dates   = data.dates   || [];
+    const seriesArr = data.series || [];
+    const ic      = data.initial_cash || 0;
+
+    // Fixed colours per key; cycle through palette for unknown keys.
+    const PALETTE = ['#f9c86d','#89b4fa','#a6e3a1','#fab387','#94e2d5'];
+    const KEY_COLOR = {
+      portfolio: '#6cd97e',
+      sp500:     '#9bd',
+      ibkr:      '#cba6f7',
+    };
+    let paletteIdx = 0;
+    function colorFor(key) {
+      if (KEY_COLOR[key]) return KEY_COLOR[key];
+      if (key.startsWith('wikifolio_')) return '#f9c86d';
+      return PALETTE[paletteIdx++ % PALETTE.length];
+    }
+
+    // Build summary rows (first non-null → last non-null return %).
+    function totalReturn(values) {
+      const first = values.find(v => v != null);
+      const last  = [...values].reverse().find(v => v != null);
+      if (first == null || last == null || first === 0) return null;
+      return (last - first) / first * 100;
+    }
+
+    const summaryRows = seriesArr.map(s => {
+      const ret = totalReturn(s.values);
+      const cls = ret == null ? '' : (ret >= 0 ? 'pos' : 'neg');
+      const retStr = ret == null ? '—' : (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
+      const last = [...(s.values || [])].reverse().find(v => v != null);
+      const lastStr = last == null ? '—' : '$' + Math.round(last).toLocaleString();
+      return `<tr>
+        <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;
+                         background:${colorFor(s.key)};margin-right:6px;"></span>${s.label}</td>
+        <td class="tabular ${cls}">${retStr}</td>
+        <td class="tabular">${lastStr}</td>
+      </tr>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <div class="card chart-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <h2 style="margin:0;font-size:14px;color:#e6e6e6;">All Benchmarks — rebased to $${Math.round(ic).toLocaleString()}</h2>
+        </div>
+        <canvas id="compare-chart" height="80"></canvas>
+      </div>
+      <div class="card" style="padding:0;overflow:auto;">
+        <table>
+          <thead><tr>
+            <th>Series</th>
+            <th class="tabular">Total return</th>
+            <th class="tabular">Last value</th>
+          </tr></thead>
+          <tbody>${summaryRows}</tbody>
+        </table>
+      </div>`;
+
+    // Re-init colorFor index (was consumed above for summary).
+    paletteIdx = 0;
+    const datasets = seriesArr.map(s => {
+      const col = colorFor(s.key);
+      const isDashed = s.key !== 'portfolio';
+      return {
+        label:           s.label,
+        data:            s.values,
+        borderColor:     col,
+        backgroundColor: col.startsWith('#') ? col + '12' : col,
+        borderWidth:     s.key === 'portfolio' ? 2.5 : 1.8,
+        borderDash:      isDashed ? [5, 4] : [],
+        pointRadius:     0,
+        tension:         0.1,
+        spanGaps:        true,
+      };
+    });
+
+    new Chart(document.getElementById('compare-chart').getContext('2d'), {
+      type: 'line',
+      data: { labels: dates, datasets },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#e6e6e6', font: { size: 11 } } },
+          tooltip: { callbacks: {
+            label: c => `${c.dataset.label}: ${c.parsed.y == null ? '—' :
+              '$' + Math.round(c.parsed.y).toLocaleString()}`,
+          }},
+        },
+        scales: {
+          x: { ticks: { color: '#9aa', maxTicksLimit: 10 }, grid: { color: '#262a35' } },
+          y: { ticks: { color: '#9aa',
+                        callback: v => '$' + Math.round(v).toLocaleString() },
+               grid: { color: '#262a35' } },
+        },
+      },
+    });
+  };
+
 })();
 </script>
 {% endblock %}
