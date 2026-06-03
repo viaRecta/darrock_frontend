@@ -1,0 +1,305 @@
+{% extends "_base.html" %}
+{% block title %}{{ portfolio.name }} — IBKR Detail — Tracking{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+
+{# ── Header ──────────────────────────────────────────────────────────── #}
+<h1>{{ portfolio.name }} <small style="font-size:14px;color:#9aa;">IBKR Portfolio</small></h1>
+<p class="meta-row">
+  {{ portfolio.index_name }} · {{ portfolio.year }} ·
+  started <b>{{ portfolio.start_date }}</b> ·
+  {{ portfolio.days_elapsed }}{% if portfolio.days_total %}/{{ portfolio.days_total }}{% endif %} days ·
+  benchmark <b>IBKR NAV</b>
+  {% if ibkr.date %} · as of <b>{{ ibkr.date }}</b>{% endif %} ·
+  <a href="/portfolio/{{ portfolio_id }}" class="row-link">&larr; main scorecard</a>
+</p>
+
+{% if warnings %}
+  {% for w in warnings %}<div class="warn">{{ w }}</div>{% endfor %}
+{% endif %}
+
+{# ── 7 summary cards ─────────────────────────────────────────────────── #}
+<div class="summary-grid">
+  <div class="card">
+    <div class="label">Return</div>
+    <div class="value {% if summary.portfolio_return_pct and summary.portfolio_return_pct > 0 %}pos{% elif summary.portfolio_return_pct and summary.portfolio_return_pct < 0 %}neg{% endif %}">
+      {% if summary.portfolio_return_pct is not none %}{{ '%+.2f'|format(summary.portfolio_return_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">IBKR NAV Return</div>
+    <div class="value {% if summary.benchmark_return_pct and summary.benchmark_return_pct > 0 %}pos{% elif summary.benchmark_return_pct and summary.benchmark_return_pct < 0 %}neg{% endif %}">
+      {% if summary.benchmark_return_pct is not none %}{{ '%+.2f'|format(summary.benchmark_return_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Alpha vs IBKR</div>
+    <div class="value {% if summary.alpha_pp and summary.alpha_pp > 0 %}pos{% elif summary.alpha_pp and summary.alpha_pp < 0 %}neg{% endif %}">
+      {% if summary.alpha_pp is not none %}{{ '%+.2f'|format(summary.alpha_pp) }}pp{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Max Drawdown</div>
+    <div class="value neg">
+      {% if summary.max_drawdown_pct is not none %}{{ '%.2f'|format(summary.max_drawdown_pct) }}%{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Portfolio Value</div>
+    <div class="value">
+      {% if summary.current_value is not none %}${{ '{:,.0f}'.format(summary.current_value) }}{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="label">Initial</div>
+    <div class="value">${{ '{:,.0f}'.format(summary.initial_cash) }}</div>
+  </div>
+  <div class="card">
+    <div class="label">Cash</div>
+    <div class="value">${{ '{:,.0f}'.format(summary.cash_remainder) }}</div>
+  </div>
+</div>
+
+{# ── Main chart — Portfolio / IBKR NAV / SP500 ───────────────────────── #}
+<div class="card chart-card">
+  <div class="chart-controls">
+    <button class="active" data-series="value">Value</button>
+    <button data-series="rolling">Rolling 30d</button>
+  </div>
+  <canvas id="main-chart" height="50"></canvas>
+</div>
+
+{# ── Risk strip ──────────────────────────────────────────────────────── #}
+<div class="risk-strip">
+  <div class="item"><span class="lbl">Sharpe</span>
+    <span class="num">{% if risk_strip.sharpe is not none %}{{ '%.2f'|format(risk_strip.sharpe) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Sortino</span>
+    <span class="num">{% if risk_strip.sortino is not none %}{{ '%.2f'|format(risk_strip.sortino) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Volatility</span>
+    <span class="num">{% if risk_strip.volatility_pct is not none %}{{ '%.1f'|format(risk_strip.volatility_pct) }}%{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Beta vs IBKR</span>
+    <span class="num">{% if risk_strip.beta is not none %}{{ '%.2f'|format(risk_strip.beta) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">R²</span>
+    <span class="num">{% if risk_strip.r_squared is not none %}{{ '%.2f'|format(risk_strip.r_squared) }}{% else %}—{% endif %}</span></div>
+  <div class="item"><span class="lbl">Treynor</span>
+    <span class="num">{% if risk_strip.treynor is not none %}{{ '%.2f'|format(risk_strip.treynor) }}{% else %}—{% endif %}</span></div>
+</div>
+
+{# ── IBKR NAV Breakdown ──────────────────────────────────────────────── #}
+{% if ibkr %}
+{% set day_pnl = (ibkr.nav_end or 0) - (ibkr.nav_start or 0) %}
+<div class="risk-strip" style="margin-top:12px;">
+  <div class="item">
+    <span class="lbl">Day P&L</span>
+    <span class="num {% if day_pnl > 0 %}pos{% elif day_pnl < 0 %}neg{% endif %}">
+      {% if day_pnl > 0 %}+{% endif %}${{ '{:,.0f}'.format(day_pnl) }}
+    </span>
+  </div>
+  <div class="item">
+    <span class="lbl">IBKR NAV</span>
+    <span class="num">${{ '{:,.0f}'.format(ibkr.nav_end or 0) }}</span>
+  </div>
+  <div class="item">
+    <span class="lbl">Stock</span>
+    <span class="num">${{ '{:,.0f}'.format(ibkr.stock or 0) }}</span>
+  </div>
+  <div class="item">
+    <span class="lbl">Cash</span>
+    <span class="num">${{ '{:,.0f}'.format(ibkr.cash or 0) }}</span>
+  </div>
+  <div class="item">
+    <span class="lbl">Dividends</span>
+    <span class="num">${{ '{:,.2f}'.format(ibkr.dividend_accruals or 0) }}</span>
+  </div>
+  <div class="item">
+    <span class="lbl">Prev NAV</span>
+    <span class="num">${{ '{:,.0f}'.format(ibkr.nav_start or 0) }}</span>
+  </div>
+</div>
+
+{# ── Holdings table (IBKR positions) ─────────────────────────────────── #}
+{% if ibkr.positions %}
+<div class="card" style="padding:0;overflow:auto;max-height:600px;margin-top:16px;">
+  <table id="ibkr-holdings-table">
+    <thead>
+      <tr>
+        <th class="sortable" data-sort="ticker">Ticker</th>
+        <th class="sortable" data-sort="name">Name</th>
+        <th class="sortable" data-sort="sector">Sector</th>
+        <th class="sortable" data-sort="shares">Shares</th>
+        <th class="sortable" data-sort="price">Price</th>
+        <th class="sortable" data-sort="value">Value</th>
+        <th class="sortable" data-sort="nav">% NAV</th>
+        <th class="sortable" data-sort="mtd">MTD P&L</th>
+        <th class="sortable" data-sort="ytd">YTD P&L</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in ibkr.positions %}
+      <tr
+        data-ticker="{{ p.ticker or p.symbol }}"
+        data-name="{{ p.name or p.symbol }}"
+        data-sector="{{ p.sector or '' }}"
+        data-shares="{{ p.shares }}"
+        data-price="{{ p.price }}"
+        data-value="{{ p.positionValue }}"
+        data-nav="{{ p.percentOfNAV }}"
+        data-mtd="{{ p.mtmMTD }}"
+        data-ytd="{{ p.mtmYTD }}"
+      >
+        <td><b>{{ p.ticker or p.symbol }}</b></td>
+        <td style="color:#9aa;font-size:12px;">{{ p.name or '—' }}</td>
+        <td style="color:#9aa;font-size:12px;">{{ p.sector or '—' }}</td>
+        <td class="tabular">{{ p.shares }}</td>
+        <td class="tabular">${{ '%.2f'|format(p.price) }}</td>
+        <td class="tabular">${{ '{:,.0f}'.format(p.positionValue) }}</td>
+        <td class="tabular">{{ '%.2f'|format(p.percentOfNAV) }}%</td>
+        <td class="tabular {% if p.mtmMTD > 0 %}pos{% elif p.mtmMTD < 0 %}neg{% endif %}">
+          {% if p.mtmMTD > 0 %}+{% endif %}${{ '{:,.0f}'.format(p.mtmMTD) }}
+        </td>
+        <td class="tabular {% if p.mtmYTD > 0 %}pos{% elif p.mtmYTD < 0 %}neg{% endif %}">
+          {% if p.mtmYTD > 0 %}+{% endif %}${{ '{:,.0f}'.format(p.mtmYTD) }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# ── MTD / YTD Performance bar chart ─────────────────────────────────── #}
+<div class="card chart-card" style="margin-top:16px;">
+  <h2 style="margin:0 0 10px;font-size:13px;color:#e6e6e6;">MTD &amp; YTD P&L by Position</h2>
+  <canvas id="perf-chart" height="120"></canvas>
+</div>
+{% endif %}{# /ibkr.positions #}
+{% endif %}{# /ibkr #}
+
+<script id="series-data" type="application/json">{{ series_json|safe }}</script>
+<script id="ibkr-data" type="application/json">{{ ibkr|tojson }}</script>
+<script>
+(function () {
+  const series = JSON.parse(document.getElementById('series-data').textContent);
+  const ibkr   = JSON.parse(document.getElementById('ibkr-data').textContent);
+
+  // ── Main chart: Portfolio + IBKR NAV + SP500 ───────────────────────
+  const ctx = document.getElementById('main-chart').getContext('2d');
+  const valueDatasets = [
+    { label: 'Portfolio', data: series.portfolio_value,
+      borderColor: '#6cd97e', backgroundColor: 'rgba(108,217,126,0.08)',
+      tension: 0.1, pointRadius: 0, borderWidth: 2.5, spanGaps: true },
+    { label: 'IBKR NAV', data: series.benchmark_value,
+      borderColor: '#cba6f7', backgroundColor: 'rgba(203,166,247,0.06)',
+      tension: 0.1, pointRadius: 0, borderWidth: 1.8, borderDash: [5, 4], spanGaps: true },
+    { label: 'S&P 500', data: series.sp500_value,
+      borderColor: '#9bd', backgroundColor: 'rgba(155,187,221,0.05)',
+      tension: 0.1, pointRadius: 0, borderWidth: 1.8, borderDash: [3, 3], spanGaps: true },
+  ];
+  const rollingDatasets = [
+    { label: '30d trailing return %', data: series.rolling_30d_pct,
+      borderColor: '#cba6f7', backgroundColor: 'rgba(203,166,247,0.08)',
+      tension: 0.1, pointRadius: 0, borderWidth: 2, spanGaps: true }
+  ];
+  const baseOptions = (yFormatter) => ({
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#e6e6e6', font: { size: 11 } } },
+      tooltip: { callbacks: {
+        label: c => `${c.dataset.label}: ${yFormatter(c.parsed.y)}`
+      }}
+    },
+    scales: {
+      x: { ticks: { color: '#9aa', maxTicksLimit: 10 }, grid: { color: '#262a35' } },
+      y: { ticks: { color: '#9aa', callback: yFormatter }, grid: { color: '#262a35' } }
+    }
+  });
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: { labels: series.dates, datasets: valueDatasets },
+    options: baseOptions(v => v == null ? '—' : '$' + Math.round(v).toLocaleString())
+  });
+  document.querySelectorAll('.chart-controls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.chart-controls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const which = btn.dataset.series;
+      chart.data.datasets = which === 'value' ? valueDatasets : rollingDatasets;
+      const fmt = which === 'value'
+        ? v => v == null ? '—' : '$' + Math.round(v).toLocaleString()
+        : v => v == null ? '—' : v.toFixed(2) + '%';
+      chart.options = baseOptions(fmt);
+      chart.update();
+    });
+  });
+
+  // ── Holdings table sort ────────────────────────────────────────────
+  (function () {
+    const table = document.getElementById('ibkr-holdings-table');
+    if (!table) return;
+    const tbody = table.tBodies[0];
+    let activeKey = null, asc = true;
+    table.querySelectorAll('th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.sort;
+        if (key === activeKey) { asc = !asc; }
+        else { activeKey = key; asc = (key === 'ticker' || key === 'name' || key === 'sector'); }
+        table.querySelectorAll('th.sortable').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+        th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const isText = (key === 'ticker' || key === 'name' || key === 'sector');
+        rows.sort((a, b) => {
+          const va = a.dataset[key], vb = b.dataset[key];
+          if (isText) return asc ? va.localeCompare(vb) : vb.localeCompare(va);
+          return asc ? parseFloat(va) - parseFloat(vb) : parseFloat(vb) - parseFloat(va);
+        });
+        rows.forEach(r => tbody.appendChild(r));
+      });
+    });
+  })();
+
+  // ── MTD / YTD bar chart ────────────────────────────────────────────
+  const perfCtx = document.getElementById('perf-chart');
+  if (perfCtx && ibkr && ibkr.positions && ibkr.positions.length) {
+    const sorted = [...ibkr.positions].sort((a, b) => b.mtmYTD - a.mtmYTD);
+    new Chart(perfCtx.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: sorted.map(p => p.ticker || p.symbol),
+        datasets: [
+          { label: 'MTD P&L',
+            data: sorted.map(p => p.mtmMTD),
+            backgroundColor: sorted.map(p => p.mtmMTD >= 0
+              ? 'rgba(108,217,126,0.65)' : 'rgba(239,111,111,0.65)'),
+            borderColor: sorted.map(p => p.mtmMTD >= 0 ? '#6cd97e' : '#ef6f6f'),
+            borderWidth: 1 },
+          { label: 'YTD P&L',
+            data: sorted.map(p => p.mtmYTD),
+            backgroundColor: 'rgba(203,166,247,0.55)',
+            borderColor: '#cba6f7',
+            borderWidth: 1 },
+        ],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#e6e6e6', font: { size: 11 } } },
+          tooltip: { callbacks: {
+            label: c => `${c.dataset.label}: ${c.parsed.x >= 0 ? '+' : ''}$${Math.round(c.parsed.x).toLocaleString()}`
+          }}
+        },
+        scales: {
+          x: { ticks: { color: '#9aa',
+                        callback: v => (v >= 0 ? '+' : '') + '$' + Math.round(v).toLocaleString() },
+               grid: { color: '#262a35' } },
+          y: { ticks: { color: '#e6e6e6', font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+  }
+})();
+</script>
+{% endblock %}

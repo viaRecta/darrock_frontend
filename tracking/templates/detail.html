@@ -13,6 +13,9 @@
   {{ portfolio.days_elapsed }}{% if portfolio.days_total %}/{{ portfolio.days_total }}{% endif %} days ·
   benchmark <b>{{ portfolio.benchmark_name }}</b> ·
   <a href="/portfolio/{{ portfolio_id }}/external" class="row-link">Compare to External &rarr;</a>
+  {% if portfolio.external_benchmark == 'ibkr' %} ·
+  <a href="/portfolio/{{ portfolio_id }}/ibkr" class="row-link">IBKR Detail &rarr;</a>
+  {% endif %}
 </p>
 
 {% if warnings %}

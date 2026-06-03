@@ -77,6 +77,27 @@ def detail(portfolio_id: int):
     )
 
 
+@app.get('/portfolio/<int:portfolio_id>/ibkr')
+def detail_ibkr(portfolio_id: int):
+    """IBKR portfolio detail page — scorecard vs IBKR NAV + SP500 + positions table."""
+    params = {}
+    if request.args.get('initial_cash'):
+        params['initial_cash'] = request.args.get('initial_cash', type=float)
+    data = get_json(f'/api/tracking/portfolios/{portfolio_id}/ibkr', params=params)
+    if 'error' in data:
+        return render_template('error.html', message=data['error']), 404
+    return render_template(
+        'ibkr.html',
+        portfolio=data['portfolio'],
+        summary=data['summary'],
+        risk_strip=data['risk_strip'],
+        warnings=data.get('warnings', []),
+        ibkr=data.get('ibkr', {}),
+        series_json=json.dumps(data['series']),
+        portfolio_id=portfolio_id,
+    )
+
+
 @app.get('/portfolio/<int:portfolio_id>/external')
 def detail_external(portfolio_id: int):
     """External-benchmark page — same scorecard shape as detail.html but with
