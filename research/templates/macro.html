@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Macro Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/v3.css">
+<style>
+  body { overflow: auto; }
+  .macro-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap:1rem; }
+  .macro-card { cursor:pointer; transition:box-shadow .12s; }
+  .macro-card:hover { box-shadow: var(--shadow); }
+  .macro-card .label { font-size:var(--fs-xs); }
+  .macro-card .value { font-size:var(--fs-lg); font-weight:600; line-height:1.1; }
+  .macro-change { font-size:var(--fs-xs); font-weight:500; margin:0.1rem 0 0.4rem; }
+  .spark-wrap { height:42px; }
+  .macro-meta { font-size:var(--fs-xs); color:var(--muted); margin-top:0.4rem; }
+  /* Detail modal */
+  .modal-back { position:fixed; inset:0; background:rgba(0,0,0,0.4); display:none;
+    align-items:center; justify-content:center; z-index:50; }
+  .modal-back.open { display:flex; }
+  .modal { background:var(--surface); border-radius:var(--radius-lg); padding:1.25rem;
+    width:min(880px, 92vw); max-height:88vh; overflow:auto; box-shadow:var(--shadow-lg); }
+  .modal-head { display:flex; align-items:baseline; justify-content:space-between; gap:1rem;
+    margin-bottom:0.75rem; }
+</style>
+</head>
+<body>
+
+{% set nav = 'macro' %}
+{% include '_topbar.html' %}
+
+<div style="max-width:1300px; margin:0 auto; padding:calc(44px + 1.5rem) 1.5rem 3rem;">
+
+<div style="display:flex; align-items:baseline; gap:0.75rem; margin-bottom:1rem;">
+  <h2>Macro Dashboard</h2>
+  <span class="badge">FRED · St. Louis Fed</span>
+</div>
+
+{% if not macro.built %}
+<div class="section"><div class="section-body">
+  <p class="text-muted">{{ macro.message or 'Macro data not yet available.' }}</p>
+</div></div>
+{% else %}
+
+{% for cat in macro.categories %}
+<div class="section">
+  <div class="section-head">{{ cat.name }}</div>
+  <div class="section-body">
+  <div class="macro-grid">
+    {% for s in cat.series %}
+    <div class="card macro-card" data-id="{{ s.id }}" data-display="{{ s.display }}">
+      <div class="label">{{ s.title }}</div>
+      <div class="value js-val">—</div>
+      <div class="macro-change js-change"></div>
+      <div class="spark-wrap"><canvas class="js-spark"></canvas></div>
+      <div class="macro-meta">{{ s.latest_date }} · {{ s.frequency or '' }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endif %}
+</div><!-- /page wrapper -->
+
+<!-- Detail modal -->
+<div class="modal-back" id="modal-back">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="modal-title" style="margin:0;">—</h3>
+        <div class="text-muted" id="modal-sub" style="font-size:var(--fs-xs);"></div>
+      </div>
+      <button class="btn btn-sm btn-ghost" id="modal-close">close</button>
+    </div>
+    <div style="height:420px; position:relative;"><canvas id="modal-chart"></canvas></div>
+  </div>
+</div>
+
+<script>
+Chart.defaults.color = '#8a8a8a';
+Chart.defaults.borderColor = '#d4d4d4';
+Chart.defaults.font.family = 'Jost, "Segoe UI", sans-serif';
+Chart.defaults.font.size = 11;
+
+const MACRO = {{ macro | tojson }};
+
+// ── Value formatting by display hint ──
+function fmtVal(v, display) {
+  if (v == null || isNaN(v)) return '—';
+  const sign = v < 0 ? '-' : '';
+  const a = Math.abs(v);
+  switch (display) {
+    case 'pct_raw':   return v.toFixed(2) + '%';
+    case 'ratio':     return v.toFixed(2);
+    case 'index':     return v.toFixed(1);
+    case 'usd_b':     // value in $billions
+      return sign + '$' + (a >= 1000 ? (a / 1000).toFixed(2) + 'T' : a.toFixed(0) + 'B');
+    case 'usd_m':     // value in $millions
+      return sign + '$' + (a >= 1e6 ? (a / 1e6).toFixed(2) + 'T'
+                         : a >= 1e3 ? (a / 1e3).toFixed(0) + 'B' : a.toFixed(0) + 'M');
+    case 'usd':       // raw USD
+      return sign + '$' + (a >= 1e12 ? (a / 1e12).toFixed(2) + 'T'
+                         : a >= 1e9  ? (a / 1e9).toFixed(0) + 'B' : a.toLocaleString());
+    case 'thousands': // value in thousands of units
+      return a >= 1000 ? sign + (a / 1000).toFixed(1) + 'M' : sign + a.toFixed(0) + 'K';
+    default:          return v.toLocaleString();
+  }
+}
+
+// ── Populate cards (values, change, sparkline) ──
+const SERIES_BY_ID = {};
+(MACRO.categories || []).forEach(cat => cat.series.forEach(s => { SERIES_BY_ID[s.id] = s; }));
+
+document.querySelectorAll('.macro-card').forEach(card => {
+  const s = SERIES_BY_ID[card.dataset.id];
+  if (!s) return;
+  card.querySelector('.js-val').textContent = fmtVal(s.latest, s.display);
+
+  // Change line: pp for rate series, % for levels — based on YoY.
+  const chgEl = card.querySelector('.js-change');
+  let txt = '', cls = 'text-muted';
+  if (s.display === 'pct_raw' && s.yoy_change != null) {
+    const up = s.yoy_change >= 0;
+    txt = (up ? '▲ +' : '▼ ') + s.yoy_change.toFixed(2) + 'pp YoY';
+    cls = up ? 'text-pos' : 'text-neg';
+  } else if (s.yoy_change_pct != null) {
+    const up = s.yoy_change_pct >= 0;
+    txt = (up ? '▲ +' : '▼ ') + (s.yoy_change_pct * 100).toFixed(1) + '% YoY';
+    cls = up ? 'text-pos' : 'text-neg';
+  }
+  chgEl.textContent = txt;
+  chgEl.className = 'macro-change ' + cls;
+
+  // Sparkline
+  const spark = s.spark || [];
+  new Chart(card.querySelector('.js-spark'), {
+    type: 'line',
+    data: {
+      labels: spark.map(p => p.date),
+      datasets: [{
+        data: spark.map(p => p.value),
+        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.10)',
+        borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.3,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } },
+    },
+  });
+
+  card.addEventListener('click', () => openDetail(s));
+});
+
+// ── Detail modal ──
+let modalChart = null;
+const modalBack = document.getElementById('modal-back');
+
+function openDetail(s) {
+  document.getElementById('modal-title').textContent = s.title;
+  document.getElementById('modal-sub').textContent =
+    (s.units || '') + (s.frequency ? ' · ' + s.frequency : '');
+  modalBack.classList.add('open');
+  fetch('/api/macro/series/' + s.id)
+    .then(r => r.json())
+    .then(d => {
+      const obs = d.observations || [];
+      if (modalChart) modalChart.destroy();
+      modalChart = new Chart(document.getElementById('modal-chart'), {
+        type: 'line',
+        data: {
+          labels: obs.map(o => o.date),
+          datasets: [{
+            label: s.title, data: obs.map(o => o.value),
+            borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)',
+            borderWidth: 1.5, pointRadius: 0, fill: true, tension: 0.2,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { maxTicksLimit: 12 } }, y: { ticks: {} } },
+        },
+      });
+    });
+}
+function closeDetail() { modalBack.classList.remove('open'); }
+document.getElementById('modal-close').addEventListener('click', closeDetail);
+modalBack.addEventListener('click', e => { if (e.target === modalBack) closeDetail(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+// ── Logout ──
+document.getElementById('logout-btn')?.addEventListener('click', () => {
+  fetch('/api/auth/logout', { method: 'POST' }).then(() => location.href = '/');
+});
+</script>
+</body>
+</html>

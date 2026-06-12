@@ -26,19 +26,8 @@
 <body>
 
 <!-- ─── Topbar ───────────────────────────────────────────────── -->
-<header class="topbar">
-  <a href="/research" class="topbar-brand">Darrock</a>
-  <div class="topbar-actions">
-    <a href="/research">Research</a>
-    <a href="/universe">Universe</a>
-    <a href="/custom">Custom</a>
-    {% if user %}
-      {% if user.role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
-      <span class="ui text-muted" style="font-size:var(--fs-xs);">{{ user.display_name }}</span>
-      <button id="logout-btn" class="btn btn-sm btn-ghost">logout</button>
-    {% endif %}
-  </div>
-</header>
+{% set nav = 'universe' %}
+{% include '_topbar.html' %}
 
 <div style="max-width:1400px; margin:0 auto; padding:calc(44px + 1.5rem) 1.5rem 3rem;">
 
@@ -52,6 +41,12 @@
       <span class="badge">{{ industry }}</span>
       {% if sp500_years %}
       <span class="badge">S&P 500 since {{ sp500_years[0] }}</span>
+      {% endif %}
+      {% if sector_context and sector_context.rank %}
+      <span class="badge" title="Market-cap standing among current S&P 500 members in this sector">
+        #{{ sector_context.rank }} of {{ sector_context.sector_count }} in {{ sector_context.sector }}
+        · {{ sector_context.mcap_pct_of_sector|pct1 }} of sector
+      </span>
       {% endif %}
     </div>
   </div>
@@ -70,7 +65,7 @@
 {% set prev3  = metrics[3] if metrics|length > 3 else {} %}
 
 {% macro trend(val, prev) %}
-{% if val is not none and prev is not none %}
+{% if val is defined and val is not none and prev is defined and prev is not none %}
   {% set delta = val - prev %}
   {% if delta > 0.005 %}<span class="text-pos" style="font-size:var(--fs-xs);">▲ {{ (delta*100)|round(1) }}pp</span>
   {% elif delta < -0.005 %}<span class="text-neg" style="font-size:var(--fs-xs);">▼ {{ (delta*100)|abs|round(1) }}pp</span>
@@ -123,6 +118,20 @@
   </div>
   </div>
 </div>
+
+<!-- ─── Price vs S&P 500 ──────────────────────────────────────── -->
+{% if price_history and price_history|length > 1 %}
+<div class="section">
+  <div class="section-head">Price Performance vs S&P 500</div>
+  <div class="section-body">
+    <div class="card">
+      <div style="font-size:var(--fs-xs); font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); margin-bottom:0.75rem;">{{ ticker }} vs S&P 500 — rebased to 100 ({{ price_history|length }} months)</div>
+      <div style="height:340px; position:relative;"><canvas id="chart-vs-spx"></canvas></div>
+    </div>
+    <div style="font-size:var(--fs-xs); color:var(--muted); margin-top:0.5rem;">Monthly closing prices, both rebased to 100 at the start of the window. Price return only (excludes dividends).</div>
+  </div>
+</div>
+{% endif %}
 
 <!-- ─── Charts ────────────────────────────────────────────────── -->
 <div class="section">
@@ -364,6 +373,35 @@ const PALETTE = {
 // ── Data from Jinja ───────────────────────────────────────────
 const metricsRaw = {{ stock_metrics | tojson }};
 const fmpRaw     = {{ fmp_metrics   | tojson }};
+const priceVsSpx = {{ price_history | tojson }};
+
+// ── Chart 0: Price vs S&P 500 (rebased to 100) ───────────────
+if (priceVsSpx && priceVsSpx.length > 1) {
+  const c0 = priceVsSpx[0].company, i0 = priceVsSpx[0].index;
+  new Chart(document.getElementById('chart-vs-spx'), {
+    type: 'line',
+    data: {
+      labels: priceVsSpx.map(p => p.date),
+      datasets: [
+        { label: '{{ ticker }}', data: priceVsSpx.map(p => p.company / c0 * 100),
+          borderColor: PALETTE.blue, backgroundColor: 'rgba(59,130,246,0.08)',
+          borderWidth: 2, pointRadius: 0, fill: true, tension: 0.2 },
+        { label: 'S&P 500', data: priceVsSpx.map(p => p.index / i0 * 100),
+          borderColor: PALETTE.slate, backgroundColor: 'transparent',
+          borderWidth: 2, pointRadius: 0, borderDash: [5, 4], tension: 0.2 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { boxWidth: 12 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } },
+        y: { grid: { color: '#e5e5e5' }, title: { display: true, text: 'Rebased to 100' } },
+      },
+    },
+  });
+}
 
 // Sort by year ascending for charts
 const mAll = [...metricsRaw].sort((a, b) => a.year - b.year);

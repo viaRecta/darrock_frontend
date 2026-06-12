@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S&P 500 Composition — Through Time</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/v3.css">
+<style>
+  body { overflow: auto; }
+  .summary-strip { display:flex; flex-wrap:wrap; gap:1.5rem; margin-bottom:1.5rem;
+    padding-bottom:1rem; border-bottom:1px solid var(--border); }
+  .summary-item .label { font-size:var(--fs-xs); color:var(--muted);
+    text-transform:uppercase; letter-spacing:0.05em; }
+  .summary-item .value { font-size:var(--fs-metric); font-weight:600; }
+  .two-col { display:grid; grid-template-columns: minmax(320px, 1fr) minmax(320px, 1.2fr);
+    gap:1.25rem; align-items:start; }
+  .chart-box { position:relative; min-height:300px; }
+  .foot { font-size:var(--fs-xs); color:var(--muted); margin-top:0.5rem; }
+  @media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+{% set nav = 'composition' %}
+{% include '_topbar.html' %}
+
+<div style="max-width:1300px; margin:0 auto; padding:calc(44px + 1.5rem) 1.5rem 3rem;">
+
+{% set totals = composition.totals %}
+<div style="display:flex; align-items:baseline; gap:0.75rem; margin-bottom:1rem;">
+  <h2>S&P 500 Composition</h2>
+  <span class="badge">as of {{ totals.year }}</span>
+</div>
+
+<div class="summary-strip">
+  <div class="summary-item">
+    <div class="label">Members</div>
+    <div class="value">{{ totals.members }}</div>
+  </div>
+  <div class="summary-item">
+    <div class="label">Total Market Cap</div>
+    <div class="value" id="total-mcap">—</div>
+  </div>
+  <div class="summary-item">
+    <div class="label">Sectors</div>
+    <div class="value">{{ composition.sectors|length }}</div>
+  </div>
+  <div class="summary-item">
+    <div class="label">History</div>
+    <div class="value">{{ history.history[0].year }}–{{ history.history[-1].year }}</div>
+  </div>
+</div>
+
+<!-- ─── Current breakdown ─────────────────────────────────────── -->
+<div class="section">
+  <div class="section-head">Current Breakdown by Sector</div>
+  <div class="section-body">
+  <div class="two-col">
+    <div class="card chart-box"><canvas id="chart-sectors"></canvas></div>
+    <div class="tbl-wrap">
+      <table class="tbl" id="sector-table">
+        <thead>
+          <tr>
+            <th>Sector</th>
+            <th class="r">Count</th>
+            <th class="r">Count %</th>
+            <th class="r">Mkt-Cap %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in composition.sectors %}
+          <tr class="sector-row" data-sector="{{ s.name }}" style="cursor:pointer;">
+            <td>{{ s.name }}</td>
+            <td class="r mono">{{ s.count }}</td>
+            <td class="r mono">{{ s.count_pct|pct1 }}</td>
+            <td class="r mono">{{ s.mcap_pct|pct1 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="foot">Market-cap weight = latest price × diluted shares. Click a sector to filter holdings below.</div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ─── Composition through time ──────────────────────────────── -->
+<div class="section">
+  <div class="section-head">Sector Composition Through Time</div>
+  <div class="section-body">
+    <div class="card chart-box" style="min-height:380px;"><canvas id="chart-history"></canvas></div>
+    <div class="foot">Share of <em>classified</em> members per year (count-based). Companies that have
+      since delisted often carry no current sector tag; classification coverage runs ~63% in the
+      1960s rising to 100% by 2020, and pre-2007 membership reconstruction is partial.</div>
+  </div>
+</div>
+
+<!-- ─── Turnover & churn ──────────────────────────────────────── -->
+<div class="section">
+  <div class="section-head">Index Turnover & Churn</div>
+  <div class="section-body">
+  <div class="two-col">
+    <div class="card chart-box"><canvas id="chart-turnover"></canvas></div>
+    <div class="card chart-box"><canvas id="chart-reasons"></canvas></div>
+  </div>
+  <div class="foot">Additions and removals per year from the constituent change log. Reason buckets cover removals.</div>
+
+  <div style="margin-top:1.25rem;">
+    <div style="font-size:var(--fs-xs); color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">Recent changes — who left & why</div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr><th>Year</th><th>In</th><th>Out</th><th>Reason</th></tr>
+        </thead>
+        <tbody>
+          {% for e in turnover.recent_events %}
+          <tr>
+            <td class="mono">{{ e.year }}</td>
+            <td>{% if e.added_ticker %}<span class="badge badge-ticker">{{ e.added_ticker }}</span> <span class="text-muted" style="font-size:var(--fs-xs);">{{ e.added_name }}</span>{% else %}—{% endif %}</td>
+            <td>{% if e.removed_ticker %}<span class="badge">{{ e.removed_ticker }}</span> <span class="text-muted" style="font-size:var(--fs-xs);">{{ e.removed_name }}</span>{% else %}—{% endif %}</td>
+            <td class="text-muted" style="font-size:var(--fs-xs);">{{ e.reason or '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ─── Top holdings ──────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-head">Top 25 Holdings by Market Cap</div>
+  <div class="section-body tbl-wrap">
+    <table class="tbl" id="holdings-table">
+      <thead>
+        <tr><th>#</th><th>Ticker</th><th>Company</th><th>Sector</th><th class="r">Market Cap</th></tr>
+      </thead>
+      <tbody>
+        {% for h in composition.top_holdings %}
+        <tr class="holding-row" data-company-id="{{ h.company_id }}" data-sector="{{ h.sector }}" style="cursor:pointer;">
+          <td class="mono text-muted">{{ loop.index }}</td>
+          <td><span class="badge badge-ticker">{{ h.ticker }}</span></td>
+          <td title="{{ h.name }}">{{ h.name }}</td>
+          <td class="text-muted">{{ h.sector }}</td>
+          <td class="r mono mcap-cell" data-mcap="{{ h.market_cap }}">—</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /page wrapper -->
+
+<script>
+Chart.defaults.color = '#8a8a8a';
+Chart.defaults.borderColor = '#d4d4d4';
+Chart.defaults.font.family = 'Jost, "Segoe UI", sans-serif';
+Chart.defaults.font.size = 11;
+
+const COMPOSITION = {{ composition | tojson }};
+const HISTORY     = {{ history | tojson }};
+const TURNOVER    = {{ turnover | tojson }};
+
+// Stable per-sector colours.
+const SECTOR_COLORS = {
+  'Technology':'#3b82f6','Financial Services':'#22c55e','Healthcare':'#ef4444',
+  'Consumer Cyclical':'#f59e0b','Industrials':'#a78bfa','Communication Services':'#2dd4bf',
+  'Consumer Defensive':'#eab308','Energy':'#f97316','Real Estate':'#ec4899',
+  'Basic Materials':'#14b8a6','Utilities':'#64748b','Unknown':'#cbd5e1',
+};
+const colorFor = (s, i) => SECTOR_COLORS[s] ||
+  ['#3b82f6','#22c55e','#ef4444','#f59e0b','#a78bfa','#2dd4bf','#eab308','#f97316','#ec4899','#14b8a6','#64748b'][i % 11];
+
+function fmtMcap(v) {
+  if (v == null || isNaN(v)) return '—';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'T';
+  if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'B';
+  return '$' + v.toFixed(0) + 'M';
+}
+
+// Total market cap headline
+document.getElementById('total-mcap').textContent = fmtMcap(COMPOSITION.totals.total_market_cap);
+
+// Market-cap cells
+document.querySelectorAll('.mcap-cell').forEach(td => {
+  td.textContent = fmtMcap(parseFloat(td.dataset.mcap));
+});
+
+// ── Chart: sector doughnut (mcap weight) ──
+(function () {
+  const secs = COMPOSITION.sectors.filter(s => s.mcap_pct);
+  new Chart(document.getElementById('chart-sectors'), {
+    type: 'doughnut',
+    data: {
+      labels: secs.map(s => s.name),
+      datasets: [{
+        data: secs.map(s => (s.mcap_pct * 100)),
+        backgroundColor: secs.map((s, i) => colorFor(s.name, i)),
+        borderWidth: 1, borderColor: '#ffffff',
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } },
+        tooltip: { callbacks: { label: c => c.label + ': ' + c.parsed.toFixed(1) + '%' } },
+      },
+    },
+  });
+})();
+
+// ── Chart: composition through time (stacked area, count share) ──
+(function () {
+  const hist = HISTORY.history;
+  const sectors = HISTORY.sectors;
+  const years = hist.map(h => h.year);
+  const datasets = sectors.map((sec, i) => ({
+    label: sec,
+    data: hist.map(h => {
+      const cls = h.classified || 0;
+      return cls ? ((h.sectors[sec] || 0) / cls * 100) : null;
+    }),
+    backgroundColor: colorFor(sec, i) + 'cc',
+    borderColor: colorFor(sec, i),
+    borderWidth: 0, fill: true, pointRadius: 0, tension: 0.2,
+  }));
+  new Chart(document.getElementById('chart-history'), {
+    type: 'line',
+    data: { labels: years, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 14 } },
+        y: { stacked: true, max: 100, ticks: { callback: v => v + '%' } },
+      },
+    },
+  });
+})();
+
+// ── Chart: turnover (adds vs removals, year >= 2000) ──
+(function () {
+  const tl = TURNOVER.timeline.filter(t => t.year >= 2000);
+  new Chart(document.getElementById('chart-turnover'), {
+    type: 'bar',
+    data: {
+      labels: tl.map(t => t.year),
+      datasets: [
+        { label: 'Additions', data: tl.map(t => t.additions), backgroundColor: '#22c55ecc' },
+        { label: 'Removals',  data: tl.map(t => t.removals),  backgroundColor: '#ef4444cc' },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { boxWidth: 12 } } },
+      scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 13 } }, y: { beginAtZero: true } },
+    },
+  });
+})();
+
+// ── Chart: removal reasons doughnut ──
+(function () {
+  const r = TURNOVER.reasons;
+  new Chart(document.getElementById('chart-reasons'), {
+    type: 'doughnut',
+    data: {
+      labels: r.map(x => x.name),
+      datasets: [{
+        data: r.map(x => x.count),
+        backgroundColor: ['#3b82f6','#f59e0b','#ef4444','#a78bfa','#64748b','#94a3b8'],
+        borderWidth: 1, borderColor: '#ffffff',
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } },
+        title: { display: true, text: 'Removal reasons (all years)', font: { size: 11 } },
+      },
+    },
+  });
+})();
+
+// ── Holdings row click → company detail ──
+document.querySelectorAll('.holding-row').forEach(tr => {
+  tr.addEventListener('click', () => { location.href = '/company/' + tr.dataset.companyId; });
+});
+
+// ── Sector-row click filters the holdings table ──
+let activeSector = '';
+document.querySelectorAll('.sector-row').forEach(tr => {
+  tr.addEventListener('click', () => {
+    const s = tr.dataset.sector;
+    activeSector = (activeSector === s) ? '' : s;
+    document.querySelectorAll('.sector-row').forEach(r => r.classList.toggle('candidate-selected', r.dataset.sector === activeSector));
+    document.querySelectorAll('.holding-row').forEach(r => {
+      r.classList.toggle('hidden', activeSector && r.dataset.sector !== activeSector);
+    });
+  });
+});
+
+// ── Logout ──
+document.getElementById('logout-btn')?.addEventListener('click', () => {
+  fetch('/api/auth/logout', { method: 'POST' }).then(() => location.href = '/');
+});
+</script>
+</body>
+</html>

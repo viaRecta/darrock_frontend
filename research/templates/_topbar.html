@@ -1,0 +1,18 @@
+{# Shared main-nav topbar. Set `nav` before including for the active marker:
+   {% set nav = 'composition' %}{% include '_topbar.html' %}
+   Expects `user` in context (may be falsy on public pages). #}
+<header class="topbar">
+  <a href="/research" class="topbar-brand">Darrock</a>
+  <div class="topbar-actions">
+    <a href="/research"    {% if nav=='research' %}class="active"{% endif %}>Research</a>
+    <a href="/universe"    {% if nav=='universe' %}class="active"{% endif %}>Universe</a>
+    <a href="/composition" {% if nav=='composition' %}class="active"{% endif %}>Composition</a>
+    <a href="/macro"       {% if nav=='macro' %}class="active"{% endif %}>Macro</a>
+    <a href="/custom"      {% if nav=='custom' %}class="active"{% endif %}>Custom</a>
+    {% if user %}
+      {% if user.role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
+      <span class="ui text-muted" style="font-size:var(--fs-xs);">{{ user.display_name }}</span>
+      <button id="logout-btn" class="btn btn-sm btn-ghost">logout</button>
+    {% endif %}
+  </div>
+</header>

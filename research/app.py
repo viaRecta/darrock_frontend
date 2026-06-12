@@ -86,6 +86,13 @@ def login():
         req_data = request.get_json() or {}
         _, data = post_json('/api/auth/login', data=request.get_data())
         if data.get('success') and data.get('user'):
+            # Track-only users (role 'tracker') may not access the research site.
+            if data['user'].get('role') == 'tracker':
+                return jsonify({
+                    "success": False,
+                    "message": "This account has tracking access only. "
+                               "Please use the tracking site.",
+                }), 403
             session['user'] = data['user']
             session['password'] = req_data.get('password', '')
         status = 200 if data.get('success') else 401
@@ -142,6 +149,16 @@ def api_tickers():
     return jsonify(data)
 
 
+@app.get('/api/macro/series/<series_id>')
+def api_macro_detail(series_id: str):
+    """Frontend proxy → backend macro detail. Feeds the Macro page detail chart."""
+    try:
+        data = get_json(f'/api/macro/series/{series_id}')
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 502
+    return jsonify(data)
+
+
 @app.route('/admin')
 def admin():
     if USE_MOCKDATA:
@@ -179,6 +196,28 @@ def universe():
     return render_template('universe.html',
                            companies=data.get('companies', []),
                            user=session.get('user'))
+
+
+@app.route('/composition')
+def composition():
+    """Index-composition showcase — sector breakdown, history, turnover."""
+    if not USE_MOCKDATA and not session.get('user'):
+        return redirect('/')
+    comp = get_json('/api/index/composition')
+    hist = get_json('/api/index/composition/history')
+    tov = get_json('/api/index/turnover')
+    return render_template('composition.html',
+                           composition=comp, history=hist, turnover=tov,
+                           user=session.get('user'))
+
+
+@app.route('/macro')
+def macro():
+    """Macro dashboard — FRED series card grid."""
+    if not USE_MOCKDATA and not session.get('user'):
+        return redirect('/')
+    data = get_json('/api/macro/series')
+    return render_template('macro.html', macro=data, user=session.get('user'))
 
 
 @app.route('/company/<int:company_id>')

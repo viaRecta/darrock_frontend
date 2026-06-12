@@ -7,23 +7,18 @@
 <link rel="stylesheet" href="/static/css/v3.css">
 <style>
   body { overflow: auto; }
+  .sector-strip { display:flex; flex-wrap:wrap; gap:0.4rem; margin-bottom:1rem; }
+  .sector-chip { display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.6rem;
+    border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);
+    font-family:var(--font-ui); font-size:var(--fs-xs); }
+  .sector-chip .w { font-weight:600; color:var(--text); }
+  .sector-chip .n { color:var(--muted); }
 </style>
 </head>
 <body>
 
-<header class="topbar">
-  <a href="/research" class="topbar-brand">Darrock</a>
-  <div class="topbar-actions">
-    <a href="/research">Research</a>
-    <a href="/universe" class="active">Universe</a>
-    <a href="/custom">Custom</a>
-    {% if user %}
-      {% if user.role == 'admin' %}<a href="/admin">Admin</a>{% endif %}
-      <span class="ui text-muted" style="font-size:var(--fs-xs);">{{ user.display_name }}</span>
-      <button id="logout-btn" class="btn btn-sm btn-ghost">logout</button>
-    {% endif %}
-  </div>
-</header>
+{% set nav = 'universe' %}
+{% include '_topbar.html' %}
 
 <div style="max-width:1200px; margin:0 auto; padding:calc(44px + 1.5rem) 1.5rem 2rem;">
 
@@ -31,6 +26,9 @@
   <h2>S&P 500 Universe</h2>
   <span class="badge" id="count-badge">{{ companies|length }} companies</span>
 </div>
+
+<!-- Sector market-cap weight summary (built from the rows below) -->
+<div class="sector-strip" id="sector-strip"></div>
 
 <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; margin-bottom:1rem;">
   <input id="search" type="text" placeholder="Search ticker or name…" autocomplete="off"
@@ -54,6 +52,7 @@
       <th class="sortable" data-col="name">Company</th>
       <th class="sortable" data-col="sector">Sector</th>
       <th class="sortable" data-col="industry">Industry</th>
+      <th class="sortable r" data-col="mcap" data-numeric="1">Market Cap</th>
     </tr>
   </thead>
   <tbody>
@@ -62,14 +61,16 @@
         data-ticker="{{ c.ticker }}"
         data-name="{{ c.name | lower }}"
         data-sector="{{ c.sector }}"
+        data-mcap="{{ c.market_cap if c.market_cap is not none else '' }}"
         style="cursor:pointer;">
       <td><span class="badge badge-ticker">{{ c.ticker }}</span></td>
       <td title="{{ c.name }}">{{ c.name }}</td>
       <td class="text-muted">{{ c.sector }}</td>
       <td class="text-muted" title="{{ c.industry }}" style="font-size:var(--fs-xs); max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ c.industry }}</td>
+      <td class="r mono mcap-cell">—</td>
     </tr>
     {% else %}
-    <tr><td colspan="4" style="text-align:center; padding:3rem; color:var(--muted);">No companies found.</td></tr>
+    <tr><td colspan="5" style="text-align:center; padding:3rem; color:var(--muted);">No companies found.</td></tr>
     {% endfor %}
   </tbody>
 </table>
@@ -81,6 +82,42 @@
 (function () {
   const rows = Array.from(document.querySelectorAll('#universe-table tbody tr[data-company-id]'));
   const badge = document.getElementById('count-badge');
+
+  // ── Market-cap formatting (values are in $M) ──
+  function fmtMcap(v) {
+    if (v == null || isNaN(v)) return '—';
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(2) + 'T';
+    if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'B';
+    return '$' + v.toFixed(0) + 'M';
+  }
+  rows.forEach(tr => {
+    const raw = tr.dataset.mcap;
+    const v = raw === '' ? null : parseFloat(raw);
+    tr.querySelector('.mcap-cell').textContent = fmtMcap(v);
+  });
+
+  // ── Sector market-cap weight strip ──
+  (function () {
+    const totals = {};
+    let grand = 0;
+    rows.forEach(tr => {
+      const v = tr.dataset.mcap === '' ? 0 : parseFloat(tr.dataset.mcap);
+      if (!v) return;
+      const s = tr.dataset.sector || 'Unknown';
+      totals[s] = (totals[s] || 0) + v;
+      grand += v;
+    });
+    const strip = document.getElementById('sector-strip');
+    Object.entries(totals)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([sector, mc]) => {
+        const pct = grand ? (mc / grand * 100) : 0;
+        const chip = document.createElement('div');
+        chip.className = 'sector-chip';
+        chip.innerHTML = '<span class="n">' + sector + '</span><span class="w">' + pct.toFixed(1) + '%</span>';
+        strip.appendChild(chip);
+      });
+  })();
 
   // ── Click row → company detail ──
   rows.forEach(tr => {
@@ -118,17 +155,18 @@
     badge.textContent = visible + ' companies';
   }
 
-  // ── Column sort ──
+  // ── Column sort (string + numeric) ──
   let sortCol = 'ticker', sortAsc = true;
   const tbody = document.querySelector('#universe-table tbody');
 
   document.querySelectorAll('#universe-table thead th[data-col]').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
+      const numeric = th.dataset.numeric === '1';
       if (sortCol === col) {
         sortAsc = !sortAsc;
       } else {
-        sortCol = col; sortAsc = true;
+        sortCol = col; sortAsc = numeric ? false : true;  // size cols default high→low
       }
       document.querySelectorAll('#universe-table thead th').forEach(h => {
         h.classList.remove('sort-asc', 'sort-desc');
@@ -136,6 +174,11 @@
       th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
 
       const sorted = [...rows].sort((a, b) => {
+        if (numeric) {
+          const av = a.dataset[col] === '' ? -Infinity : parseFloat(a.dataset[col]);
+          const bv = b.dataset[col] === '' ? -Infinity : parseFloat(b.dataset[col]);
+          return sortAsc ? av - bv : bv - av;
+        }
         const av = a.dataset[col] || '';
         const bv = b.dataset[col] || '';
         return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
