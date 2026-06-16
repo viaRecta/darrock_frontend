@@ -79,6 +79,30 @@ def _load_mock(filename: str) -> dict:
 USE_MOCKDATA = False
 
 
+# Indices the research site can switch between. The backend honours ?index= on
+# every research route (default sp500); this is the frontend allowlist for the
+# universe gate. Add new index DBs here once their data is loaded.
+RESEARCH_INDICES = ('sp500', 'bist100')
+
+
+def _current_index() -> str:
+    """Resolve the active research index, defaulting to sp500.
+
+    Precedence: an explicit 'index' in the request (form field from the gate, or
+    ?index= on a link) — which also becomes sticky in the session — then the
+    session, then sp500. Values outside RESEARCH_INDICES are ignored so a bad
+    param can never reach connect_market()."""
+    requested = (request.values.get('index') or '').strip().lower()
+    if requested in RESEARCH_INDICES:
+        idx = requested
+    else:
+        idx = session.get('index', 'sp500')
+    if idx not in RESEARCH_INDICES:
+        idx = 'sp500'
+    session['index'] = idx
+    return idx
+
+
 @app.route('/')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -112,14 +136,16 @@ def logout():
 def research():
     if not USE_MOCKDATA and not session.get('user'):
         return redirect('/')
+    idx = _current_index()
     if USE_MOCKDATA:
         data = _load_mock('dashboard_response.json')
     elif request.method == 'POST':
-        _, data = post_form('/api/research/dashboard', data=request.form)
+        _, data = post_form(f'/api/research/dashboard?index={idx}', data=request.form)
     else:
-        data = get_json('/api/research/dashboard')
+        data = get_json(f'/api/research/dashboard?index={idx}')
     if not data.get('user') and session.get('user'):
         data['user'] = session['user']
+    data['index'] = idx
     return render_template('research.html', **data)
 
 
@@ -128,13 +154,15 @@ def custom():
     """Custom portfolio backtest — user provides a fixed ticker list."""
     if not USE_MOCKDATA and not session.get('user'):
         return redirect('/')
+    idx = _current_index()
     data = {}
     if request.method == 'POST':
-        _, data = post_form('/api/research/custom-backtest', data=request.form)
+        _, data = post_form(f'/api/research/custom-backtest?index={idx}', data=request.form)
         if not isinstance(data, dict):
             data = {}
     if not data.get('user') and session.get('user'):
         data['user'] = session['user']
+    data['index'] = idx
     return render_template('custom.html', **data)
 
 
@@ -142,8 +170,9 @@ def custom():
 def api_tickers():
     """Frontend proxy → backend /api/research/tickers. Used by the custom-backtest
     pill input typeahead. Auth flows through api_client._auth_headers."""
+    idx = _current_index()
     try:
-        data = get_json('/api/research/tickers')
+        data = get_json(f'/api/research/tickers?index={idx}')
     except Exception as exc:
         return jsonify({"error": str(exc), "tickers": []}), 502
     return jsonify(data)
@@ -192,9 +221,11 @@ def admin_delete(user_id: int):
 def universe():
     if not USE_MOCKDATA and not session.get('user'):
         return redirect('/')
-    data = get_json('/api/universe')
+    idx = _current_index()
+    data = get_json(f'/api/universe?index={idx}')
     return render_template('universe.html',
                            companies=data.get('companies', []),
+                           index=idx,
                            user=session.get('user'))
 
 
@@ -203,11 +234,13 @@ def composition():
     """Index-composition showcase — sector breakdown, history, turnover."""
     if not USE_MOCKDATA and not session.get('user'):
         return redirect('/')
-    comp = get_json('/api/index/composition')
-    hist = get_json('/api/index/composition/history')
-    tov = get_json('/api/index/turnover')
+    idx = _current_index()
+    comp = get_json(f'/api/index/composition?index={idx}')
+    hist = get_json(f'/api/index/composition/history?index={idx}')
+    tov = get_json(f'/api/index/turnover?index={idx}')
     return render_template('composition.html',
                            composition=comp, history=hist, turnover=tov,
+                           index=idx,
                            user=session.get('user'))
 
 
@@ -224,11 +257,13 @@ def macro():
 def company_detail(company_id: int):
     if not USE_MOCKDATA and not session.get('user'):
         return redirect('/')
+    idx = _current_index()
     bq = request.args.get('buying_quarter', 'q4')
     if bq not in ('q1', 'q2', 'q3', 'q4'):
         bq = 'q4'
-    data = get_json(f'/api/company/{company_id}/full?buying_quarter={bq}')
+    data = get_json(f'/api/company/{company_id}/full?buying_quarter={bq}&index={idx}')
     data['user'] = session.get('user')
+    data['index'] = idx
     return render_template('company_detail.html', **data)
 
 
@@ -246,7 +281,8 @@ def stock(ticker: str, company_id: int):
         bq = request.args.get('buying_quarter', 'q4')
         if bq not in ('q1', 'q2', 'q3', 'q4'):
             bq = 'q4'
-        data = get_json(f'/api/research/stock/{company_id}?buying_quarter={bq}')
+        idx = _current_index()
+        data = get_json(f'/api/research/stock/{company_id}?buying_quarter={bq}&index={idx}')
 
     # If ?partial=1 → return just the fragment (for slide-over AJAX)
     if request.args.get('partial') == '1':
@@ -301,8 +337,9 @@ def get_portfolio_route(portfolio_id: int):
 
 @app.post('/save_portfolio')
 def save_portfolio_route():
+    idx = _current_index()
     payload = request.form.to_dict(flat=False)
-    status_code, data = post_form('/api/research/save', data=payload)
+    status_code, data = post_form(f'/api/research/save?index={idx}', data=payload)
     return jsonify(data), status_code
 
 

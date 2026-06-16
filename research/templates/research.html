@@ -44,6 +44,26 @@
     <form id="filter-form" method="post" action="/research">
     <div class="panel-content">
 
+      {# --- INDEX UNIVERSE GATE (SP500 / BIST100) --- #}
+      {% set active_index = index | default('sp500') %}
+      <div class="acc">
+        <div class="acc-head">Universe</div>
+        <div class="acc-body">
+          <div class="f-group mb-1" style="max-width:220px;">
+            <label>Index</label>
+            <select name="index" id="index-select" onchange="toggleTryNote(this.value)">
+              <option value="sp500"   {{ 'selected' if active_index == 'sp500' }}>S&amp;P 500 (USD)</option>
+              <option value="bist100" {{ 'selected' if active_index == 'bist100' }}>BIST 100 (TRY)</option>
+            </select>
+          </div>
+          <p id="try-note" class="text-muted"
+             style="font-size:0.5rem;font-family:var(--font-ui);line-height:1.3;{{ '' if active_index == 'bist100' else 'display:none;' }}">
+            &#9888; Financials are in nominal TRY. Growth metrics reflect both real growth and
+            currency debasement &mdash; use relative rankings within BIST&nbsp;100 only.
+          </p>
+        </div>
+      </div>
+
       {# --- ACCORDION 1: Screening Rules --- #}
       <div class="acc">
         <div class="acc-head">Screening Rules</div>
@@ -819,6 +839,13 @@
     "{{ cid }}": "{{ detail.ticker }}"{% if not loop.last %},{% endif %}
   {%- endfor -%}
   };
+
+  {# Immediate show/hide of the TRY note when the index dropdown changes
+     (the authoritative state is still server-rendered on submit). #}
+  function toggleTryNote(value) {
+    var note = document.getElementById('try-note');
+    if (note) note.style.display = (value === 'bist100') ? '' : 'none';
+  }
 </script>
 <script src="/static/js/v3.js"></script>
 </body>
